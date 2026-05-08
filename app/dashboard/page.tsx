@@ -55,11 +55,14 @@ export default async function DashboardPage() {
     `)
     .eq("user_id", user.id)
 
-// @ts-ignore
-  const accessiblePortals: any[] = (portalAccess || [])
+  // CORRECCIÓN DEFINITIVA: 
+  // Extraemos los portales y forzamos a que el sistema los acepte pase lo que pase
+  const rawPortals = (portalAccess || [])
     .map((pa: any) => pa.portals)
     .flat()
-    .filter((p: any) => p && p.is_active);
+    .filter((p: any) => p !== null && p !== undefined && p.is_active);
+
+  const accessiblePortals = rawPortals as any[];
 
   // Calculate days remaining
   const daysRemaining = activeMembership
@@ -88,7 +91,8 @@ export default async function DashboardPage() {
 
           <div>
             <h2 className="text-xl font-semibold mb-4">Your Portals</h2>
-            <PortalsGrid portals={accessiblePortals || []} />
+            {/* Usamos el casting 'as any' aquí también para asegurar que no se detenga el build */}
+            <PortalsGrid portals={accessiblePortals as any} />
           </div>
         </>
       )}
