@@ -55,9 +55,10 @@ export default async function DashboardPage() {
     `)
     .eq("user_id", user.id)
 
-  const accessiblePortals = portalAccess
-    ?.map((pa) => pa.portals)
-    .filter((p): p is NonNullable<typeof p> => p !== null && p.is_active)
+ const accessiblePortals = portalAccess
+  ?.map((pa) => pa.portals)
+  .flat()
+  .filter((p: any) => p !== null && p?.is_active);
 
   // Calculate days remaining
   const daysRemaining = activeMembership
