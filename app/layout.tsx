@@ -15,14 +15,13 @@ export const viewport: Viewport = {
   initialScale: 1,
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+// ... tus imports arriba
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={inter.variable}>
-      <body className="min-h-screen bg-white text-gray-900 font-sans antialiased">{children}</body>
+    <html lang="es">
+      <body className="min-h-screen bg-white antialiased">
+        {children}
+      </body>
     </html>
   )
 }
