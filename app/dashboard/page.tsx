@@ -95,7 +95,7 @@ export default async function DashboardPage() {
           <div>
             <h2 className="text-xl font-semibold mb-4">Your Portals</h2>
             {/* Usamos el casting 'as any' aquí también para asegurar que no se detenga el build */}
-            <PortalsGrid portals={accessiblePortals as any} />
+            <PortalsGrid portals={(accessiblePortals || []) as any} />
           </div>
         </>
       )}
