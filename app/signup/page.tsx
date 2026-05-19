@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Building2, Loader2, CheckCircle } from "lucide-react"
+import { Building2, Loader2, CheckCircle, AlertTriangle } from "lucide-react"
 
 export default function SignupPage() {
   const [fullName, setFullName] = useState("")
@@ -22,6 +22,12 @@ export default function SignupPage() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    if (!supabase) {
+      setError("Supabase is not configured. Please set up your environment variables.")
+      return
+    }
+    
     setLoading(true)
     setError(null)
 
@@ -45,6 +51,33 @@ export default function SignupPage() {
 
     setSuccess(true)
     setLoading(false)
+  }
+  
+  if (!supabase) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-yellow-100">
+              <AlertTriangle className="h-6 w-6 text-yellow-600" />
+            </div>
+            <CardTitle className="text-2xl">Configuration Required</CardTitle>
+            <CardDescription>
+              Supabase is not configured. Please add the following environment variables:
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <code className="block bg-muted p-2 rounded text-sm">NEXT_PUBLIC_SUPABASE_URL</code>
+            <code className="block bg-muted p-2 rounded text-sm">NEXT_PUBLIC_SUPABASE_ANON_KEY</code>
+          </CardContent>
+          <CardFooter>
+            <Button variant="outline" className="w-full" asChild>
+              <Link href="/">Back to Home</Link>
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    )
   }
 
   if (success) {
