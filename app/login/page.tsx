@@ -22,7 +22,7 @@ export default function LoginPage() {
     e.preventDefault()
     
     if (!supabase) {
-      setError("Supabase is not configured. Please set up your environment variables.")
+      setError("Supabase no está configurado. Por favor configura las variables de entorno.")
       return
     }
     
@@ -52,9 +52,9 @@ export default function LoginPage() {
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-yellow-100">
               <AlertTriangle className="h-6 w-6 text-yellow-600" />
             </div>
-            <CardTitle className="text-2xl">Configuration Required</CardTitle>
+            <CardTitle className="text-2xl">Configuración Requerida</CardTitle>
             <CardDescription>
-              Supabase is not configured. Please add the following environment variables:
+              Supabase no está configurado. Por favor agrega las siguientes variables de entorno:
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -63,7 +63,7 @@ export default function LoginPage() {
           </CardContent>
           <CardFooter>
             <Button variant="outline" className="w-full" asChild>
-              <Link href="/">Back to Home</Link>
+              <Link href="/">Volver al Inicio</Link>
             </Button>
           </CardFooter>
         </Card>
@@ -78,9 +78,9 @@ export default function LoginPage() {
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
             <Building2 className="h-6 w-6 text-primary" />
           </div>
-          <CardTitle className="text-2xl">Welcome back</CardTitle>
+          <CardTitle className="text-2xl">Bienvenido de nuevo</CardTitle>
           <CardDescription>
-            Sign in to your account to continue
+            Inicia sesión en tu cuenta para continuar
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleLogin}>
@@ -91,11 +91,11 @@ export default function LoginPage() {
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Correo electrónico</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder="tu@ejemplo.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -103,11 +103,11 @@ export default function LoginPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Contraseña</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="Your password"
+                placeholder="Tu contraseña"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -120,16 +120,16 @@ export default function LoginPage() {
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Signing in...
+                  Iniciando sesión...
                 </>
               ) : (
-                "Sign in"
+                "Iniciar Sesión"
               )}
             </Button>
             <p className="text-sm text-muted-foreground text-center">
-              {"Don't have an account? "}
+              {"¿No tienes una cuenta? "}
               <Link href="/signup" className="text-primary hover:underline">
-                Sign up
+                Regístrate
               </Link>
             </p>
           </CardFooter>

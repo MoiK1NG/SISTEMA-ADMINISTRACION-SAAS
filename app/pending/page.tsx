@@ -17,14 +17,14 @@ export default async function PendingPage() {
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-yellow-100">
               <AlertTriangle className="h-6 w-6 text-yellow-600" />
             </div>
-            <CardTitle className="text-2xl">Configuration Required</CardTitle>
+            <CardTitle className="text-2xl">Configuración Requerida</CardTitle>
             <CardDescription>
-              Supabase is not configured. Please add the required environment variables.
+              Supabase no está configurado. Por favor agrega las variables de entorno requeridas.
             </CardDescription>
           </CardHeader>
           <CardFooter>
             <Button variant="outline" className="w-full" asChild>
-              <Link href="/">Back to Home</Link>
+              <Link href="/">Volver al Inicio</Link>
             </Button>
           </CardFooter>
         </Card>
@@ -55,10 +55,10 @@ export default async function PendingPage() {
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-yellow-100">
             <Clock className="h-6 w-6 text-yellow-600" />
           </div>
-          <CardTitle className="text-2xl">Pending Approval</CardTitle>
+          <CardTitle className="text-2xl">Aprobación Pendiente</CardTitle>
           <CardDescription className="text-base">
-            {profile?.full_name ? `Hi ${profile.full_name}, your` : "Your"} account is awaiting administrator approval. 
-            You will be notified once your access has been granted.
+            {profile?.full_name ? `Hola ${profile.full_name}, tu` : "Tu"} cuenta está esperando la aprobación del administrador. 
+            Serás notificado una vez que tu acceso haya sido otorgado.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex justify-center">

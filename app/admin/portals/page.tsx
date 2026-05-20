@@ -20,9 +20,9 @@ export default async function PortalsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Portals</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Portales</h1>
         <p className="text-muted-foreground">
-          Manage business portals available to users
+          Gestiona los portales empresariales disponibles para los usuarios
         </p>
       </div>
 
@@ -35,7 +35,7 @@ export default async function PortalsPage() {
                   <Grid3X3 className="h-5 w-5 text-primary" />
                 </div>
                 <Badge variant={portal.is_active ? "success" : "secondary"}>
-                  {portal.is_active ? "Active" : "Inactive"}
+                  {portal.is_active ? "Activo" : "Inactivo"}
                 </Badge>
               </div>
               <CardTitle className="mt-4">{portal.name}</CardTitle>
@@ -43,7 +43,7 @@ export default async function PortalsPage() {
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Users with access</span>
+                <span className="text-muted-foreground">Usuarios con acceso</span>
                 <span className="font-medium">
                   {portal.user_portal_access?.length || 0}
                 </span>
@@ -62,7 +62,7 @@ export default async function PortalsPage() {
             <CardContent className="flex flex-col items-center justify-center py-8">
               <Grid3X3 className="h-12 w-12 text-muted-foreground/50" />
               <p className="mt-4 text-sm text-muted-foreground">
-                No portals configured yet
+                Aún no hay portales configurados
               </p>
             </CardContent>
           </Card>

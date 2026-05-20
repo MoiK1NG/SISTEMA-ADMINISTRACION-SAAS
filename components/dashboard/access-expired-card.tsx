@@ -10,18 +10,18 @@ export function AccessExpiredCard() {
             <AlertTriangle className="h-5 w-5 text-destructive" />
           </div>
           <div>
-            <CardTitle className="text-lg text-destructive">Access Expired</CardTitle>
+            <CardTitle className="text-lg text-destructive">Acceso Expirado</CardTitle>
             <CardDescription>
-              Your membership has expired or is inactive
+              Tu membresía ha expirado o está inactiva
             </CardDescription>
           </div>
         </div>
       </CardHeader>
       <CardContent>
         <p className="text-sm text-muted-foreground">
-          Your access to the business portals has been suspended because your membership has expired 
-          or has been deactivated. Please contact your administrator to renew your membership 
-          and regain access to all features.
+          Tu acceso a los portales empresariales ha sido suspendido porque tu membresía ha expirado 
+          o ha sido desactivada. Por favor contacta a tu administrador para renovar tu membresía 
+          y recuperar el acceso a todas las funcionalidades.
         </p>
       </CardContent>
     </Card>

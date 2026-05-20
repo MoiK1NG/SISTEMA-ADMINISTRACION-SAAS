@@ -24,7 +24,7 @@ export default function SignupPage() {
     e.preventDefault()
     
     if (!supabase) {
-      setError("Supabase is not configured. Please set up your environment variables.")
+      setError("Supabase no está configurado. Por favor configura las variables de entorno.")
       return
     }
     
@@ -61,9 +61,9 @@ export default function SignupPage() {
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-yellow-100">
               <AlertTriangle className="h-6 w-6 text-yellow-600" />
             </div>
-            <CardTitle className="text-2xl">Configuration Required</CardTitle>
+            <CardTitle className="text-2xl">Configuración Requerida</CardTitle>
             <CardDescription>
-              Supabase is not configured. Please add the following environment variables:
+              Supabase no está configurado. Por favor agrega las siguientes variables de entorno:
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -72,7 +72,7 @@ export default function SignupPage() {
           </CardContent>
           <CardFooter>
             <Button variant="outline" className="w-full" asChild>
-              <Link href="/">Back to Home</Link>
+              <Link href="/">Volver al Inicio</Link>
             </Button>
           </CardFooter>
         </Card>
@@ -88,14 +88,14 @@ export default function SignupPage() {
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
               <CheckCircle className="h-6 w-6 text-green-600" />
             </div>
-            <CardTitle className="text-2xl">Check your email</CardTitle>
+            <CardTitle className="text-2xl">Revisa tu correo</CardTitle>
             <CardDescription>
-              We sent you a confirmation link. Please check your email to verify your account.
+              Te enviamos un enlace de confirmación. Por favor revisa tu correo electrónico para verificar tu cuenta.
             </CardDescription>
           </CardHeader>
           <CardFooter className="justify-center">
             <Button variant="outline" asChild>
-              <Link href="/login">Back to Login</Link>
+              <Link href="/login">Volver a Iniciar Sesión</Link>
             </Button>
           </CardFooter>
         </Card>
@@ -110,9 +110,9 @@ export default function SignupPage() {
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
             <Building2 className="h-6 w-6 text-primary" />
           </div>
-          <CardTitle className="text-2xl">Create an account</CardTitle>
+          <CardTitle className="text-2xl">Crear una cuenta</CardTitle>
           <CardDescription>
-            Sign up to get started with Business Portal
+            Regístrate para comenzar con Portal Empresarial
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSignup}>
@@ -123,11 +123,11 @@ export default function SignupPage() {
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name</Label>
+              <Label htmlFor="fullName">Nombre Completo</Label>
               <Input
                 id="fullName"
                 type="text"
-                placeholder="John Doe"
+                placeholder="Juan Pérez"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 required
@@ -135,11 +135,11 @@ export default function SignupPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Correo electrónico</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder="tu@ejemplo.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -147,11 +147,11 @@ export default function SignupPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Contraseña</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="Create a password"
+                placeholder="Crea una contraseña"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -159,7 +159,7 @@ export default function SignupPage() {
                 disabled={loading}
               />
               <p className="text-xs text-muted-foreground">
-                Must be at least 6 characters
+                Debe tener al menos 6 caracteres
               </p>
             </div>
           </CardContent>
@@ -168,16 +168,16 @@ export default function SignupPage() {
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating account...
+                  Creando cuenta...
                 </>
               ) : (
-                "Create account"
+                "Crear cuenta"
               )}
             </Button>
             <p className="text-sm text-muted-foreground text-center">
-              Already have an account?{" "}
+              ¿Ya tienes una cuenta?{" "}
               <Link href="/login" className="text-primary hover:underline">
-                Sign in
+                Inicia sesión
               </Link>
             </p>
           </CardFooter>

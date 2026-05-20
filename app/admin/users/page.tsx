@@ -37,9 +37,9 @@ export default async function UsersPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Users</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Usuarios</h1>
         <p className="text-muted-foreground">
-          Manage user accounts, approvals, and memberships
+          Gestiona cuentas de usuario, aprobaciones y membresías
         </p>
       </div>
 

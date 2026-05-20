@@ -5,7 +5,7 @@ import { Users, CreditCard, UserCheck, Clock } from "lucide-react"
 export default async function AdminDashboardPage() {
   const supabase = await createClient()
 
-  // Get counts
+  // Obtener conteos
   const { count: totalUsers } = await supabase
     .from("profiles")
     .select("*", { count: "exact", head: true })
@@ -29,27 +29,27 @@ export default async function AdminDashboardPage() {
 
   const stats = [
     {
-      title: "Total Users",
+      title: "Total de Usuarios",
       value: totalUsers || 0,
-      description: "Registered accounts",
+      description: "Cuentas registradas",
       icon: Users,
     },
     {
-      title: "Pending Approval",
+      title: "Pendientes de Aprobación",
       value: pendingUsers || 0,
-      description: "Awaiting review",
+      description: "Esperando revisión",
       icon: Clock,
     },
     {
-      title: "Active Members",
+      title: "Miembros Activos",
       value: activeMembers || 0,
-      description: "With valid membership",
+      description: "Con membresía válida",
       icon: CreditCard,
     },
     {
-      title: "Approved Users",
+      title: "Usuarios Aprobados",
       value: (totalUsers || 0) - (pendingUsers || 0),
-      description: "Can access platform",
+      description: "Pueden acceder a la plataforma",
       icon: UserCheck,
     },
   ]
@@ -57,9 +57,9 @@ export default async function AdminDashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Panel de Control</h1>
         <p className="text-muted-foreground">
-          Overview of your platform statistics
+          Resumen de las estadísticas de tu plataforma
         </p>
       </div>
 
@@ -80,8 +80,8 @@ export default async function AdminDashboardPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Recent Users</CardTitle>
-          <CardDescription>Latest registered accounts</CardDescription>
+          <CardTitle>Usuarios Recientes</CardTitle>
+          <CardDescription>Últimas cuentas registradas</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -101,7 +101,7 @@ export default async function AdminDashboardPage() {
                     </span>
                   </div>
                   <div>
-                    <p className="text-sm font-medium">{user.full_name || "No name"}</p>
+                    <p className="text-sm font-medium">{user.full_name || "Sin nombre"}</p>
                     <p className="text-xs text-muted-foreground">{user.email}</p>
                   </div>
                 </div>
@@ -113,14 +113,14 @@ export default async function AdminDashboardPage() {
                         : "bg-yellow-100 text-yellow-700"
                     }`}
                   >
-                    {user.is_approved ? "Approved" : "Pending"}
+                    {user.is_approved ? "Aprobado" : "Pendiente"}
                   </span>
                 </div>
               </div>
             ))}
             {(!recentUsers || recentUsers.length === 0) && (
               <p className="text-sm text-muted-foreground text-center py-4">
-                No users yet
+                Aún no hay usuarios
               </p>
             )}
           </div>

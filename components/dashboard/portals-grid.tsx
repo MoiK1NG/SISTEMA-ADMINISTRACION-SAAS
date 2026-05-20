@@ -20,9 +20,9 @@ export function PortalsGrid({ portals }: PortalsGridProps) {
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-12">
           <Grid3X3 className="h-12 w-12 text-muted-foreground/50" />
-          <h3 className="mt-4 text-lg font-medium">No portals assigned</h3>
+          <h3 className="mt-4 text-lg font-medium">Sin portales asignados</h3>
           <p className="mt-2 text-sm text-muted-foreground text-center max-w-sm">
-            {"You don't have access to any portals yet. Contact your administrator to request access."}
+            {"Aún no tienes acceso a ningún portal. Contacta a tu administrador para solicitar acceso."}
           </p>
         </CardContent>
       </Card>
@@ -48,11 +48,11 @@ export function PortalsGrid({ portals }: PortalsGridProps) {
             </CardHeader>
             <CardContent>
               <CardDescription className="mb-4">
-                {portal.description || "Access this portal to manage your business operations."}
+                {portal.description || "Accede a este portal para gestionar tus operaciones empresariales."}
               </CardDescription>
               <Button className="w-full" variant="outline" disabled>
                 <ExternalLink className="mr-2 h-4 w-4" />
-                Coming Soon
+                Próximamente
               </Button>
             </CardContent>
           </Card>
