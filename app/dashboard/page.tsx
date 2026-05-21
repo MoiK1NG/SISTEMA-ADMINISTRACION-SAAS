@@ -171,7 +171,7 @@ export default async function DashboardPage() {
                 </p>
               </div>
             </div>
-            <PortalsGrid portals={accessiblePortals as any} />
+            <PortalsGrid portals={(accessiblePortals || []) as any} />
           </div>
         </>
       )}
