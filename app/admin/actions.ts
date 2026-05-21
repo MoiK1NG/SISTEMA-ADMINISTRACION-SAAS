@@ -15,27 +15,26 @@ async function verifyAdmin() {
   const { data: adminProfile } = await supabase
     .from("profiles")
     .select("role")
-    .eq("id", (user as any).id) // <-- El truco del "as any" aquí calma a TypeScript por completo
+    .eq("id", (user as any).id)
     .single()
   
   if (!adminProfile || adminProfile.role === "user") {
     throw new Error("No tienes permisos de administrador")
   }
   
-  return { supabase, user }
+  return { supabase, user, adminProfile: adminProfile as any }
 }
 
 // Helper para verificar superadmin
 async function verifySuperAdmin() {
   const { supabase, user, adminProfile } = await verifyAdmin()
   
-  if (adminProfile.role !== "superadmin") {
+  if (!adminProfile || (adminProfile as any).role !== "superadmin") {
     throw new Error("No autorizado - Solo superadmins pueden realizar esta acción")
   }
-
-  return { supabase, user, adminProfile }
+  
+  return { supabase, user }
 }
-
 // ==========================================
 // ACCIONES DE USUARIOS
 // ==========================================
