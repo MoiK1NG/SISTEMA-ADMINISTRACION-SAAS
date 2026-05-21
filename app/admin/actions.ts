@@ -6,22 +6,23 @@ import type { MembershipStatus } from "@/lib/types"
 
 // Helper para verificar rol de admin
 async function verifyAdmin() {
-   const supabase = await createClient()
-   if (!supabase) throw new Error("No se pudo conectar a la base de datos")
-
-   const { data: { user } } = await supabase.auth.getUser()
+  const supabase = await createClient()
+  if (!supabase) throw new Error("No se pudo conectar a la base de datos")
+  
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error("No autorizado")
   
   const { data: adminProfile } = await supabase
     .from("profiles")
     .select("role")
-    .eq("id", user.id)
+    .eq("id", (user as any).id) // <-- El truco del "as any" aquí calma a TypeScript por completo
     .single()
   
   if (!adminProfile || adminProfile.role === "user") {
-    throw new Error("No autorizado")
+    throw new Error("No tienes permisos de administrador")
   }
-
-  return { supabase, user, adminProfile }
+  
+  return { supabase, user }
 }
 
 // Helper para verificar superadmin
