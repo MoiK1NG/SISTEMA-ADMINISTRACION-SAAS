@@ -13,8 +13,11 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default async function MembershipsPage() {
-  const supabase = await createClient()
+const supabase = await createClient()
 if (!supabase) throw new Error("No se pudo conectar a la base de datos")
+
+// Obtener conteos
+const { count: totalUsers } = await supabase
 
 const { data: memberships } = await supabase
   .from("memberships")
