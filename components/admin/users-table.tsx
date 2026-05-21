@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { format, differenceInDays, isPast } from "date-fns"
+import { es } from "date-fns/locale"
 import {
   Table,
   TableBody,
@@ -21,15 +22,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, Check, X, Trash2, CreditCard, UserCog } from "lucide-react"
-import type { Profile, MembershipPlan, Portal, Membership } from "@/lib/types"
+import { MoreHorizontal, Check, X, Trash2, CreditCard, Grid3X3, Shield } from "lucide-react"
+import type { Profile, MembershipPlan, Portal, Membership, MembershipStatus } from "@/lib/types"
 import {
   approveUser,
   disapproveUser,
   toggleUserActive,
   deleteUser,
+  updateUserRole,
 } from "@/app/admin/actions"
 import { MembershipDialog } from "./membership-dialog"
+import { PortalAccessDialog } from "./portal-access-dialog"
 
 interface UserWithMembership extends Profile {
   memberships?: (Membership & {
@@ -41,11 +44,13 @@ interface UsersTableProps {
   users: UserWithMembership[]
   plans: MembershipPlan[]
   portals: Portal[]
+  currentUserRole: string
 }
 
-export function UsersTable({ users, plans, portals }: UsersTableProps) {
+export function UsersTable({ users, plans, portals, currentUserRole }: UsersTableProps) {
   const [selectedUser, setSelectedUser] = useState<UserWithMembership | null>(null)
   const [membershipDialogOpen, setMembershipDialogOpen] = useState(false)
+  const [portalAccessDialogOpen, setPortalAccessDialogOpen] = useState(false)
   const [loading, setLoading] = useState<string | null>(null)
 
   const handleApprove = async (userId: string) => {
@@ -53,7 +58,7 @@ export function UsersTable({ users, plans, portals }: UsersTableProps) {
     try {
       await approveUser(userId)
     } catch (error) {
-      console.error("Error approving user:", error)
+      console.error("Error al aprobar usuario:", error)
     }
     setLoading(null)
   }
@@ -63,7 +68,7 @@ export function UsersTable({ users, plans, portals }: UsersTableProps) {
     try {
       await disapproveUser(userId)
     } catch (error) {
-      console.error("Error disapproving user:", error)
+      console.error("Error al desaprobar usuario:", error)
     }
     setLoading(null)
   }
@@ -73,20 +78,33 @@ export function UsersTable({ users, plans, portals }: UsersTableProps) {
     try {
       await toggleUserActive(userId, isActive)
     } catch (error) {
-      console.error("Error toggling user active:", error)
+      console.error("Error al cambiar estado activo:", error)
     }
     setLoading(null)
   }
 
   const handleDelete = async (userId: string) => {
-    if (!confirm("Are you sure you want to delete this user? This action cannot be undone.")) {
+    if (!confirm("¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.")) {
       return
     }
     setLoading(userId)
     try {
       await deleteUser(userId)
     } catch (error) {
-      console.error("Error deleting user:", error)
+      console.error("Error al eliminar usuario:", error)
+    }
+    setLoading(null)
+  }
+
+  const handleRoleChange = async (userId: string, newRole: "user" | "admin" | "superadmin") => {
+    if (!confirm(`¿Estás seguro de que deseas cambiar el rol a ${newRole}?`)) {
+      return
+    }
+    setLoading(userId)
+    try {
+      await updateUserRole(userId, newRole)
+    } catch (error) {
+      console.error("Error al cambiar rol:", error)
     }
     setLoading(null)
   }
@@ -94,24 +112,46 @@ export function UsersTable({ users, plans, portals }: UsersTableProps) {
   const getActiveMembership = (user: UserWithMembership) => {
     if (!user.memberships || user.memberships.length === 0) return null
     const active = user.memberships.find(
-      (m) => m.is_active && !isPast(new Date(m.end_date))
+      (m) => m.status === "active" && !isPast(new Date(m.end_date))
     )
     return active || null
   }
 
   const getMembershipStatus = (user: UserWithMembership) => {
     const membership = getActiveMembership(user)
-    if (!membership) return { status: "none", label: "No Membership", variant: "secondary" as const }
+    if (!membership) return { status: "none", label: "Sin Membresía", variant: "secondary" as const }
     
     const daysRemaining = differenceInDays(new Date(membership.end_date), new Date())
     
     if (daysRemaining < 0) {
-      return { status: "expired", label: "Expired", variant: "destructive" as const }
+      return { status: "expired", label: "Expirada", variant: "destructive" as const }
     }
     if (daysRemaining <= 7) {
-      return { status: "expiring", label: `${daysRemaining}d left`, variant: "warning" as const }
+      return { status: "expiring", label: `${daysRemaining}d restantes`, variant: "warning" as const }
     }
-    return { status: "active", label: `${daysRemaining}d left`, variant: "success" as const }
+    return { status: "active", label: `${daysRemaining}d restantes`, variant: "success" as const }
+  }
+
+  const getRoleBadgeVariant = (role: string) => {
+    switch (role) {
+      case "superadmin":
+        return "default"
+      case "admin":
+        return "secondary"
+      default:
+        return "outline"
+    }
+  }
+
+  const getRoleLabel = (role: string) => {
+    switch (role) {
+      case "superadmin":
+        return "Super Admin"
+      case "admin":
+        return "Admin"
+      default:
+        return "Usuario"
+    }
   }
 
   return (
@@ -120,13 +160,13 @@ export function UsersTable({ users, plans, portals }: UsersTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>User</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Approval</TableHead>
-              <TableHead>Membership</TableHead>
-              <TableHead>Expiry Date</TableHead>
-              <TableHead>Active</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>Usuario</TableHead>
+              <TableHead>Rol</TableHead>
+              <TableHead>Aprobación</TableHead>
+              <TableHead>Membresía</TableHead>
+              <TableHead>Expiración</TableHead>
+              <TableHead>Activo</TableHead>
+              <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -138,26 +178,18 @@ export function UsersTable({ users, plans, portals }: UsersTableProps) {
                 <TableRow key={user.id}>
                   <TableCell>
                     <div>
-                      <p className="font-medium">{user.full_name || "No name"}</p>
+                      <p className="font-medium">{user.full_name || "Sin nombre"}</p>
                       <p className="text-sm text-muted-foreground">{user.email}</p>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge
-                      variant={
-                        user.role === "superadmin"
-                          ? "default"
-                          : user.role === "admin"
-                          ? "secondary"
-                          : "outline"
-                      }
-                    >
-                      {user.role}
+                    <Badge variant={getRoleBadgeVariant(user.role)}>
+                      {getRoleLabel(user.role)}
                     </Badge>
                   </TableCell>
                   <TableCell>
                     <Badge variant={user.is_approved ? "success" : "warning"}>
-                      {user.is_approved ? "Approved" : "Pending"}
+                      {user.is_approved ? "Aprobado" : "Pendiente"}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -175,7 +207,7 @@ export function UsersTable({ users, plans, portals }: UsersTableProps) {
                   <TableCell>
                     {membership ? (
                       <span className="text-sm">
-                        {format(new Date(membership.end_date), "MMM d, yyyy")}
+                        {format(new Date(membership.end_date), "d MMM, yyyy", { locale: es })}
                       </span>
                     ) : (
                       <span className="text-sm text-muted-foreground">-</span>
@@ -193,23 +225,27 @@ export function UsersTable({ users, plans, portals }: UsersTableProps) {
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" disabled={loading === user.id}>
                           <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Actions</span>
+                          <span className="sr-only">Acciones</span>
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                         <DropdownMenuSeparator />
+                        
+                        {/* Aprobar/Desaprobar */}
                         {user.is_approved ? (
                           <DropdownMenuItem onClick={() => handleDisapprove(user.id)}>
                             <X className="mr-2 h-4 w-4" />
-                            Disapprove
+                            Desaprobar
                           </DropdownMenuItem>
                         ) : (
                           <DropdownMenuItem onClick={() => handleApprove(user.id)}>
                             <Check className="mr-2 h-4 w-4" />
-                            Approve
+                            Aprobar
                           </DropdownMenuItem>
                         )}
+                        
+                        {/* Gestionar Membresía */}
                         <DropdownMenuItem
                           onClick={() => {
                             setSelectedUser(user)
@@ -217,15 +253,55 @@ export function UsersTable({ users, plans, portals }: UsersTableProps) {
                           }}
                         >
                           <CreditCard className="mr-2 h-4 w-4" />
-                          Manage Membership
+                          Gestionar Membresía
                         </DropdownMenuItem>
+                        
+                        {/* Gestionar Acceso a Portales */}
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setSelectedUser(user)
+                            setPortalAccessDialogOpen(true)
+                          }}
+                        >
+                          <Grid3X3 className="mr-2 h-4 w-4" />
+                          Acceso a Portales
+                        </DropdownMenuItem>
+                        
+                        {/* Cambiar Rol (solo superadmin) */}
+                        {currentUserRole === "superadmin" && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuLabel className="text-xs text-muted-foreground">
+                              Cambiar Rol
+                            </DropdownMenuLabel>
+                            {user.role !== "user" && (
+                              <DropdownMenuItem onClick={() => handleRoleChange(user.id, "user")}>
+                                <Shield className="mr-2 h-4 w-4" />
+                                Hacer Usuario
+                              </DropdownMenuItem>
+                            )}
+                            {user.role !== "admin" && (
+                              <DropdownMenuItem onClick={() => handleRoleChange(user.id, "admin")}>
+                                <Shield className="mr-2 h-4 w-4" />
+                                Hacer Admin
+                              </DropdownMenuItem>
+                            )}
+                            {user.role !== "superadmin" && (
+                              <DropdownMenuItem onClick={() => handleRoleChange(user.id, "superadmin")}>
+                                <Shield className="mr-2 h-4 w-4" />
+                                Hacer Super Admin
+                              </DropdownMenuItem>
+                            )}
+                          </>
+                        )}
+                        
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           onClick={() => handleDelete(user.id)}
                           className="text-destructive focus:text-destructive"
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
-                          Delete User
+                          Eliminar Usuario
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -236,7 +312,7 @@ export function UsersTable({ users, plans, portals }: UsersTableProps) {
             {users.length === 0 && (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                  No users found
+                  No se encontraron usuarios
                 </TableCell>
               </TableRow>
             )}
@@ -249,6 +325,13 @@ export function UsersTable({ users, plans, portals }: UsersTableProps) {
         onOpenChange={setMembershipDialogOpen}
         user={selectedUser}
         plans={plans}
+      />
+
+      <PortalAccessDialog
+        open={portalAccessDialogOpen}
+        onOpenChange={setPortalAccessDialogOpen}
+        user={selectedUser}
+        portals={portals}
       />
     </>
   )

@@ -50,7 +50,7 @@ export function DashboardHeader({ profile }: DashboardHeaderProps) {
           <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary">
             <Building2 className="h-4 w-4 text-primary-foreground" />
           </div>
-          <span className="font-semibold hidden sm:inline-block">Business Portal</span>
+          <span className="font-semibold hidden sm:inline-block">Portal Empresarial</span>
         </Link>
 
         <div className="flex items-center gap-4">
@@ -58,7 +58,7 @@ export function DashboardHeader({ profile }: DashboardHeaderProps) {
             <Button variant="outline" size="sm" asChild className="hidden sm:flex">
               <Link href="/admin">
                 <Settings className="mr-2 h-4 w-4" />
-                Admin Panel
+                Panel Admin
               </Link>
             </Button>
           )}
@@ -76,7 +76,7 @@ export function DashboardHeader({ profile }: DashboardHeaderProps) {
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{profile.full_name || "User"}</p>
+                  <p className="text-sm font-medium leading-none">{profile.full_name || "Usuario"}</p>
                   <p className="text-xs leading-none text-muted-foreground">
                     {profile.email}
                   </p>
@@ -87,13 +87,13 @@ export function DashboardHeader({ profile }: DashboardHeaderProps) {
                 <DropdownMenuItem asChild className="sm:hidden">
                   <Link href="/admin">
                     <Settings className="mr-2 h-4 w-4" />
-                    Admin Panel
+                    Panel Admin
                   </Link>
                 </DropdownMenuItem>
               )}
               <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
-                Sign out
+                Cerrar Sesión
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

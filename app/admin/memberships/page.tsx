@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { format, isPast } from "date-fns"
+import { es } from "date-fns/locale"
 import {
   Table,
   TableBody,
@@ -39,20 +40,20 @@ export default async function MembershipsPage() {
 
   const getMembershipStatus = (membership: any) => {
     if (!membership.is_active) {
-      return { label: "Inactive", variant: "secondary" as const }
+      return { label: "Inactiva", variant: "secondary" as const }
     }
     if (isPast(new Date(membership.end_date))) {
-      return { label: "Expired", variant: "destructive" as const }
+      return { label: "Expirada", variant: "destructive" as const }
     }
-    return { label: "Active", variant: "success" as const }
+    return { label: "Activa", variant: "success" as const }
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Memberships</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Membresías</h1>
         <p className="text-muted-foreground">
-          View and manage all membership subscriptions
+          Ver y gestionar todas las suscripciones de membresía
         </p>
       </div>
 
@@ -66,12 +67,12 @@ export default async function MembershipsPage() {
             <Card key={plan.id}>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium">{plan.name}</CardTitle>
-                <CardDescription>{plan.duration_days} days</CardDescription>
+                <CardDescription>{plan.duration_days} días</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{activeMemberships}</div>
                 <p className="text-xs text-muted-foreground">
-                  active subscriptions
+                  suscripciones activas
                 </p>
               </CardContent>
             </Card>
@@ -81,18 +82,18 @@ export default async function MembershipsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>All Memberships</CardTitle>
-          <CardDescription>Complete list of membership records</CardDescription>
+          <CardTitle>Todas las Membresías</CardTitle>
+          <CardDescription>Lista completa de registros de membresía</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>User</TableHead>
+                <TableHead>Usuario</TableHead>
                 <TableHead>Plan</TableHead>
-                <TableHead>Start Date</TableHead>
-                <TableHead>End Date</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Fecha de Inicio</TableHead>
+                <TableHead>Fecha de Fin</TableHead>
+                <TableHead>Estado</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -103,7 +104,7 @@ export default async function MembershipsPage() {
                     <TableCell>
                       <div>
                         <p className="font-medium">
-                          {membership.profiles?.full_name || "No name"}
+                          {membership.profiles?.full_name || "Sin nombre"}
                         </p>
                         <p className="text-sm text-muted-foreground">
                           {membership.profiles?.email}
@@ -119,10 +120,10 @@ export default async function MembershipsPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {format(new Date(membership.start_date), "MMM d, yyyy")}
+                      {format(new Date(membership.start_date), "d MMM, yyyy", { locale: es })}
                     </TableCell>
                     <TableCell>
-                      {format(new Date(membership.end_date), "MMM d, yyyy")}
+                      {format(new Date(membership.end_date), "d MMM, yyyy", { locale: es })}
                     </TableCell>
                     <TableCell>
                       <Badge variant={status.variant}>{status.label}</Badge>
@@ -133,7 +134,7 @@ export default async function MembershipsPage() {
               {(!memberships || memberships.length === 0) && (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                    No memberships found
+                    No se encontraron membresías
                   </TableCell>
                 </TableRow>
               )}
