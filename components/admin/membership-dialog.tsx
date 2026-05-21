@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import type { Profile, MembershipPlan, Membership } from "@/lib/types"
+import type { Profile, MembershipPlan, Membership, MembershipStatus } from "@/lib/types"
 import { assignMembership } from "@/app/admin/actions"
 import { Loader2 } from "lucide-react"
 
@@ -67,7 +67,7 @@ export function MembershipDialog({
     setLoading(false)
   }
 
-  const activeMembership = user?.memberships?.find((m) => m.is_active)
+  const activeMembership = user?.memberships?.find((m) => m.status === "active")
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

@@ -4,6 +4,14 @@ import { UsersTable } from "@/components/admin/users-table"
 export default async function UsersPage() {
   const supabase = await createClient()
 
+  // Obtener el rol del usuario actual
+  const { data: { user } } = await supabase.auth.getUser()
+  const { data: currentUserProfile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user?.id)
+    .single()
+
   const { data: users } = await supabase
     .from("profiles")
     .select(`
@@ -13,7 +21,7 @@ export default async function UsersPage() {
         plan_id,
         start_date,
         end_date,
-        is_active,
+        status,
         membership_plans (
           id,
           name,
@@ -26,6 +34,7 @@ export default async function UsersPage() {
   const { data: plans } = await supabase
     .from("membership_plans")
     .select("*")
+    .eq("is_active", true)
     .order("duration_days", { ascending: true })
 
   const { data: portals } = await supabase
@@ -47,6 +56,7 @@ export default async function UsersPage() {
         users={users || []} 
         plans={plans || []} 
         portals={portals || []}
+        currentUserRole={currentUserProfile?.role || "user"}
       />
     </div>
   )

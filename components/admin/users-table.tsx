@@ -22,15 +22,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, Check, X, Trash2, CreditCard, UserCog } from "lucide-react"
-import type { Profile, MembershipPlan, Portal, Membership } from "@/lib/types"
+import { MoreHorizontal, Check, X, Trash2, CreditCard, Grid3X3, Shield } from "lucide-react"
+import type { Profile, MembershipPlan, Portal, Membership, MembershipStatus } from "@/lib/types"
 import {
   approveUser,
   disapproveUser,
   toggleUserActive,
   deleteUser,
+  updateUserRole,
 } from "@/app/admin/actions"
 import { MembershipDialog } from "./membership-dialog"
+import { PortalAccessDialog } from "./portal-access-dialog"
 
 interface UserWithMembership extends Profile {
   memberships?: (Membership & {
@@ -42,11 +44,13 @@ interface UsersTableProps {
   users: UserWithMembership[]
   plans: MembershipPlan[]
   portals: Portal[]
+  currentUserRole: string
 }
 
-export function UsersTable({ users, plans, portals }: UsersTableProps) {
+export function UsersTable({ users, plans, portals, currentUserRole }: UsersTableProps) {
   const [selectedUser, setSelectedUser] = useState<UserWithMembership | null>(null)
   const [membershipDialogOpen, setMembershipDialogOpen] = useState(false)
+  const [portalAccessDialogOpen, setPortalAccessDialogOpen] = useState(false)
   const [loading, setLoading] = useState<string | null>(null)
 
   const handleApprove = async (userId: string) => {
@@ -92,10 +96,23 @@ export function UsersTable({ users, plans, portals }: UsersTableProps) {
     setLoading(null)
   }
 
+  const handleRoleChange = async (userId: string, newRole: "user" | "admin" | "superadmin") => {
+    if (!confirm(`¿Estás seguro de que deseas cambiar el rol a ${newRole}?`)) {
+      return
+    }
+    setLoading(userId)
+    try {
+      await updateUserRole(userId, newRole)
+    } catch (error) {
+      console.error("Error al cambiar rol:", error)
+    }
+    setLoading(null)
+  }
+
   const getActiveMembership = (user: UserWithMembership) => {
     if (!user.memberships || user.memberships.length === 0) return null
     const active = user.memberships.find(
-      (m) => m.is_active && !isPast(new Date(m.end_date))
+      (m) => m.status === "active" && !isPast(new Date(m.end_date))
     )
     return active || null
   }
@@ -115,6 +132,28 @@ export function UsersTable({ users, plans, portals }: UsersTableProps) {
     return { status: "active", label: `${daysRemaining}d restantes`, variant: "success" as const }
   }
 
+  const getRoleBadgeVariant = (role: string) => {
+    switch (role) {
+      case "superadmin":
+        return "default"
+      case "admin":
+        return "secondary"
+      default:
+        return "outline"
+    }
+  }
+
+  const getRoleLabel = (role: string) => {
+    switch (role) {
+      case "superadmin":
+        return "Super Admin"
+      case "admin":
+        return "Admin"
+      default:
+        return "Usuario"
+    }
+  }
+
   return (
     <>
       <div className="rounded-md border bg-card">
@@ -125,7 +164,7 @@ export function UsersTable({ users, plans, portals }: UsersTableProps) {
               <TableHead>Rol</TableHead>
               <TableHead>Aprobación</TableHead>
               <TableHead>Membresía</TableHead>
-              <TableHead>Fecha de Expiración</TableHead>
+              <TableHead>Expiración</TableHead>
               <TableHead>Activo</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
@@ -144,16 +183,8 @@ export function UsersTable({ users, plans, portals }: UsersTableProps) {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge
-                      variant={
-                        user.role === "superadmin"
-                          ? "default"
-                          : user.role === "admin"
-                          ? "secondary"
-                          : "outline"
-                      }
-                    >
-                      {user.role === "superadmin" ? "Super Admin" : user.role === "admin" ? "Admin" : "Usuario"}
+                    <Badge variant={getRoleBadgeVariant(user.role)}>
+                      {getRoleLabel(user.role)}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -200,6 +231,8 @@ export function UsersTable({ users, plans, portals }: UsersTableProps) {
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                         <DropdownMenuSeparator />
+                        
+                        {/* Aprobar/Desaprobar */}
                         {user.is_approved ? (
                           <DropdownMenuItem onClick={() => handleDisapprove(user.id)}>
                             <X className="mr-2 h-4 w-4" />
@@ -211,6 +244,8 @@ export function UsersTable({ users, plans, portals }: UsersTableProps) {
                             Aprobar
                           </DropdownMenuItem>
                         )}
+                        
+                        {/* Gestionar Membresía */}
                         <DropdownMenuItem
                           onClick={() => {
                             setSelectedUser(user)
@@ -220,6 +255,46 @@ export function UsersTable({ users, plans, portals }: UsersTableProps) {
                           <CreditCard className="mr-2 h-4 w-4" />
                           Gestionar Membresía
                         </DropdownMenuItem>
+                        
+                        {/* Gestionar Acceso a Portales */}
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setSelectedUser(user)
+                            setPortalAccessDialogOpen(true)
+                          }}
+                        >
+                          <Grid3X3 className="mr-2 h-4 w-4" />
+                          Acceso a Portales
+                        </DropdownMenuItem>
+                        
+                        {/* Cambiar Rol (solo superadmin) */}
+                        {currentUserRole === "superadmin" && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuLabel className="text-xs text-muted-foreground">
+                              Cambiar Rol
+                            </DropdownMenuLabel>
+                            {user.role !== "user" && (
+                              <DropdownMenuItem onClick={() => handleRoleChange(user.id, "user")}>
+                                <Shield className="mr-2 h-4 w-4" />
+                                Hacer Usuario
+                              </DropdownMenuItem>
+                            )}
+                            {user.role !== "admin" && (
+                              <DropdownMenuItem onClick={() => handleRoleChange(user.id, "admin")}>
+                                <Shield className="mr-2 h-4 w-4" />
+                                Hacer Admin
+                              </DropdownMenuItem>
+                            )}
+                            {user.role !== "superadmin" && (
+                              <DropdownMenuItem onClick={() => handleRoleChange(user.id, "superadmin")}>
+                                <Shield className="mr-2 h-4 w-4" />
+                                Hacer Super Admin
+                              </DropdownMenuItem>
+                            )}
+                          </>
+                        )}
+                        
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           onClick={() => handleDelete(user.id)}
@@ -250,6 +325,13 @@ export function UsersTable({ users, plans, portals }: UsersTableProps) {
         onOpenChange={setMembershipDialogOpen}
         user={selectedUser}
         plans={plans}
+      />
+
+      <PortalAccessDialog
+        open={portalAccessDialogOpen}
+        onOpenChange={setPortalAccessDialogOpen}
+        user={selectedUser}
+        portals={portals}
       />
     </>
   )
