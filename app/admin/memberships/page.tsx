@@ -14,7 +14,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 export default async function MembershipsPage() {
 const supabase = await createClient()
-if (!supabase) throw new Error("No se pudo conectar a la base de datos")
+  if (!supabase) throw new Error("No se pudo conectar a la base de datos")
+
+  // Llamada limpia a la tabla de membresías
+  const { data: memberships } = await supabase
+    .from("memberships")
+    .select(`
+      *,
+      profiles:user_id (
+        full_name,
+        email
+      )
+    `)
+    .order("created_at", { ascending: false })
 
 // Obtener conteos
 const { count: totalUsers } = await supabase
