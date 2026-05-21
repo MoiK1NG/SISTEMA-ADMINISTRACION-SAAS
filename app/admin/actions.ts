@@ -6,9 +6,10 @@ import type { MembershipStatus } from "@/lib/types"
 
 // Helper para verificar rol de admin
 async function verifyAdmin() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error("No autorizado")
+   const supabase = await createClient()
+   if (!supabase) throw new Error("No se pudo conectar a la base de datos")
+
+   const { data: { user } } = await supabase.auth.getUser()
   
   const { data: adminProfile } = await supabase
     .from("profiles")
