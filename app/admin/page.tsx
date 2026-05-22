@@ -3,8 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Users, CreditCard, UserCheck, Clock } from "lucide-react"
 
 export default async function AdminDashboardPage() {
-  const supabase = await createClient()
-
+if (!supabase) throw new Error("No se pudo conectar a la base de datos de Supabase")
+  
   // Verificación de seguridad inicial para asegurarle a TypeScript que no es nulo
   if (!supabase) {
     throw new Error("No se pudo conectar a la base de datos de Supabase.")
