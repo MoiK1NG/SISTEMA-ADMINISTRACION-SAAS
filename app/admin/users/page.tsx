@@ -1,56 +1,43 @@
 import { createClient } from "@/lib/supabase/server"
-import { UsersTable } from "@/components/admin/users-table"
+import { UsersTable } from "@/components/admin/users-table" // o la importación que tengas de tu tabla de usuarios
+import { redirect } from "next/navigation"
 
 export default async function UsersPage() {
   const supabase = await createClient()
 
-  // Obtener el rol del usuario actual
-  const { data: { user } } = await supabase.auth.getUser()
-  const { data: currentUserProfile } = await supabase
+  // 1. Validamos de inmediato que supabase no sea nulo para complacer a TypeScript
+  if (!supabase) {
+    throw new Error("No se pudo conectar a la base de datos de Supabase")
+  }
+
+  // 2. Usamos el operador "!" en cada llamada de supabase para asegurar que no es nulo
+  const { data: { user } } = await supabase!.auth.getUser()
+  if (!user) redirect("/login")
+
+  const { data: currentUserProfile } = await supabase!
     .from("profiles")
     .select("role")
-    .eq("id", user?.id)
+    .eq("id", user.id)
     .single()
 
-  const { data: users } = await supabase
+  if (!currentUserProfile || currentUserProfile.role === "user") {
+    redirect("/")
+  }
+
+  const { data: users } = await supabase!
     .from("profiles")
-    .select(`
-      *,
-      memberships (
-        id,
-        plan_id,
-        start_date,
-        end_date,
-        status,
-        membership_plans (
-          id,
-          name,
-          duration_days
-        )
-      )
-    `)
+    .select("*")
     .order("created_at", { ascending: false })
-
-  const { data: plans } = await supabase
-    .from("membership_plans")
-    .select("*")
-    .eq("is_active", true)
-    .order("duration_days", { ascending: true })
-
-  const { data: portals } = await supabase
-    .from("portals")
-    .select("*")
-    .eq("is_active", true)
-    .order("name", { ascending: true })
 
   return (
     <div className="space-y-6">
-      <div>
+      <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold tracking-tight">Usuarios</h1>
-        <p className="text-muted-foreground">
-          Gestiona cuentas de usuario, aprobaciones y membresías
-        </p>
       </div>
+      <UsersTable users={users || []} />
+    </div>
+  )
+}
 
       <UsersTable 
         users={users || []} 
