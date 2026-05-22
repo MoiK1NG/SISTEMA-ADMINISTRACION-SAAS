@@ -5,23 +5,28 @@ import { Users, CreditCard, UserCheck, Clock } from "lucide-react"
 export default async function AdminDashboardPage() {
   const supabase = await createClient()
 
-  // Obtener conteos
- const { count: totalUsers } = await supabase!
-  .from("profiles")
-  .select("*", { count: "exact", head: true })
+  // Verificación de seguridad inicial para asegurarle a TypeScript que no es nulo
+  if (!supabase) {
+    throw new Error("No se pudo conectar a la base de datos de Supabase.")
+  }
 
-  const { count: pendingUsers } = await supabase
+  // Obtener conteos usando el operador '!' para aserción de no-nulo
+  const { count: totalUsers } = await supabase!
+    .from("profiles")
+    .select("*", { count: "exact", head: true })
+
+  const { count: pendingUsers } = await supabase!
     .from("profiles")
     .select("*", { count: "exact", head: true })
     .eq("is_approved", false)
 
-  const { count: activeMembers } = await supabase
+  const { count: activeMembers } = await supabase!
     .from("memberships")
     .select("*", { count: "exact", head: true })
     .eq("is_active", true)
     .gte("end_date", new Date().toISOString().split("T")[0])
 
-  const { data: recentUsers } = await supabase
+  const { data: recentUsers } = await supabase!
     .from("profiles")
     .select("*")
     .order("created_at", { ascending: false })
