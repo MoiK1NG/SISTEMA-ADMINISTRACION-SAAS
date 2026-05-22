@@ -1,16 +1,16 @@
 import { createClient } from "@/lib/supabase/server"
-import { UsersTable } from "@/components/admin/users-table" // o la importación que tengas de tu tabla de usuarios
+import { UsersTable } from "@/components/admin/users-table"
 import { redirect } from "next/navigation"
 
 export default async function UsersPage() {
   const supabase = await createClient()
 
-  // 1. Validamos de inmediato que supabase no sea nulo para complacer a TypeScript
+  // 1. Validamos de inmediato que el cliente de Supabase no sea nulo para complacer a TypeScript
   if (!supabase) {
-    throw new Error("No se pudo conectar a la base de datos de Supabase")
+    throw new Error("No se pudo conectar a la base de datos de Supabase.")
   }
 
-  // 2. Usamos el operador "!" en cada llamada de supabase para asegurar que no es nulo
+  // 2. Comprobamos la autenticación y permisos de forma segura usando el operador "!"
   const { data: { user } } = await supabase!.auth.getUser()
   if (!user) redirect("/login")
 
@@ -24,26 +24,36 @@ export default async function UsersPage() {
     redirect("/")
   }
 
+  // 3. Obtenemos los datos necesarios para la tabla usando aserción de no-nulo
   const { data: users } = await supabase!
     .from("profiles")
     .select("*")
     .order("created_at", { ascending: false })
 
+  const { data: plans } = await supabase!
+    .from("plans")
+    .select("*")
+
+  const { data: portals } = await supabase!
+    .from("portals")
+    .select("*")
+
+  // 4. Retornamos todo el bloque visual agrupado correctamente dentro de la función principal
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold tracking-tight">Usuarios</h1>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Usuarios</h1>
+          <p className="text-muted-foreground">
+            Administra los usuarios de tu plataforma, sus roles, aprobaciones y accesos a portales.
+          </p>
+        </div>
       </div>
-      <UsersTable users={users || []} />
-    </div>
-  )
-}
 
       <UsersTable 
         users={users || []} 
         plans={plans || []} 
-        portals={portals || []}
-        currentUserRole={currentUserProfile?.role || "user"}
+        portals={portals || []} 
       />
     </div>
   )
