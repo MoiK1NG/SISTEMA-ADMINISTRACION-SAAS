@@ -6,9 +6,9 @@ export default async function AdminDashboardPage() {
   const supabase = await createClient()
 
   // Obtener conteos
-  const { count: totalUsers } = await supabase
-    .from("profiles")
-    .select("*", { count: "exact", head: true })
+ const { count: totalUsers } = await supabase!
+  .from("profiles")
+  .select("*", { count: "exact", head: true })
 
   const { count: pendingUsers } = await supabase
     .from("profiles")
