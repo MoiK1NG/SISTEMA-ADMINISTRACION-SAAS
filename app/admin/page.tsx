@@ -3,14 +3,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Users, CreditCard, UserCheck, Clock } from "lucide-react"
 
 export default async function AdminDashboardPage() {
-if (!supabase) throw new Error("No se pudo conectar a la base de datos de Supabase")
-  
-  // Verificación de seguridad inicial para asegurarle a TypeScript que no es nulo
+  // 1. Primero creamos el cliente de Supabase obligatoriamente
+  const supabase = await createClient()
+
+  // 2. Ahora sí comprobamos de forma segura si no se pudo conectar
   if (!supabase) {
     throw new Error("No se pudo conectar a la base de datos de Supabase.")
   }
 
-  // Obtener conteos usando el operador '!' para aserción de no-nulo
+  // 3. Obtenemos los conteos usando el operador '!' para asegurar que no es nulo
   const { count: totalUsers } = await supabase!
     .from("profiles")
     .select("*", { count: "exact", head: true })
