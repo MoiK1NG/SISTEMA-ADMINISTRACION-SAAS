@@ -2,8 +2,13 @@ import { createClient } from "@/lib/supabase/server"
   import { redirect } from "next/navigation"
 
 export default async function MembershipsPage() {
-  const supabase = await createClient()
-  if (!supabase) throw new Error("No se pudo conectar a la base de datos")
+ const supabase = await createClient()
+if (!supabase) throw new Error("No se pudo conectar a la base de datos")
+
+// Obtener conteos
+const { count: totalUsers } = await supabase
+  .from("profiles")
+  .select("*", { count: "exact", head: true })
 
   // 1. Verificar si el usuario está autenticado y es administrador
   const { data: { user } } = await supabase.auth.getUser()
