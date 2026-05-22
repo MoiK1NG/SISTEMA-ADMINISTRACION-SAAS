@@ -10,20 +10,27 @@ import { Sparkles, Shield, Clock } from "lucide-react"
 
 export default async function DashboardPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+
+  // 1. Añadimos el paracaídas de seguridad para calmar a TypeScript
+  if (!supabase) {
+    throw new Error("No se pudo conectar a la base de datos de Supabase.")
+  }
+
+  // 2. Usamos la aserción de no nulo con "supabase!" para asegurar la llamada
+  const { data: { user } } = await supabase!.auth.getUser()
 
   if (!user) {
     redirect("/login")
   }
 
-  const { data: profile } = await supabase
+  const { data: profile } = await supabase!
     .from("profiles")
     .select("*")
     .eq("id", user.id)
     .single()
 
   // Obtener membresía activa
-  const { data: memberships } = await supabase
+  const { data: memberships } = await supabase!
     .from("memberships")
     .select(`
       *,
@@ -44,7 +51,7 @@ export default async function DashboardPage() {
   const hasValidMembership = activeMembership && !isPast(new Date(activeMembership.end_date))
 
   // Obtener acceso a portales con todos los campos
-  const { data: portalAccess } = await supabase
+  const { data: portalAccess } = await supabase!
     .from("user_portal_access")
     .select(`
       id,
@@ -82,7 +89,7 @@ export default async function DashboardPage() {
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            {greeting}{profile?.full_name ? `, ${profile.full_name.split(" ")[0]}` : ""}
+            {greeting}{profile?.full_name ? `, {profile.full_name.split(" ")[0]}` : ""}
           </h1>
           <p className="text-muted-foreground">
             Aquí tienes un resumen de tu cuenta y portales disponibles
