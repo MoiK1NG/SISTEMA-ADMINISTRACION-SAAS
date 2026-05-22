@@ -54,6 +54,7 @@ export default async function UsersPage() {
         users={users || []} 
         plans={plans || []} 
         portals={portals || []} 
+        currentUserRole={currentUserProfile.role}
       />
     </div>
   )
