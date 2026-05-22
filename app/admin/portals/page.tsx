@@ -19,9 +19,6 @@ export default async function PortalsPage() {
     `)
     .order("created_at", { ascending: false })
 
-  // Aquí continúa el resto del código de tu componente...
-}
-
   return (
     <div className="space-y-6">
       <PortalsManager portals={portals || []} />
