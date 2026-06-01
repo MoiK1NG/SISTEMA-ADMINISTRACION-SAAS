@@ -7,6 +7,7 @@ import { differenceInDays, isPast } from "date-fns"
 import { MembershipCard } from "@/components/dashboard/membership-card"
 import { PortalsGrid } from "@/components/dashboard/portals-grid"
 import { AccessExpiredCard } from "@/components/dashboard/access-expired-card"
+import { PortalAccessAlert } from "@/components/dashboard/portal-access-alert"
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -74,6 +75,9 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
+      {/* Alerta cuando el middleware redirige con ?error=<code> */}
+      <PortalAccessAlert />
+
       <div>
         <h1 className="text-3xl font-bold tracking-tight">
           Welcome back{profile?.full_name ? `, ${profile.full_name.split(" ")[0]}` : ""}

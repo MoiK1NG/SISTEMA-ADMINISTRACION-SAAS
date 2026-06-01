@@ -4,88 +4,185 @@ import { NextResponse, type NextRequest } from 'next/server'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
+// ---------------------------------------------------------------------------
+// Rutas que nunca requieren autenticación
+// ---------------------------------------------------------------------------
+const PUBLIC_ROUTES = ['/', '/login', '/signup', '/auth/callback', '/auth/error']
+
+// Regex que captura /portal/<slug>  →  grupo 1 = slug
+const PORTAL_ROUTE_RE = /^\/portal\/([^/]+)/
+
+// ---------------------------------------------------------------------------
+// Códigos de error normalizados para query-param ?error=<code>
+// El componente cliente los traduce a mensajes legibles.
+// ---------------------------------------------------------------------------
+export type PortalErrorCode =
+  | 'no_access'       // sin fila en user_portal_access
+  | 'membership_expired'  // membresía expirada o inexistente
+  | 'portal_inactive' // el portal está desactivado por el admin
+  | 'unauthorized'    // sin sesión válida
+
+// ---------------------------------------------------------------------------
+// Helper: construye NextResponse de redirección con parámetro de error
+// ---------------------------------------------------------------------------
+function redirectWithError(
+  request: NextRequest,
+  destination: string,
+  error: PortalErrorCode,
+): NextResponse {
+  const url = request.nextUrl.clone()
+  url.pathname = destination
+  url.searchParams.set('error', error)
+  return NextResponse.redirect(url)
+}
+
+// ---------------------------------------------------------------------------
+// updateSession
+// Encadena tres capas de protección en el middleware:
+//   1. Sesión Supabase (refresco de tokens via @supabase/ssr)
+//   2. Estado del perfil (aprobado, activo, rol)
+//   3. Acceso a portales (slug → portal_id → user_portal_access + membership)
+// ---------------------------------------------------------------------------
 export async function updateSession(request: NextRequest) {
-  // If Supabase is not configured, allow access to all pages
+  // Sin Supabase configurado → acceso libre (útil en CI/CD sin env vars)
   if (!supabaseUrl || !supabaseAnonKey) {
     return NextResponse.next({ request })
   }
 
-  let supabaseResponse = NextResponse.next({
-    request,
-  })
+  // --- Inicializar cliente SSR con gestión de cookies ---
+  let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
-      getAll() {
-        return request.cookies.getAll()
-      },
+      getAll: () => request.cookies.getAll(),
       setAll(cookiesToSet) {
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-        supabaseResponse = NextResponse.next({
-          request,
-        })
+        supabaseResponse = NextResponse.next({ request })
         cookiesToSet.forEach(({ name, value, options }) =>
-          supabaseResponse.cookies.set(name, value, options)
+          supabaseResponse.cookies.set(name, value, options),
         )
       },
     },
   })
 
+  // getUser() valida el JWT con Supabase Auth (no usa la caché local)
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
-  const pathname = request.nextUrl.pathname
+  const { pathname } = request.nextUrl
 
-  // Public routes that don't require authentication
-  const publicRoutes = ['/', '/login', '/signup', '/auth/callback', '/auth/error']
-  const isPublicRoute = publicRoutes.some(route => pathname === route || (route !== '/' && pathname.startsWith(route)))
+  const isPublicRoute = PUBLIC_ROUTES.some(
+    (r) => pathname === r || (r !== '/' && pathname.startsWith(r)),
+  )
 
-  // If user is not authenticated and trying to access protected route
-  if (!user && !isPublicRoute) {
+  // =========================================================================
+  // CAPA 1 – Sin sesión
+  // =========================================================================
+  if (!user) {
+    if (isPublicRoute) return supabaseResponse
+
+    // Ruta de portal sin sesión → error específico
+    if (PORTAL_ROUTE_RE.test(pathname)) {
+      return redirectWithError(request, '/dashboard', 'unauthorized')
+    }
+
+    // Cualquier otra ruta protegida → login
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
-  // If user is authenticated, check their profile status
-  if (user && !isPublicRoute) {
+  // =========================================================================
+  // CAPA 2 – Perfil del usuario (aprobado, activo, rol)
+  // Se omite en rutas públicas para no hacer una query innecesaria.
+  // =========================================================================
+  if (!isPublicRoute) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('is_approved, is_active, role')
       .eq('id', user.id)
       .single()
 
-    // If user is not approved and trying to access anything other than /pending
     if (profile && !profile.is_approved && pathname !== '/pending') {
       const url = request.nextUrl.clone()
       url.pathname = '/pending'
       return NextResponse.redirect(url)
     }
 
-    // If user is approved but inactive
     if (profile && profile.is_approved && !profile.is_active && pathname !== '/suspended') {
       const url = request.nextUrl.clone()
       url.pathname = '/suspended'
       return NextResponse.redirect(url)
     }
 
-    // If user is approved and trying to access /pending, redirect to dashboard
     if (profile && profile.is_approved && profile.is_active && pathname === '/pending') {
       const url = request.nextUrl.clone()
       url.pathname = '/dashboard'
       return NextResponse.redirect(url)
     }
 
-    // Admin route protection
     if (pathname.startsWith('/admin') && profile?.role === 'user') {
       const url = request.nextUrl.clone()
       url.pathname = '/dashboard'
       return NextResponse.redirect(url)
     }
+
+    // =======================================================================
+    // CAPA 3 – Acceso a portales  /portal/<slug>
+    // =======================================================================
+    const portalMatch = pathname.match(PORTAL_ROUTE_RE)
+
+    if (portalMatch) {
+      const slug = portalMatch[1]
+
+      // 3a. Obtener el portal por slug y verificar que esté activo
+      const { data: portal } = await supabase
+        .from('portals')
+        .select('id, is_active')
+        .eq('slug', slug)
+        .single()
+
+      if (!portal || !portal.is_active) {
+        return redirectWithError(request, '/dashboard', 'portal_inactive')
+      }
+
+      // 3b. Verificar que el usuario tenga la fila en user_portal_access
+      const { data: portalAccess } = await supabase
+        .from('user_portal_access')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('portal_id', portal.id)
+        .maybeSingle()
+
+      if (!portalAccess) {
+        return redirectWithError(request, '/dashboard', 'no_access')
+      }
+
+      // 3c. Verificar membresía activa y no expirada
+      //     Una sola query: is_active + rango de fechas en el servidor.
+      const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD
+
+      const { data: membership } = await supabase
+        .from('memberships')
+        .select('id, end_date')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .lte('start_date', today)  // started on or before today
+        .gte('end_date', today)    // ends on or after today
+        .maybeSingle()
+
+      if (!membership) {
+        return redirectWithError(request, '/dashboard', 'membership_expired')
+      }
+
+      // ✅ Todo OK → continuar hacia la página del portal
+    }
   }
 
-  // If user is authenticated and on login page, redirect appropriately
+  // =========================================================================
+  // Usuario autenticado en rutas públicas → redirigir a su destino correcto
+  // =========================================================================
   if (user && (pathname === '/login' || pathname === '/signup' || pathname === '/')) {
     const { data: profile } = await supabase
       .from('profiles')
