@@ -50,7 +50,7 @@ export function AdminHeader({ profile }: AdminHeaderProps) {
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary">
               <Building2 className="h-4 w-4 text-primary-foreground" />
             </div>
-            <span className="font-semibold hidden sm:inline-block">Admin Panel</span>
+            <span className="font-semibold hidden sm:inline-block">Panel de Administración</span>
           </Link>
           <Badge variant="secondary" className="hidden sm:inline-flex">
             {profile.role === "superadmin" ? "Super Admin" : "Admin"}
@@ -61,7 +61,7 @@ export function AdminHeader({ profile }: AdminHeaderProps) {
           <Button variant="ghost" size="sm" asChild className="hidden sm:flex">
             <Link href="/dashboard">
               <User className="mr-2 h-4 w-4" />
-              User Dashboard
+              Panel de Usuario
             </Link>
           </Button>
 
@@ -78,7 +78,7 @@ export function AdminHeader({ profile }: AdminHeaderProps) {
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{profile.full_name || "User"}</p>
+                  <p className="text-sm font-medium leading-none">{profile.full_name || "Usuario"}</p>
                   <p className="text-xs leading-none text-muted-foreground">
                     {profile.email}
                   </p>
@@ -88,12 +88,12 @@ export function AdminHeader({ profile }: AdminHeaderProps) {
               <DropdownMenuItem asChild className="lg:hidden">
                 <Link href="/dashboard">
                   <User className="mr-2 h-4 w-4" />
-                  User Dashboard
+                  Panel de Usuario
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
-                Sign out
+                Cerrar Sesión
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

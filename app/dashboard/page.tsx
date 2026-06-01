@@ -1,6 +1,3 @@
-
-
-
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { differenceInDays, isPast } from "date-fns"
@@ -8,6 +5,9 @@ import { MembershipCard } from "@/components/dashboard/membership-card"
 import { PortalsGrid } from "@/components/dashboard/portals-grid"
 import { AccessExpiredCard } from "@/components/dashboard/access-expired-card"
 import { PortalAccessAlert } from "@/components/dashboard/portal-access-alert"
+import { Card, CardContent } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Sparkles, Shield, Clock } from "lucide-react"
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -23,7 +23,7 @@ export default async function DashboardPage() {
     .eq("id", user.id)
     .single()
 
-  // Get active membership
+  // Obtener membresía activa
   const { data: memberships } = await supabase
     .from("memberships")
     .select(`
@@ -31,6 +31,7 @@ export default async function DashboardPage() {
       membership_plans (
         id,
         name,
+        description,
         duration_days,
         price
       )
@@ -43,7 +44,7 @@ export default async function DashboardPage() {
   const activeMembership = memberships?.[0]
   const hasValidMembership = activeMembership && !isPast(new Date(activeMembership.end_date))
 
-  // Get portal access
+  // Obtener acceso a portales
   const { data: portalAccess } = await supabase
     .from("user_portal_access")
     .select(`
@@ -59,46 +60,122 @@ export default async function DashboardPage() {
     `)
     .eq("user_id", user.id)
 
-  // CORRECCIÓN DEFINITIVA: 
-  // Extraemos los portales y forzamos a que el sistema los acepte pase lo que pase
-  const rawPortals = (portalAccess || [])
+  // Extraer los portales activos
+  const accessiblePortals = (portalAccess || [])
     .map((pa: any) => pa.portals)
-    .flat()
-    .filter((p: any) => p !== null && p !== undefined && p.is_active);
+    .filter((p: any) => p !== null && p !== undefined && p.is_active)
 
-  const accessiblePortals = rawPortals as any[];
-
-  // Calculate days remaining
+  // Calcular días restantes
   const daysRemaining = activeMembership
     ? differenceInDays(new Date(activeMembership.end_date), new Date())
     : 0
+
+  // Saludo según la hora
+  const hour = new Date().getHours()
+  const greeting = hour < 12 ? "Buenos días" : hour < 18 ? "Buenas tardes" : "Buenas noches"
 
   return (
     <div className="space-y-8">
       {/* Alerta cuando el middleware redirige con ?error=<code> */}
       <PortalAccessAlert />
 
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">
-          Welcome back{profile?.full_name ? `, ${profile.full_name.split(" ")[0]}` : ""}
-        </h1>
-        <p className="text-muted-foreground">
-          {"Here's an overview of your account and available portals"}
-        </p>
+      {/* Header con saludo */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">
+            {greeting}{profile?.full_name ? `, ${profile.full_name.split(" ")[0]}` : ""}
+          </h1>
+          <p className="text-muted-foreground">
+            Aquí tienes un resumen de tu cuenta y portales disponibles
+          </p>
+        </div>
+
+        {hasValidMembership && (
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="gap-1.5 py-1.5 px-3">
+              <Shield className="h-3.5 w-3.5" />
+              {profile?.role === "superadmin"
+                ? "Super Admin"
+                : profile?.role === "admin"
+                ? "Admin"
+                : "Usuario"}
+            </Badge>
+          </div>
+        )}
       </div>
 
       {!hasValidMembership ? (
         <AccessExpiredCard />
       ) : (
         <>
+          {/* Estadísticas rápidas */}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <Card className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border-primary/20">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/20">
+                    <Sparkles className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{accessiblePortals.length}</p>
+                    <p className="text-sm text-muted-foreground">Portales Activos</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-500/20">
+                    <Clock className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">
+                      {daysRemaining > 0 ? daysRemaining : 0}
+                    </p>
+                    <p className="text-sm text-muted-foreground">Días Restantes</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="sm:col-span-2">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Plan Actual</p>
+                    <p className="text-xl font-semibold">
+                      {activeMembership?.membership_plans?.name || "Sin Plan"}
+                    </p>
+                  </div>
+                  <Badge
+                    variant={daysRemaining > 7 ? "success" : daysRemaining > 0 ? "warning" : "destructive"}
+                    className="text-sm"
+                  >
+                    {daysRemaining > 7 ? "Activo" : daysRemaining > 0 ? "Por Expirar" : "Expirado"}
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Tarjeta de membresía */}
           <MembershipCard
             membership={activeMembership}
             daysRemaining={daysRemaining}
           />
 
+          {/* Grid de portales */}
           <div>
-            <h2 className="text-xl font-semibold mb-4">Your Portals</h2>
-            {/* Usamos el casting 'as any' aquí también para asegurar que no se detenga el build */}
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-xl font-semibold">Tus Portales</h2>
+                <p className="text-sm text-muted-foreground">
+                  Accede a tus herramientas empresariales
+                </p>
+              </div>
+            </div>
             <PortalsGrid portals={(accessiblePortals || []) as any} />
           </div>
         </>

@@ -11,14 +11,14 @@ export default function AuthErrorPage() {
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
             <AlertCircle className="h-6 w-6 text-destructive" />
           </div>
-          <CardTitle>Authentication Error</CardTitle>
+          <CardTitle>Error de Autenticación</CardTitle>
           <CardDescription>
-            There was a problem signing you in. Please try again.
+            Hubo un problema al iniciar sesión. Por favor intenta de nuevo.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex justify-center">
           <Button asChild>
-            <Link href="/login">Back to Login</Link>
+            <Link href="/login">Volver a Iniciar Sesión</Link>
           </Button>
         </CardContent>
       </Card>

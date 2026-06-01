@@ -7,22 +7,22 @@ import { Users, LayoutDashboard, CreditCard, Grid3X3 } from "lucide-react"
 
 const navItems = [
   {
-    title: "Dashboard",
+    title: "Panel de Control",
     href: "/admin",
     icon: LayoutDashboard,
   },
   {
-    title: "Users",
+    title: "Usuarios",
     href: "/admin/users",
     icon: Users,
   },
   {
-    title: "Memberships",
+    title: "Membresías",
     href: "/admin/memberships",
     icon: CreditCard,
   },
   {
-    title: "Portals",
+    title: "Portales",
     href: "/admin/portals",
     icon: Grid3X3,
   },

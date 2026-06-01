@@ -6,8 +6,8 @@ import "./globals.css"
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
 
 export const metadata: Metadata = {
-  title: "Business Portal - SaaS Admin",
-  description: "Multi-portal entrepreneurship platform for managing users and memberships",
+  title: "Portal Empresarial - Administración SaaS",
+  description: "Plataforma multi-portal para emprendedores para gestionar usuarios y membresías",
 }
 
 export const viewport: Viewport = {

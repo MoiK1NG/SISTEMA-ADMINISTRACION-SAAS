@@ -2,109 +2,99 @@
 
 import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
+import type { MembershipStatus } from "@/lib/types"
 
-export async function approveUser(userId: string) {
+// Helper para verificar rol de admin
+async function verifyAdmin() {
   const supabase = await createClient()
+  if (!supabase) throw new Error("No se pudo conectar a la base de datos")
   
-  // Verify admin role
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error("Unauthorized")
+  if (!user) throw new Error("No autorizado")
   
   const { data: adminProfile } = await supabase
     .from("profiles")
     .select("role")
-    .eq("id", user.id)
+    .eq("id", (user as any).id)
     .single()
   
   if (!adminProfile || adminProfile.role === "user") {
-    throw new Error("Unauthorized")
+    throw new Error("No tienes permisos de administrador")
   }
+  
+  return { supabase, user, adminProfile: adminProfile as any }
+}
+
+// Helper para verificar superadmin
+async function verifySuperAdmin() {
+  const { supabase, user, adminProfile } = await verifyAdmin()
+  
+  if (!adminProfile || (adminProfile as any).role !== "superadmin") {
+    throw new Error("No autorizado - Solo superadmins pueden realizar esta acción")
+  }
+  
+  return { supabase, user }
+}
+// ==========================================
+// ACCIONES DE USUARIOS
+// ==========================================
+
+export async function approveUser(userId: string) {
+  const { supabase } = await verifyAdmin()
 
   const { error } = await supabase
     .from("profiles")
-    .update({ is_approved: true, updated_at: new Date().toISOString() })
+    .update({ is_approved: true })
     .eq("id", userId)
 
   if (error) throw error
   
   revalidatePath("/admin/users")
+  revalidatePath("/admin")
   return { success: true }
 }
 
 export async function disapproveUser(userId: string) {
-  const supabase = await createClient()
-  
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error("Unauthorized")
-  
-  const { data: adminProfile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single()
-  
-  if (!adminProfile || adminProfile.role === "user") {
-    throw new Error("Unauthorized")
-  }
+  const { supabase } = await verifyAdmin()
 
   const { error } = await supabase
     .from("profiles")
-    .update({ is_approved: false, updated_at: new Date().toISOString() })
+    .update({ is_approved: false })
     .eq("id", userId)
 
   if (error) throw error
   
   revalidatePath("/admin/users")
+  revalidatePath("/admin")
   return { success: true }
 }
 
 export async function toggleUserActive(userId: string, isActive: boolean) {
-  const supabase = await createClient()
-  
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error("Unauthorized")
-  
-  const { data: adminProfile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single()
-  
-  if (!adminProfile || adminProfile.role === "user") {
-    throw new Error("Unauthorized")
-  }
+  const { supabase } = await verifyAdmin()
 
   const { error } = await supabase
     .from("profiles")
-    .update({ is_active: isActive, updated_at: new Date().toISOString() })
+    .update({ is_active: isActive })
     .eq("id", userId)
 
   if (error) throw error
   
   revalidatePath("/admin/users")
+  revalidatePath("/admin")
   return { success: true }
 }
 
 export async function updateUserRole(userId: string, role: "user" | "admin" | "superadmin") {
-  const supabase = await createClient()
-  
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error("Unauthorized")
-  
-  const { data: adminProfile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single()
-  
-  // Only superadmins can change roles
-  if (!adminProfile || adminProfile.role !== "superadmin") {
-    throw new Error("Unauthorized - Only superadmins can change roles")
+  const { supabase, user } = await verifySuperAdmin()
+
+  // Prevenir auto-degradación
+  if (userId === user.id && role !== "superadmin") {
+    throw new Error("No puedes cambiar tu propio rol de superadmin")
   }
 
   const { error } = await supabase
     .from("profiles")
-    .update({ role, updated_at: new Date().toISOString() })
+    .update({ role })
     .eq("id", userId)
 
   if (error) throw error
@@ -114,27 +104,13 @@ export async function updateUserRole(userId: string, role: "user" | "admin" | "s
 }
 
 export async function deleteUser(userId: string) {
-  const supabase = await createClient()
-  
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error("Unauthorized")
-  
-  const { data: adminProfile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single()
-  
-  if (!adminProfile || adminProfile.role === "user") {
-    throw new Error("Unauthorized")
-  }
+  const { supabase, user } = await verifyAdmin()
 
-  // Don't allow deleting yourself
+  // No permitir eliminarse a sí mismo
   if (userId === user.id) {
-    throw new Error("Cannot delete your own account")
+    throw new Error("No puedes eliminar tu propia cuenta")
   }
 
-  // Delete from profiles (will cascade to memberships etc)
   const { error } = await supabase
     .from("profiles")
     .delete()
@@ -143,87 +119,68 @@ export async function deleteUser(userId: string) {
   if (error) throw error
   
   revalidatePath("/admin/users")
+  revalidatePath("/admin")
   return { success: true }
 }
+
+// ==========================================
+// ACCIONES DE MEMBRESÍAS
+// ==========================================
 
 export async function assignMembership(
   userId: string,
   planId: string,
   startDate: string
 ) {
-  const supabase = await createClient()
-  
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error("Unauthorized")
-  
-  const { data: adminProfile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single()
-  
-  if (!adminProfile || adminProfile.role === "user") {
-    throw new Error("Unauthorized")
-  }
+  const { supabase } = await verifyAdmin()
 
-  // Get plan details for duration
+  // Obtener detalles del plan
   const { data: plan, error: planError } = await supabase
     .from("membership_plans")
     .select("duration_days")
     .eq("id", planId)
     .single()
 
-  if (planError || !plan) throw new Error("Plan not found")
+  if (planError || !plan) throw new Error("Plan no encontrado")
 
-  // Calculate end date
+  // Calcular fecha de fin
   const start = new Date(startDate)
   const end = new Date(start)
   end.setDate(end.getDate() + plan.duration_days)
 
-  // Deactivate existing memberships for this user
+  // Desactivar membresías existentes
   await supabase
     .from("memberships")
-    .update({ is_active: false, updated_at: new Date().toISOString() })
+    .update({ status: "expired" as MembershipStatus })
     .eq("user_id", userId)
+    .eq("status", "active")
 
-  // Create new membership
+  // Crear nueva membresía
   const { error } = await supabase.from("memberships").insert({
     user_id: userId,
     plan_id: planId,
     start_date: startDate,
     end_date: end.toISOString().split("T")[0],
-    is_active: true,
+    status: "active" as MembershipStatus,
   })
 
   if (error) throw error
   
   revalidatePath("/admin/users")
   revalidatePath("/admin/memberships")
+  revalidatePath("/admin")
   return { success: true }
 }
 
-export async function updateMembership(
+export async function updateMembershipStatus(
   membershipId: string,
-  isActive: boolean
+  status: MembershipStatus
 ) {
-  const supabase = await createClient()
-  
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error("Unauthorized")
-  
-  const { data: adminProfile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single()
-  
-  if (!adminProfile || adminProfile.role === "user") {
-    throw new Error("Unauthorized")
-  }
+  const { supabase } = await verifyAdmin()
 
   const { error } = await supabase
     .from("memberships")
-    .update({ is_active: isActive, updated_at: new Date().toISOString() })
+    .update({ status })
     .eq("id", membershipId)
 
   if (error) throw error
@@ -233,48 +190,190 @@ export async function updateMembership(
   return { success: true }
 }
 
-export async function assignPortalAccess(userId: string, portalId: string) {
-  const supabase = await createClient()
+export async function deleteMembership(membershipId: string) {
+  const { supabase } = await verifyAdmin()
+
+  const { error } = await supabase
+    .from("memberships")
+    .delete()
+    .eq("id", membershipId)
+
+  if (error) throw error
   
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error("Unauthorized")
-  
-  const { data: adminProfile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
+  revalidatePath("/admin/users")
+  revalidatePath("/admin/memberships")
+  return { success: true }
+}
+
+// ==========================================
+// ACCIONES DE PORTALES
+// ==========================================
+
+export async function createPortal(data: {
+  name: string
+  slug: string
+  description: string | null
+  url: string | null
+  icon: string
+  color: string
+  is_active: boolean
+}) {
+  const { supabase } = await verifyAdmin()
+
+  // Verificar slug único
+  const { data: existing } = await supabase
+    .from("portals")
+    .select("id")
+    .eq("slug", data.slug)
     .single()
-  
-  if (!adminProfile || adminProfile.role === "user") {
-    throw new Error("Unauthorized")
+
+  if (existing) {
+    throw new Error("Ya existe un portal con este slug")
   }
+
+  const { error } = await supabase.from("portals").insert(data)
+
+  if (error) throw error
+  
+  revalidatePath("/admin/portals")
+  revalidatePath("/admin")
+  return { success: true }
+}
+
+export async function updatePortal(
+  portalId: string,
+  data: {
+    name: string
+    slug: string
+    description: string | null
+    url: string | null
+    icon: string
+    color: string
+    is_active: boolean
+  }
+) {
+  const { supabase } = await verifyAdmin()
+
+  // Verificar slug único (excluyendo el portal actual)
+  const { data: existing } = await supabase
+    .from("portals")
+    .select("id")
+    .eq("slug", data.slug)
+    .neq("id", portalId)
+    .single()
+
+  if (existing) {
+    throw new Error("Ya existe un portal con este slug")
+  }
+
+  const { error } = await supabase
+    .from("portals")
+    .update(data)
+    .eq("id", portalId)
+
+  if (error) throw error
+  
+  revalidatePath("/admin/portals")
+  revalidatePath("/admin")
+  return { success: true }
+}
+
+export async function deletePortal(portalId: string) {
+  const { supabase } = await verifyAdmin()
+
+  // Primero eliminar los accesos asociados
+  await supabase
+    .from("user_portal_access")
+    .delete()
+    .eq("portal_id", portalId)
+
+  const { error } = await supabase
+    .from("portals")
+    .delete()
+    .eq("id", portalId)
+
+  if (error) throw error
+  
+  revalidatePath("/admin/portals")
+  revalidatePath("/admin")
+  return { success: true }
+}
+
+export async function togglePortalActive(portalId: string, isActive: boolean) {
+  const { supabase } = await verifyAdmin()
+
+  const { error } = await supabase
+    .from("portals")
+    .update({ is_active: isActive })
+    .eq("id", portalId)
+
+  if (error) throw error
+  
+  revalidatePath("/admin/portals")
+  revalidatePath("/admin")
+  return { success: true }
+}
+
+// ==========================================
+// ACCIONES DE ACCESO A PORTALES
+// ==========================================
+
+export async function getUserPortalAccess(userId: string) {
+  const { supabase } = await verifyAdmin()
+
+  const { data, error } = await supabase
+    .from("user_portal_access")
+    .select("portal_id")
+    .eq("user_id", userId)
+
+  if (error) throw error
+  
+  return data || []
+}
+
+export async function updateUserPortalAccess(userId: string, portalIds: string[]) {
+  const { supabase, user } = await verifyAdmin()
+
+  // Eliminar todos los accesos existentes
+  await supabase
+    .from("user_portal_access")
+    .delete()
+    .eq("user_id", userId)
+
+  // Crear nuevos accesos
+  if (portalIds.length > 0) {
+    const accesses = portalIds.map((portalId) => ({
+      user_id: userId,
+      portal_id: portalId,
+      granted_by: user.id,
+    }))
+
+    const { error } = await supabase.from("user_portal_access").insert(accesses)
+    if (error) throw error
+  }
+
+  revalidatePath("/admin/users")
+  revalidatePath("/admin")
+  return { success: true }
+}
+
+export async function assignPortalAccess(userId: string, portalId: string) {
+  const { supabase, user } = await verifyAdmin()
 
   const { error } = await supabase.from("user_portal_access").insert({
     user_id: userId,
     portal_id: portalId,
+    granted_by: user.id,
   })
 
-  if (error && error.code !== "23505") throw error // Ignore duplicate key
+  if (error && error.code !== "23505") throw error // Ignorar duplicados
   
   revalidatePath("/admin/users")
   return { success: true }
 }
 
 export async function removePortalAccess(userId: string, portalId: string) {
-  const supabase = await createClient()
-  
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error("Unauthorized")
-  
-  const { data: adminProfile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single()
-  
-  if (!adminProfile || adminProfile.role === "user") {
-    throw new Error("Unauthorized")
-  }
+  const { supabase } = await verifyAdmin()
 
   const { error } = await supabase
     .from("user_portal_access")
@@ -285,5 +384,75 @@ export async function removePortalAccess(userId: string, portalId: string) {
   if (error) throw error
   
   revalidatePath("/admin/users")
+  return { success: true }
+}
+
+// ==========================================
+// ACCIONES DE PLANES DE MEMBRESÍA
+// ==========================================
+
+export async function createMembershipPlan(data: {
+  name: string
+  description: string | null
+  duration_days: number
+  price: number
+  is_active: boolean
+}) {
+  const { supabase } = await verifyAdmin()
+
+  const { error } = await supabase.from("membership_plans").insert(data)
+
+  if (error) throw error
+  
+  revalidatePath("/admin/memberships")
+  return { success: true }
+}
+
+export async function updateMembershipPlan(
+  planId: string,
+  data: {
+    name: string
+    description: string | null
+    duration_days: number
+    price: number
+    is_active: boolean
+  }
+) {
+  const { supabase } = await verifyAdmin()
+
+  const { error } = await supabase
+    .from("membership_plans")
+    .update(data)
+    .eq("id", planId)
+
+  if (error) throw error
+  
+  revalidatePath("/admin/memberships")
+  return { success: true }
+}
+
+export async function deleteMembershipPlan(planId: string) {
+  const { supabase } = await verifyAdmin()
+
+  // Verificar que no hay membresías activas con este plan
+  const { data: activeMemberships } = await supabase
+    .from("memberships")
+    .select("id")
+    .eq("plan_id", planId)
+    .eq("status", "active")
+    .limit(1)
+
+  if (activeMemberships && activeMemberships.length > 0) {
+    throw new Error("No se puede eliminar un plan con membresías activas")
+  }
+
+  const { error } = await supabase
+    .from("membership_plans")
+    .delete()
+    .eq("id", planId)
+
+  if (error) throw error
+  
+  revalidatePath("/admin/memberships")
   return { success: true }
 }
