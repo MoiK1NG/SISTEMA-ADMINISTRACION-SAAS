@@ -1,22 +1,21 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { createClient } from "@/lib/supabase/server"
-import type { EstadoPago, EstadoReserva } from "./types"
+import { requireClient } from "@/lib/supabase/require-client"
+import type { EstadoPago } from "./types"
 
-// ─── Crear reserva ────────────────────────────────────────────────────────────
 export async function crearReserva(input: {
   cancha_id:        string
   cliente_nombre:   string
   cliente_telefono?: string
-  fecha:            string   // YYYY-MM-DD
+  fecha:            string
   hora_inicio:      number
   hora_fin:         number
   monto:            number
   estado_pago:      EstadoPago
   nota?:            string
 }) {
-  const supabase = await createClient()
+  const supabase = await requireClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error("No autenticado")
 
@@ -35,7 +34,6 @@ export async function crearReserva(input: {
     estado:           "confirmada",
   })
 
-  // Código 23P01 = exclusion constraint (solapamiento de horario)
   if (error?.code === "23P01") throw new Error("Ese horario ya está reservado en esta cancha")
   if (error) throw error
 
@@ -43,13 +41,12 @@ export async function crearReserva(input: {
   return { success: true }
 }
 
-// ─── Actualizar estado de pago ────────────────────────────────────────────────
 export async function actualizarEstadoPago(
   reservaId: string,
   estadoPago: EstadoPago,
   montoPagado: number,
 ) {
-  const supabase = await createClient()
+  const supabase = await requireClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error("No autenticado")
 
@@ -57,7 +54,7 @@ export async function actualizarEstadoPago(
     .from("reservas")
     .update({ estado_pago: estadoPago, monto_pagado: montoPagado, updated_at: new Date().toISOString() })
     .eq("id", reservaId)
-    .eq("agente_id", user.id)   // RLS extra: solo el dueño
+    .eq("agente_id", user.id)
 
   if (error) throw error
 
@@ -65,9 +62,8 @@ export async function actualizarEstadoPago(
   return { success: true }
 }
 
-// ─── Cancelar reserva ─────────────────────────────────────────────────────────
 export async function cancelarReserva(reservaId: string) {
-  const supabase = await createClient()
+  const supabase = await requireClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error("No autenticado")
 
@@ -83,9 +79,8 @@ export async function cancelarReserva(reservaId: string) {
   return { success: true }
 }
 
-// ─── Obtener canchas del agente ───────────────────────────────────────────────
 export async function obtenerCanchas() {
-  const supabase = await createClient()
+  const supabase = await requireClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error("No autenticado")
 

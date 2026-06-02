@@ -1,5 +1,5 @@
 // ─── Server Component ────────────────────────────────────────────────────────
-import { createClient } from "@/lib/supabase/server"
+import { requireClient } from "@/lib/supabase/require-client"
 import { redirect } from "next/navigation"
 import {
   AlertTriangle,
@@ -82,7 +82,7 @@ const ESTADO: Record<EstadoPrestamo, { label: string; icon: React.ElementType; c
 
 // ─── Página ───────────────────────────────────────────────────────────────────
 export default async function PrestamosPage() {
-  const supabase = await createClient()
+  const supabase = await requireClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect("/login")
 

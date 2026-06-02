@@ -1,5 +1,5 @@
 // ─── Server Component ─────────────────────────────────────────────────────────
-import { createClient } from "@/lib/supabase/server"
+import { requireClient } from "@/lib/supabase/require-client"
 import { redirect } from "next/navigation"
 import { Dumbbell } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -11,7 +11,7 @@ function getInitials(name: string) {
 }
 
 export default async function CanchasPage() {
-  const supabase = await createClient()
+  const supabase = await requireClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect("/login")
 
