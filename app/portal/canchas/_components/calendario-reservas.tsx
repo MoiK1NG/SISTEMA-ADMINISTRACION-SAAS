@@ -5,33 +5,16 @@
 // El Server Component (page.tsx) le pasa los datos iniciales como props.
 
 import { useState, useMemo } from "react"
-import { ChevronLeft, ChevronRight, Plus, CalendarDays, Clock, DollarSign, TrendingUp, Circle } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { ChevronLeft, ChevronRight, Plus, CalendarDays, Clock, DollarSign, TrendingUp } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-
-// ─── Tipos ────────────────────────────────────────────────────────────────────
-type EstadoPago = "pagado" | "debe_sena" | "pendiente"
-
-export interface Reserva {
-  id: string
-  canchaId: string
-  clienteNombre: string
-  horaInicio: number   // 16 = 4 PM
-  horaFin: number      // 17 = 5 PM
-  estadoPago: EstadoPago
-  monto: number
-}
-
-export interface Cancha {
-  id: string
-  nombre: string
-  tipo: string
-  color: string        // clase Tailwind para el acento de color
-}
+import { crearReserva } from "../actions"
+import type { Cancha, Reserva, EstadoPago } from "../types"
 
 interface Props {
   canchas: Cancha[]
@@ -76,12 +59,14 @@ function isTomorrow(iso: string) { return iso === addDays(new Date().toISOString
 
 // ─── Componente ───────────────────────────────────────────────────────────────
 export function CalendarioReservas({ canchas, reservasIniciales, fechaInicial, ingresosDia }: Props) {
+  const router = useRouter()
   const [fecha, setFecha] = useState(fechaInicial)
   const [reservas] = useState<Reserva[]>(reservasIniciales)
   const [modalOpen, setModalOpen] = useState(false)
   const [slotSeleccionado, setSlotSeleccionado] = useState<{ canchaId: string; hora: number } | null>(null)
 
-  // Reservas filtradas para la fecha actual (mock: siempre las mismas)
+  // TODO: cuando cambies de fecha, hacer fetch de reservas_del_dia(fecha)
+  // Por ahora muestra las iniciales (del día de hoy) en cualquier fecha
   const reservasDia = useMemo(() => reservas, [reservas, fecha])
 
   // Mapa rápido: "canchaId-hora" → reserva
@@ -198,6 +183,7 @@ export function CalendarioReservas({ canchas, reservasIniciales, fechaInicial, i
             <ModalNuevaReserva
               canchas={canchas}
               slotInicial={slotSeleccionado}
+              fecha={fecha}
               onClose={() => setModalOpen(false)}
             />
           </Dialog>
@@ -424,21 +410,43 @@ export function CalendarioReservas({ canchas, reservasIniciales, fechaInicial, i
 function ModalNuevaReserva({
   canchas,
   slotInicial,
+  fecha,
   onClose,
 }: {
   canchas: Cancha[]
   slotInicial: { canchaId: string; hora: number } | null
+  fecha: string
   onClose: () => void
 }) {
+  const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setLoading(true)
-    // TODO: conectar a server action crearReserva()
-    await new Promise(r => setTimeout(r, 700))
-    setLoading(false)
-    onClose()
+    setError(null)
+    const form = new FormData(e.currentTarget)
+
+    try {
+      await crearReserva({
+        cancha_id:        form.get("cancha")      as string,
+        cliente_nombre:   form.get("cliente")     as string,
+        cliente_telefono: form.get("telefono")    as string || undefined,
+        fecha,
+        hora_inicio:      Number(form.get("hora_inicio")),
+        hora_fin:         Number(form.get("hora_fin")),
+        monto:            Number(form.get("monto")),
+        estado_pago:      form.get("estado")      as EstadoPago,
+        nota:             form.get("nota")        as string || undefined,
+      })
+      onClose()
+      router.refresh()
+    } catch (err: any) {
+      setError(err?.message ?? "Error al crear la reserva")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -449,9 +457,17 @@ function ModalNuevaReserva({
       </DialogHeader>
 
       <form onSubmit={handleSubmit} className="mt-2 space-y-4">
+        {error && (
+          <p className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">{error}</p>
+        )}
         <div className="space-y-1.5">
           <Label htmlFor="r-cliente">Cliente</Label>
           <Input id="r-cliente" name="cliente" placeholder="Nombre completo" required />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="r-telefono">Teléfono (opcional)</Label>
+          <Input id="r-telefono" name="telefono" placeholder="809-000-0000" />
         </div>
 
         <div className="grid grid-cols-2 gap-3">
