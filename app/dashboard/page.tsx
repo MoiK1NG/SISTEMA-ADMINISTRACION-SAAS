@@ -11,8 +11,11 @@ import { Badge } from "@/components/ui/badge"
 import { Sparkles, Shield, Clock } from "lucide-react"
 
 export default async function DashboardPage() {
-      const supabase = await createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+  const supabase = await createClient()
+
+  if (!supabase) redirect("/login")
+
+  const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
     redirect("/login")
