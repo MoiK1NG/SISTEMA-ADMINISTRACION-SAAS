@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { differenceInDays, isPast } from "date-fns"
+import { Suspense } from "react"
 import { MembershipCard } from "@/components/dashboard/membership-card"
 import { PortalsGrid } from "@/components/dashboard/portals-grid"
 import { AccessExpiredCard } from "@/components/dashboard/access-expired-card"
@@ -76,8 +77,11 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      {/* Alerta cuando el middleware redirige con ?error=<code> */}
-      <PortalAccessAlert />
+      {/* Suspense requerido por Next.js 15: useSearchParams() no puede
+          bloquear el render del Server Component padre */}
+      <Suspense fallback={null}>
+        <PortalAccessAlert />
+      </Suspense>
 
       {/* Header con saludo */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
