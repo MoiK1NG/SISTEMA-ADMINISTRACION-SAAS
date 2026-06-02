@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
+import { requireClient } from "@/lib/supabase/require-client"
 import { redirect } from "next/navigation"
 import { differenceInDays, isPast } from "date-fns"
 import { Suspense } from "react"
@@ -11,10 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { Sparkles, Shield, Clock } from "lucide-react"
 
 export default async function DashboardPage() {
-  const supabase = await createClient()
-
-  if (!supabase) redirect("/login")
-
+  const supabase = await requireClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {

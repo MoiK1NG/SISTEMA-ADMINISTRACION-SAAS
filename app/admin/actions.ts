@@ -1,12 +1,12 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { createClient } from "@/lib/supabase/server"
+import { requireClient } from "@/lib/supabase/require-client"
 import type { MembershipStatus } from "@/lib/types"
 
 // Helper para verificar rol de admin
 async function verifyAdmin() {
-  const supabase = await createClient()
+  const supabase = await requireClient()
   if (!supabase) throw new Error("No se pudo conectar a la base de datos")
   
   const { data: { user } } = await supabase.auth.getUser()

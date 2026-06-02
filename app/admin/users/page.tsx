@@ -1,9 +1,9 @@
-import { createClient } from "@/lib/supabase/server"
+import { requireClient } from "@/lib/supabase/require-client"
 import { UsersTable } from "@/components/admin/users-table"
 import { redirect } from "next/navigation"
 
 export default async function UsersPage() {
-  const supabase = await createClient()
+  const supabase = await requireClient()
 
   // 1. Validamos de inmediato que el cliente de Supabase no sea nulo para complacer a TypeScript
   if (!supabase) {

@@ -1,10 +1,10 @@
-import { createClient } from "@/lib/supabase/server"
+import { requireClient } from "@/lib/supabase/require-client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users, CreditCard, UserCheck, Clock } from "lucide-react"
 
 export default async function AdminDashboardPage() {
   // 1. Primero creamos el cliente de Supabase obligatoriamente
-  const supabase = await createClient()
+  const supabase = await requireClient()
 
   // 2. Ahora sí comprobamos de forma segura si no se pudo conectar
   if (!supabase) {
