@@ -1,7 +1,10 @@
 import type { Metadata, Viewport } from "next"
-import { Inter } from "next/font/google"
+import { Inter, Geist } from "next/font/google"
 
 import "./globals.css"
+import { cn } from "@/lib/utils";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
 
@@ -18,7 +21,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es" className={inter.variable}>
+    <html lang="es" className={cn("font-sans", geist.variable)}>
       <body className="min-h-screen bg-background text-foreground font-sans antialiased">
         {children}
       </body>

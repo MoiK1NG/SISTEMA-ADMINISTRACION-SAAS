@@ -4,33 +4,27 @@ import { differenceInDays, isPast } from "date-fns"
 import { MembershipCard } from "@/components/dashboard/membership-card"
 import { PortalsGrid } from "@/components/dashboard/portals-grid"
 import { AccessExpiredCard } from "@/components/dashboard/access-expired-card"
+import { PortalAccessAlert } from "@/components/dashboard/portal-access-alert"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Sparkles, Shield, Clock } from "lucide-react"
 
 export default async function DashboardPage() {
-  const supabase = await createClient()
-
-  // 1. Añadimos el paracaídas de seguridad para calmar a TypeScript
-  if (!supabase) {
-    throw new Error("No se pudo conectar a la base de datos de Supabase.")
-  }
-
-  // 2. Usamos la aserción de no nulo con "supabase!" para asegurar la llamada
-  const { data: { user } } = await supabase!.auth.getUser()
+      const supabase = await createClient()
+      const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
     redirect("/login")
   }
 
-  const { data: profile } = await supabase!
+  const { data: profile } = await supabase
     .from("profiles")
     .select("*")
     .eq("id", user.id)
     .single()
 
   // Obtener membresía activa
-  const { data: memberships } = await supabase!
+  const { data: memberships } = await supabase
     .from("memberships")
     .select(`
       *,
@@ -43,15 +37,15 @@ export default async function DashboardPage() {
       )
     `)
     .eq("user_id", user.id)
-    .eq("status", "active")
+    .eq("is_active", true)
     .order("end_date", { ascending: false })
     .limit(1)
 
   const activeMembership = memberships?.[0]
   const hasValidMembership = activeMembership && !isPast(new Date(activeMembership.end_date))
 
-  // Obtener acceso a portales con todos los campos
-  const { data: portalAccess } = await supabase!
+  // Obtener acceso a portales
+  const { data: portalAccess } = await supabase
     .from("user_portal_access")
     .select(`
       id,
@@ -61,9 +55,6 @@ export default async function DashboardPage() {
         name,
         slug,
         description,
-        url,
-        icon,
-        color,
         is_active
       )
     `)
@@ -79,28 +70,35 @@ export default async function DashboardPage() {
     ? differenceInDays(new Date(activeMembership.end_date), new Date())
     : 0
 
-  // Obtener hora para el saludo
+  // Saludo según la hora
   const hour = new Date().getHours()
   const greeting = hour < 12 ? "Buenos días" : hour < 18 ? "Buenas tardes" : "Buenas noches"
 
   return (
     <div className="space-y-8">
+      {/* Alerta cuando el middleware redirige con ?error=<code> */}
+      <PortalAccessAlert />
+
       {/* Header con saludo */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            {greeting}{profile?.full_name ? `, {profile.full_name.split(" ")[0]}` : ""}
+            {greeting}{profile?.full_name ? `, ${profile.full_name.split(" ")[0]}` : ""}
           </h1>
           <p className="text-muted-foreground">
             Aquí tienes un resumen de tu cuenta y portales disponibles
           </p>
         </div>
-        
+
         {hasValidMembership && (
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="gap-1.5 py-1.5 px-3">
               <Shield className="h-3.5 w-3.5" />
-              {profile?.role === "superadmin" ? "Super Admin" : profile?.role === "admin" ? "Admin" : "Usuario"}
+              {profile?.role === "superadmin"
+                ? "Super Admin"
+                : profile?.role === "admin"
+                ? "Admin"
+                : "Usuario"}
             </Badge>
           </div>
         )}
@@ -151,7 +149,7 @@ export default async function DashboardPage() {
                       {activeMembership?.membership_plans?.name || "Sin Plan"}
                     </p>
                   </div>
-                  <Badge 
+                  <Badge
                     variant={daysRemaining > 7 ? "success" : daysRemaining > 0 ? "warning" : "destructive"}
                     className="text-sm"
                   >
