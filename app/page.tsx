@@ -11,187 +11,211 @@ import {
   Users,
   CheckCircle2,
   ChevronRight,
+  Lock,
+  TrendingUp,
+  Layers,
 } from "lucide-react"
 
-// ─── Portal cards data ────────────────────────────────────────────────────────
+// ─── Data ────────────────────────────────────────────────────────────────────
+const STATS = [
+  { value: "3+",    label: "Portales especializados" },
+  { value: "100%",  label: "Datos en tiempo real" },
+  { value: "RLS",   label: "Seguridad por fila" },
+  { value: "0 min", label: "Tiempo de configuración" },
+]
+
 const PORTALES = [
   {
     icon: UtensilsCrossed,
-    color: "from-amber-500 to-orange-500",
-    shadow: "shadow-amber-500/20",
-    bg: "bg-amber-50",
-    text: "text-amber-700",
+    color: "#F59E0B",
     name: "Punto de Venta",
-    desc: "POS táctil para restaurantes y panaderías. Catálogo, carrito, cobro con ITBIS.",
+    desc: "POS táctil optimizado para tablets. Catálogo por categorías, carrito inteligente, múltiples métodos de pago e ITBIS automático.",
     tags: ["Restaurantes", "Panaderías", "Cafeterías"],
   },
   {
     icon: Dumbbell,
-    color: "from-sky-500 to-blue-600",
-    shadow: "shadow-sky-500/20",
-    bg: "bg-sky-50",
-    text: "text-sky-700",
+    color: "#3B82F6",
     name: "Canchas Sintéticas",
-    desc: "Calendario de reservas por hora con control de solapamiento y estadísticas.",
+    desc: "Calendario de reservas con vista por hora. Validación de solapamiento en base de datos, estadísticas de ocupación por cancha.",
     tags: ["Deportes", "Reservas", "Horarios"],
   },
   {
     icon: Banknote,
-    color: "from-emerald-500 to-green-600",
-    shadow: "shadow-emerald-500/20",
-    bg: "bg-emerald-50",
-    text: "text-emerald-700",
+    color: "#10B981",
     name: "Portal de Préstamos",
-    desc: "Gestión de cartera con interés sobre saldo, cuotas automáticas y cobro en campo.",
-    tags: ["Finanzas", "Microcrédito", "Cuotas"],
+    desc: "Gestión de cartera completa con interés sobre saldo, generación automática de cuotas y cobro en campo con historial de pagos.",
+    tags: ["Microcrédito", "Cuotas", "Cartera"],
   },
 ]
 
 const FEATURES = [
-  {
-    icon: Shield,
-    title: "Seguridad con RLS",
-    desc: "Row Level Security en Supabase. Cada usuario accede únicamente a sus datos, sin excepciones.",
-  },
-  {
-    icon: Zap,
-    title: "Acceso instantáneo",
-    desc: "Los portales cargan en milisegundos gracias a Server Components y Edge Functions.",
-  },
-  {
-    icon: BarChart3,
-    title: "KPIs en tiempo real",
-    desc: "Métricas de ingresos, ocupación y cartera calculadas directamente en la base de datos.",
-  },
-  {
-    icon: Users,
-    title: "Multi-usuario",
-    desc: "Administra agentes, asigna portales y controla membresías desde un panel central.",
-  },
+  { icon: Shield,    title: "Seguridad RLS",         desc: "Row Level Security en Supabase. Cada usuario ve únicamente sus propios datos." },
+  { icon: Zap,       title: "Server Components",     desc: "Las páginas renderizan en el servidor. Carga instantánea, sin parpadeos." },
+  { icon: BarChart3, title: "KPIs en tiempo real",   desc: "Métricas calculadas en PostgreSQL. Sin procesos batch, sin retrasos." },
+  { icon: Lock,      title: "Control de acceso",     desc: "Asigna portales por membresía. El middleware verifica cada ruta automáticamente." },
+  { icon: TrendingUp,title: "Reportes integrados",   desc: "Vistas precalculadas por agente, fecha y producto. Listas para exportar." },
+  { icon: Layers,    title: "Multi-negocio",         desc: "Un panel para todos tus negocios. Cambia entre portales sin cerrar sesión." },
 ]
 
-const PLAN_ITEMS = [
-  "Acceso a todos los portales del plan",
-  "Soporte técnico prioritario",
-  "Actualizaciones incluidas",
-  "Sin límite de transacciones",
-  "Backup automático diario",
-]
+// ─── Small UI mockup components (pure HTML/CSS via dangerouslySetInnerHTML won't work in RSC)
+// We'll build them inline with Tailwind + inline styles
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-white text-slate-900 antialiased">
+    <div className="min-h-screen bg-white text-slate-900 antialiased overflow-x-hidden">
 
-      {/* ── NAV ─────────────────────────────────────────────────────────────── */}
-      <nav className="sticky top-0 z-50 border-b border-slate-100 bg-white/80 backdrop-blur-md">
+      {/* ── NAV ──────────────────────────────────────────────────────────────── */}
+      <nav className="sticky top-0 z-50 border-b border-slate-100 bg-white/90 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-slate-800 to-slate-600 shadow-sm">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl" style={{ background: "linear-gradient(135deg,#1d4ed8,#3b82f6)" }}>
               <Building2 className="h-4 w-4 text-white" />
             </div>
-            <span className="font-bold text-slate-900 tracking-tight">SaaS Admin</span>
+            <span className="font-bold text-slate-900 tracking-tight text-base">SaaS Admin</span>
           </div>
           <div className="flex items-center gap-2">
-            <Link
-              href="/login"
-              className="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
-            >
+            <Link href="/login" className="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">
               Iniciar sesión
             </Link>
-            <Link
-              href="/signup"
-              className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-700 transition-all active:scale-[0.98]"
-            >
-              Comenzar gratis
-              <ArrowRight className="h-3.5 w-3.5" />
+            <Link href="/signup" className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold text-white transition-all active:scale-[0.98]" style={{ background: "#1d4ed8" }}>
+              Comenzar gratis <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
         </div>
       </nav>
 
       {/* ── HERO ─────────────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden">
-        {/* Background gradient */}
-        <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -top-40 left-1/2 h-[600px] w-[600px] -translate-x-1/2 rounded-full bg-gradient-to-b from-slate-100 to-transparent opacity-60 blur-3xl" />
+      <section className="relative overflow-hidden py-24 sm:py-32">
+        {/* Blobs */}
+        <div className="pointer-events-none absolute inset-0 -z-10">
+          <div className="absolute -top-32 -right-32 h-96 w-96 rounded-full opacity-10 blur-3xl" style={{ background: "#3b82f6" }} />
+          <div className="absolute top-20 -left-20 h-72 w-72 rounded-full opacity-8 blur-3xl" style={{ background: "#1d4ed8" }} />
         </div>
 
-        <div className="relative mx-auto max-w-6xl px-4 sm:px-6 pt-20 pb-24 text-center">
-          {/* Badge */}
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 shadow-sm">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs font-medium text-slate-600">Multi-portal · Un solo panel</span>
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="flex flex-col lg:flex-row items-center gap-16">
+
+            {/* Text */}
+            <div className="flex-1 text-center lg:text-left">
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
+                <span className="text-xs font-semibold text-blue-700">Multi-portal · Un solo panel de control</span>
+              </div>
+
+              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-[1.05]">
+                Administra<br />
+                <span style={{ color: "#1d4ed8" }}>todos tus</span><br />
+                negocios
+              </h1>
+
+              <p className="mt-6 text-lg text-slate-500 leading-relaxed max-w-md mx-auto lg:mx-0">
+                POS, canchas, préstamos y más. Cada portal adaptado a su industria,
+                con seguridad empresarial real y datos en tiempo real.
+              </p>
+
+              <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
+                <Link
+                  href="/signup"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl px-7 py-3.5 text-base font-bold text-white shadow-lg transition-all active:scale-[0.98]"
+                  style={{ background: "#1d4ed8", boxShadow: "0 4px 24px rgba(29,78,216,0.35)" }}
+                >
+                  Empieza gratis <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link href="/login" className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-7 py-3.5 text-base font-medium text-slate-700 hover:bg-slate-50 transition-all">
+                  Tengo cuenta <ChevronRight className="h-4 w-4 text-slate-400" />
+                </Link>
+              </div>
+
+              <p className="mt-5 text-sm text-slate-400">Sin tarjeta de crédito · Acceso inmediato</p>
+            </div>
+
+            {/* Hero UI mockup */}
+            <div className="flex-1 w-full max-w-lg">
+              <div className="rounded-3xl border border-slate-200 bg-white shadow-2xl overflow-hidden" style={{ boxShadow: "0 32px 80px rgba(29,78,216,0.12)" }}>
+                {/* Top bar */}
+                <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3">
+                  <div className="flex items-center gap-2">
+                    <div className="h-2 w-2 rounded-full bg-red-400" />
+                    <div className="h-2 w-2 rounded-full bg-yellow-400" />
+                    <div className="h-2 w-2 rounded-full bg-green-400" />
+                  </div>
+                  <div className="flex-1 mx-4 h-6 rounded-lg bg-slate-100" />
+                </div>
+                {/* Dashboard preview */}
+                <div className="p-5 bg-slate-50">
+                  <div className="grid grid-cols-3 gap-3 mb-4">
+                    {[
+                      { label: "Portales", val: "3", color: "#1d4ed8" },
+                      { label: "Días restantes", val: "28", color: "#10b981" },
+                      { label: "Plan", val: "Pro", color: "#f59e0b" },
+                    ].map(c => (
+                      <div key={c.label} className="rounded-2xl bg-white border border-slate-100 p-3 shadow-sm">
+                        <p className="text-[10px] text-slate-400 mb-1">{c.label}</p>
+                        <p className="text-xl font-black" style={{ color: c.color }}>{c.val}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wide">Tus portales</p>
+                  <div className="space-y-2">
+                    {[
+                      { name: "Punto de Venta", emoji: "🍽️", color: "#fef3c7", tc: "#92400e" },
+                      { name: "Canchas Sintéticas", emoji: "⚽", color: "#dbeafe", tc: "#1e40af" },
+                      { name: "Portal de Préstamos", emoji: "💰", color: "#d1fae5", tc: "#065f46" },
+                    ].map(p => (
+                      <div key={p.name} className="flex items-center gap-3 rounded-xl bg-white border border-slate-100 px-3 py-2.5 shadow-sm">
+                        <span className="text-base">{p.emoji}</span>
+                        <span className="flex-1 text-xs font-semibold text-slate-800">{p.name}</span>
+                        <span className="text-[10px] font-bold rounded-full px-2 py-0.5" style={{ background: p.color, color: p.tc }}>Activo</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
+        </div>
+      </section>
 
-          <h1 className="mx-auto max-w-3xl text-5xl sm:text-6xl font-black tracking-tight text-slate-900 leading-[1.1]">
-            La plataforma para{" "}
-            <span className="bg-gradient-to-r from-slate-900 via-slate-700 to-slate-500 bg-clip-text text-transparent">
-              emprendedores dominicanos
-            </span>
-          </h1>
-
-          <p className="mx-auto mt-6 max-w-xl text-lg text-slate-500 leading-relaxed">
-            Administra tus negocios desde un único panel. POS, canchas, préstamos y más —
-            cada portal adaptado a tu industria, con seguridad empresarial real.
-          </p>
-
-          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link
-              href="/signup"
-              className="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-6 py-3.5 text-base font-bold text-white shadow-lg shadow-slate-900/20 hover:bg-slate-700 transition-all active:scale-[0.98]"
-            >
-              Empieza ahora — es gratis
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link
-              href="/login"
-              className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-6 py-3.5 text-base font-medium text-slate-700 shadow-sm hover:border-slate-300 hover:bg-slate-50 transition-all"
-            >
-              Ya tengo cuenta
-              <ChevronRight className="h-4 w-4 text-slate-400" />
-            </Link>
+      {/* ── STATS — dark blue ────────────────────────────────────────────────── */}
+      <section style={{ background: "#0f172a" }} className="py-16">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+            {STATS.map(s => (
+              <div key={s.label} className="text-center">
+                <p className="text-4xl sm:text-5xl font-black text-white mb-2">{s.value}</p>
+                <p className="text-sm font-medium" style={{ color: "#94a3b8" }}>{s.label}</p>
+              </div>
+            ))}
           </div>
-
-          {/* Social proof */}
-          <p className="mt-8 text-sm text-slate-400">
-            Sin tarjeta de crédito · Acceso inmediato · Cancela cuando quieras
-          </p>
         </div>
       </section>
 
       {/* ── PORTALES ─────────────────────────────────────────────────────────── */}
-      <section className="border-t border-slate-100 bg-slate-50 py-20">
+      <section className="py-24 bg-white">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <div className="mb-12 text-center">
-            <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-3">Portales disponibles</p>
-            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">
-              Herramientas hechas para tu negocio
+          <div className="text-center mb-14">
+            <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "#1d4ed8" }}>Portales disponibles</span>
+            <h2 className="mt-2 text-4xl sm:text-5xl font-black text-slate-900 leading-tight">
+              Herramientas hechas<br />para cada industria
             </h2>
-            <p className="mt-3 text-slate-500 max-w-lg mx-auto">
-              Cada portal está construido específicamente para su industria. Sin adaptaciones, sin compromiso.
+            <p className="mt-4 text-slate-500 max-w-xl mx-auto">
+              Cada portal está construido de cero para su industria. Sin adaptaciones genéricas.
             </p>
           </div>
 
-          <div className="grid gap-5 md:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-3">
             {PORTALES.map((p) => {
               const Icon = p.icon
               return (
-                <div
-                  key={p.name}
-                  className="group relative rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5"
-                >
-                  {/* Icon */}
-                  <div className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${p.color} shadow-lg ${p.shadow}`}>
-                    <Icon className="h-5 w-5 text-white" />
+                <div key={p.name} className="group rounded-3xl border border-slate-100 bg-white p-7 shadow-sm transition-all duration-200 hover:shadow-xl hover:-translate-y-1" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+                  <div className="mb-5 inline-flex h-14 w-14 items-center justify-center rounded-2xl" style={{ background: p.color + "20" }}>
+                    <Icon className="h-7 w-7" style={{ color: p.color }} />
                   </div>
-
-                  <h3 className="mb-2 text-lg font-bold text-slate-900">{p.name}</h3>
-                  <p className="mb-4 text-sm text-slate-500 leading-relaxed">{p.desc}</p>
-
-                  {/* Tags */}
-                  <div className="flex flex-wrap gap-1.5">
+                  <h3 className="mb-3 text-xl font-bold text-slate-900">{p.name}</h3>
+                  <p className="mb-5 text-sm text-slate-500 leading-relaxed">{p.desc}</p>
+                  <div className="flex flex-wrap gap-2">
                     {p.tags.map(tag => (
-                      <span key={tag} className={`rounded-full ${p.bg} ${p.text} px-2.5 py-1 text-xs font-medium`}>
+                      <span key={tag} className="rounded-full px-3 py-1 text-xs font-semibold" style={{ background: p.color + "15", color: p.color }}>
                         {tag}
                       </span>
                     ))}
@@ -203,25 +227,92 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── FEATURES ──────────────────────────────────────────────────────────── */}
-      <section className="py-20">
+      {/* ── POS MOCKUP SECTION ─────────────────────────────────────────────── */}
+      <section className="py-24" style={{ background: "#f8fafc" }}>
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <div className="mb-12 text-center">
-            <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-3">Por qué elegirnos</p>
-            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">
-              Infraestructura de nivel empresarial
+          <div className="flex flex-col lg:flex-row items-center gap-16">
+            {/* Text */}
+            <div className="flex-1 order-2 lg:order-1">
+              <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "#f59e0b" }}>Portal POS</span>
+              <h2 className="mt-2 text-4xl font-black text-slate-900 leading-tight">
+                Cobra más rápido<br />desde cualquier tablet
+              </h2>
+              <p className="mt-4 text-slate-500 leading-relaxed">
+                Interfaz táctil optimizada para restaurantes y panaderías. Catálogo con búsqueda,
+                categorías, carrito con ITBIS automático y 3 métodos de cobro.
+              </p>
+              <ul className="mt-6 space-y-3">
+                {["Catálogo visual con emojis y badges de cantidad", "ITBIS 18% calculado automáticamente", "Efectivo con cálculo de vuelto instantáneo", "Tarjeta y transferencia integrados"].map(item => (
+                  <li key={item} className="flex items-start gap-2.5 text-sm text-slate-600">
+                    <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" style={{ color: "#f59e0b" }} />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* POS mini mockup */}
+            <div className="flex-1 order-1 lg:order-2 w-full max-w-md">
+              <div className="rounded-3xl border border-slate-200 bg-white overflow-hidden shadow-xl">
+                <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3" style={{ background: "#fffbeb" }}>
+                  <div className="flex items-center gap-2">
+                    <div className="h-7 w-7 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg,#f59e0b,#f97316)" }}>
+                      <UtensilsCrossed className="h-3.5 w-3.5 text-white" />
+                    </div>
+                    <span className="text-sm font-bold text-slate-800">Punto de Venta</span>
+                  </div>
+                  <span className="text-[10px] font-semibold rounded-full bg-emerald-100 text-emerald-700 px-2 py-0.5">● En línea</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2 p-4">
+                  {[
+                    { e: "🍞", n: "Pan sobao", p: "RD$30" },
+                    { e: "☕", n: "Café", p: "RD$75" },
+                    { e: "🥐", n: "Croissant", p: "RD$95" },
+                    { e: "🍩", n: "Donut", p: "RD$75" },
+                    { e: "🥪", n: "Sandwich", p: "RD$140" },
+                    { e: "🍕", n: "Pizza", p: "RD$220" },
+                  ].map(pr => (
+                    <div key={pr.n} className="rounded-xl border border-slate-100 p-2.5 text-center">
+                      <div className="text-2xl mb-1">{pr.e}</div>
+                      <p className="text-[10px] font-semibold text-slate-700 leading-tight">{pr.n}</p>
+                      <p className="text-[10px] font-bold mt-0.5" style={{ color: "#f59e0b" }}>{pr.p}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="border-t border-slate-100 px-4 py-3 flex items-center justify-between" style={{ background: "#f8fafc" }}>
+                  <div>
+                    <p className="text-[10px] text-slate-400">Total</p>
+                    <p className="text-lg font-black text-slate-900">RD$248.50</p>
+                  </div>
+                  <div className="rounded-xl px-4 py-2 text-sm font-bold text-white" style={{ background: "#10b981" }}>
+                    💳 Cobrar
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── FEATURES GRID ────────────────────────────────────────────────────── */}
+      <section className="py-24 bg-white">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="text-center mb-14">
+            <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "#1d4ed8" }}>Tecnología</span>
+            <h2 className="mt-2 text-4xl sm:text-5xl font-black text-slate-900">
+              Infraestructura<br />de nivel empresarial
             </h2>
           </div>
 
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map((f) => {
               const Icon = f.icon
               return (
-                <div key={f.title} className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900">
-                    <Icon className="h-5 w-5 text-white" />
+                <div key={f.title} className="rounded-2xl border border-slate-100 bg-white p-6 transition-all hover:border-blue-100 hover:shadow-md" style={{ boxShadow: "0 1px 6px rgba(0,0,0,0.05)" }}>
+                  <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: "#eff6ff" }}>
+                    <Icon className="h-5 w-5" style={{ color: "#1d4ed8" }} />
                   </div>
-                  <h3 className="mb-1.5 font-semibold text-slate-900">{f.title}</h3>
+                  <h3 className="mb-1.5 font-bold text-slate-900">{f.title}</h3>
                   <p className="text-sm text-slate-500 leading-relaxed">{f.desc}</p>
                 </div>
               )
@@ -230,71 +321,65 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── CTA / PLAN ────────────────────────────────────────────────────────── */}
-      <section className="border-t border-slate-100 bg-slate-50 py-20">
-        <div className="mx-auto max-w-4xl px-4 sm:px-6">
-          <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8 sm:p-12 shadow-2xl shadow-slate-900/30">
-            <div className="flex flex-col lg:flex-row items-start lg:items-center gap-8">
+      {/* ── CTA DARK ─────────────────────────────────────────────────────────── */}
+      <section className="py-24" style={{ background: "#0f172a" }}>
+        <div className="mx-auto max-w-5xl px-4 sm:px-6">
+          <div className="flex flex-col lg:flex-row items-center gap-12">
+            <div className="flex-1 text-center lg:text-left">
+              <h2 className="text-4xl sm:text-5xl font-black text-white leading-tight">
+                Un plan.<br />
+                <span style={{ color: "#60a5fa" }}>Todos los portales.</span>
+              </h2>
+              <p className="mt-4 leading-relaxed" style={{ color: "#94a3b8" }}>
+                Sin sorpresas ni costos ocultos. Un precio mensual que te da acceso
+                a todo lo que tu negocio necesita para operar.
+              </p>
+              <ul className="mt-6 space-y-3">
+                {[
+                  "Acceso a todos los portales del plan",
+                  "Sin límite de transacciones",
+                  "Actualizaciones automáticas incluidas",
+                  "Soporte técnico prioritario",
+                  "Backup automático diario",
+                ].map(item => (
+                  <li key={item} className="flex items-center gap-2.5 text-sm" style={{ color: "#cbd5e1" }}>
+                    <CheckCircle2 className="h-4 w-4 shrink-0" style={{ color: "#34d399" }} />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-              {/* Left */}
-              <div className="flex-1">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-slate-400">
-                  Todo incluido
-                </p>
-                <h2 className="text-3xl font-black text-white leading-tight">
-                  Un plan. Todos los portales.
-                </h2>
-                <p className="mt-3 text-slate-400 leading-relaxed">
-                  Sin sorpresas. Un precio mensual que te da acceso a todo lo que tu negocio necesita.
-                </p>
-                <ul className="mt-6 space-y-2.5">
-                  {PLAN_ITEMS.map(item => (
-                    <li key={item} className="flex items-center gap-2.5 text-sm text-slate-300">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+            <div className="w-full lg:w-80 shrink-0 rounded-3xl p-8" style={{ background: "#1e293b", border: "1px solid #334155" }}>
+              <p className="text-sm mb-1" style={{ color: "#94a3b8" }}>Empieza desde</p>
+              <p className="text-6xl font-black text-white">$0
+                <span className="text-xl font-normal" style={{ color: "#64748b" }}>/mes</span>
+              </p>
+              <p className="text-xs mt-1 mb-7" style={{ color: "#475569" }}>
+                Escala cuando tu negocio crezca
+              </p>
 
-              {/* Right: CTA card */}
-              <div className="w-full lg:w-72 shrink-0 rounded-2xl bg-white/5 border border-white/10 p-6 backdrop-blur-sm">
-                <p className="text-sm text-slate-400 mb-1">Desde</p>
-                <p className="text-5xl font-black text-white">
-                  $0
-                  <span className="text-lg font-normal text-slate-400">/mes</span>
-                </p>
-                <p className="mt-1 text-xs text-slate-500">para empezar · actualiza cuando crezcas</p>
-
-                <Link
-                  href="/signup"
-                  className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white py-3.5 text-sm font-bold text-slate-900 shadow-lg hover:bg-slate-100 transition-all active:scale-[0.98]"
-                >
-                  Crear cuenta gratis
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-                <Link
-                  href="/login"
-                  className="mt-2.5 inline-flex w-full items-center justify-center rounded-xl py-3 text-sm font-medium text-slate-400 hover:text-white transition-colors"
-                >
-                  Ya tengo cuenta →
-                </Link>
-              </div>
+              <Link href="/signup" className="flex items-center justify-center gap-2 w-full rounded-2xl py-3.5 text-sm font-bold text-slate-900 bg-white hover:bg-slate-100 transition-all mb-3">
+                Crear cuenta gratis <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link href="/login" className="flex items-center justify-center w-full rounded-2xl py-3 text-sm font-medium transition-colors" style={{ color: "#64748b" }}>
+                Ya tengo cuenta →
+              </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── FOOTER ────────────────────────────────────────────────────────────── */}
+      {/* ── FOOTER ───────────────────────────────────────────────────────────── */}
       <footer className="border-t border-slate-100 bg-white py-10">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-900">
+            <div className="flex h-6 w-6 items-center justify-center rounded-lg" style={{ background: "#1d4ed8" }}>
               <Building2 className="h-3.5 w-3.5 text-white" />
             </div>
-            <span className="text-sm font-semibold text-slate-700">SaaS Admin</span>
+            <span className="text-sm font-bold text-slate-700">SaaS Admin</span>
           </div>
-          <p className="text-sm text-slate-400">© {new Date().getFullYear()} · Hecho con ❤️ para emprendedores dominicanos</p>
+          <p className="text-sm text-slate-400">© {new Date().getFullYear()} · Todos los derechos reservados</p>
           <div className="flex items-center gap-4 text-sm text-slate-400">
             <Link href="/login" className="hover:text-slate-700 transition-colors">Iniciar sesión</Link>
             <Link href="/signup" className="hover:text-slate-700 transition-colors">Registrarse</Link>
