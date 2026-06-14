@@ -26,12 +26,11 @@ export default async function DashboardLayout({
     redirect("/pending")
   }
 
-  if (!profile.is_approved) {
-    redirect("/pending")
-  }
+  const isSuperAdmin = profile.role === 'superadmin'
 
-  if (!profile.is_active) {
-    redirect("/suspended")
+  if (!isSuperAdmin) {
+    if (!profile.is_approved) redirect("/pending")
+    if (!profile.is_active) redirect("/suspended")
   }
 
   return (
