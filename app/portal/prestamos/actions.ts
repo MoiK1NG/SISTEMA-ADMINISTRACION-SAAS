@@ -112,7 +112,79 @@ export async function registrarPago(
   if (error) throw error
 
   revalidatePath("/portal/prestamos")
+  revalidatePath(`/portal/prestamos/${prestamo_id}`)
   return { success: true, pago_id: data }
+}
+
+export async function cancelarPrestamo(prestamo_id: string) {
+  const supabase = await requireClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error("No autenticado")
+
+  const { error } = await supabase
+    .from("prestamos")
+    .update({ estado: "cancelado" })
+    .eq("id", prestamo_id)
+    .eq("agente_id", user.id)
+
+  if (error) throw error
+
+  revalidatePath("/portal/prestamos")
+  revalidatePath(`/portal/prestamos/${prestamo_id}`)
+  return { success: true }
+}
+
+export async function editarCliente(
+  cliente_id: string,
+  data: { nombre: string; cedula?: string; telefono?: string; direccion?: string },
+) {
+  const supabase = await requireClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error("No autenticado")
+
+  const { error } = await supabase
+    .from("clientes")
+    .update({
+      nombre:    data.nombre,
+      cedula:    data.cedula    ?? null,
+      telefono:  data.telefono  ?? null,
+      direccion: data.direccion ?? null,
+    })
+    .eq("id", cliente_id)
+    .eq("agente_id", user.id)
+
+  if (error) throw error
+
+  revalidatePath("/portal/prestamos")
+  revalidatePath("/portal/prestamos/clientes")
+  return { success: true }
+}
+
+export async function eliminarCliente(cliente_id: string) {
+  const supabase = await requireClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error("No autenticado")
+
+  const { count } = await supabase
+    .from("prestamos")
+    .select("*", { count: "exact", head: true })
+    .eq("cliente_id", cliente_id)
+    .in("estado", ["activo", "al_dia", "en_mora", "pendiente"])
+
+  if (count && count > 0) {
+    throw new Error("No se puede eliminar un cliente con préstamos activos")
+  }
+
+  const { error } = await supabase
+    .from("clientes")
+    .delete()
+    .eq("id", cliente_id)
+    .eq("agente_id", user.id)
+
+  if (error) throw error
+
+  revalidatePath("/portal/prestamos/clientes")
+  return { success: true }
 }
 
 export async function obtenerClientes() {

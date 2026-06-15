@@ -1,6 +1,7 @@
 // ─── Server Component ────────────────────────────────────────────────────────
 import { requireClient } from "@/lib/supabase/require-client"
 import { redirect } from "next/navigation"
+import Link from "next/link"
 import {
   AlertTriangle,
   CheckCircle2,
@@ -8,22 +9,15 @@ import {
   CircleDot,
   TrendingUp,
   Landmark,
-  ChevronRight,
   ArrowUpRight,
+  Users,
+  Wallet,
 } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { NuevoPrestamoButton } from "./_components/nuevo-prestamo-button"
+import { PrestamosTable } from "./_components/prestamos-table"
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 type EstadoPrestamo = "pendiente" | "activo" | "al_dia" | "en_mora" | "pagado" | "cancelado"
@@ -137,7 +131,6 @@ export default async function PrestamosPage() {
     `)
     .eq("agente_id", user.id)
     .order("created_at", { ascending: false })
-    .limit(8)
 
   // Para cada préstamo, obtener la próxima cuota pendiente/vencida
   const prestamosIds = (prestamosRaw ?? []).map((p) => p.id)
@@ -187,6 +180,12 @@ export default async function PrestamosPage() {
           </div>
 
           <div className="flex items-center gap-3">
+            <Button asChild variant="ghost" size="sm" className="hidden sm:flex gap-1.5 text-slate-600 hover:text-slate-900">
+              <Link href="/portal/prestamos/clientes">
+                <Users className="h-4 w-4" />
+                Clientes
+              </Link>
+            </Button>
             <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
               <span className="text-xs font-medium text-emerald-700">{planName}</span>
@@ -220,7 +219,7 @@ export default async function PrestamosPage() {
         </div>
 
         {/* ── KPIs ──────────────────────────────────────────────────────── */}
-        <section className="grid gap-4 sm:grid-cols-3">
+        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 
           {/* Total Prestado */}
           <Card className="group border-slate-100 bg-white shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-default">
@@ -289,22 +288,44 @@ export default async function PrestamosPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Cartera Vigente */}
+          <Card className="group border-slate-100 bg-white shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-default">
+            <CardHeader className="flex flex-row items-start justify-between pb-2">
+              <CardTitle className="text-xs font-medium uppercase tracking-wider text-slate-500">
+                Cartera Vigente
+              </CardTitle>
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-50 group-hover:bg-purple-100 transition-colors">
+                <Wallet className="h-4 w-4 text-purple-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold text-slate-900">{fmt(kpi.cartera_vigente)}</p>
+              <div className="mt-2 flex items-center gap-1 text-xs text-slate-500">
+                <span>Saldo activo por cobrar</span>
+              </div>
+            </CardContent>
+          </Card>
         </section>
 
         {/* ── TABLA ─────────────────────────────────────────────────────── */}
         <section>
           <Card className="border-slate-100 bg-white shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between border-b border-slate-50 pb-4">
-              <div>
-                <CardTitle className="text-base font-semibold text-slate-900">Préstamos Recientes</CardTitle>
-                <p className="mt-0.5 text-xs text-slate-500">{prestamos.length} registros mostrados</p>
+            <CardHeader className="border-b border-slate-50 pb-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-base font-semibold text-slate-900">Cartera de Préstamos</CardTitle>
+                  <p className="mt-0.5 text-xs text-slate-500">{prestamos.length} préstamos en total</p>
+                </div>
+                <Button asChild variant="ghost" size="sm" className="gap-1.5 text-xs text-slate-500 hover:text-slate-900">
+                  <Link href="/portal/prestamos/clientes">
+                    <Users className="h-3.5 w-3.5" />
+                    Ver clientes
+                  </Link>
+                </Button>
               </div>
-              <Button variant="ghost" size="sm" className="hidden sm:flex gap-1 text-xs text-slate-500 hover:text-slate-900">
-                Ver todos <ChevronRight className="h-3.5 w-3.5" />
-              </Button>
             </CardHeader>
-
-            <CardContent className="p-0">
+            <CardContent className={prestamos.length === 0 ? "p-0" : "p-0 pt-4 px-6 pb-6"}>
               {prestamos.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
@@ -314,89 +335,9 @@ export default async function PrestamosPage() {
                   <p className="mt-1 text-xs text-slate-500">Crea tu primer préstamo con el botón de arriba.</p>
                 </div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-slate-50 hover:bg-transparent">
-                      <TableHead className="pl-6 text-[11px] font-semibold uppercase tracking-wider text-slate-400">Cliente</TableHead>
-                      <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Monto</TableHead>
-                      <TableHead className="hidden sm:table-cell text-[11px] font-semibold uppercase tracking-wider text-slate-400">Próxima Cuota</TableHead>
-                      <TableHead className="hidden md:table-cell text-[11px] font-semibold uppercase tracking-wider text-slate-400">Saldo Pendiente</TableHead>
-                      <TableHead className="pr-6 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-400">Estado</TableHead>
-                    </TableRow>
-                  </TableHeader>
-
-                  <TableBody>
-                    {prestamos.map((p) => {
-                      const cfg     = ESTADO[p.estado] ?? ESTADO.activo
-                      const Icon    = cfg.icon
-                      const nombre  = p.clientes?.nombre ?? "Sin nombre"
-
-                      return (
-                        <TableRow key={p.id} className="border-slate-50 transition-colors hover:bg-slate-50/70">
-
-                          {/* Cliente */}
-                          <TableCell className="pl-6">
-                            <div className="flex items-center gap-3">
-                              <Avatar className="h-8 w-8 shrink-0">
-                                <AvatarFallback className="bg-slate-100 text-slate-600 text-xs font-medium">
-                                  {getInitials(nombre)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <p className="text-sm font-medium text-slate-900 leading-none">{nombre}</p>
-                                <p className="mt-0.5 text-[11px] text-slate-400 font-mono">
-                                  {p.id.slice(0, 8).toUpperCase()}
-                                </p>
-                              </div>
-                            </div>
-                          </TableCell>
-
-                          {/* Monto */}
-                          <TableCell>
-                            <span className="text-sm font-semibold text-slate-900">{fmt(p.monto_principal)}</span>
-                          </TableCell>
-
-                          {/* Próxima cuota */}
-                          <TableCell className="hidden sm:table-cell">
-                            {p.estado === "pagado" || p.estado === "cancelado" ? (
-                              <span className="text-sm text-slate-400">—</span>
-                            ) : p.proxima_cuota ? (
-                              <div>
-                                <p className={`text-sm ${p.estado === "en_mora" ? "text-rose-600 font-medium" : "text-slate-700"}`}>
-                                  {fmtDate(p.proxima_cuota.fecha_vencimiento)}
-                                </p>
-                                <p className="mt-0.5 text-[11px] text-slate-400">{fmt(p.proxima_cuota.monto_cuota)}</p>
-                              </div>
-                            ) : (
-                              <span className="text-sm text-slate-400">Sin cuotas</span>
-                            )}
-                          </TableCell>
-
-                          {/* Saldo pendiente */}
-                          <TableCell className="hidden md:table-cell">
-                            <span className="text-sm text-slate-600">{fmt(p.saldo_pendiente)}</span>
-                          </TableCell>
-
-                          {/* Estado */}
-                          <TableCell className="pr-6 text-right">
-                            <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium ${cfg.classes}`}>
-                              <Icon className="h-3 w-3" />
-                              {cfg.label}
-                            </span>
-                          </TableCell>
-                        </TableRow>
-                      )
-                    })}
-                  </TableBody>
-                </Table>
+                <PrestamosTable prestamos={prestamos} />
               )}
             </CardContent>
-
-            <div className="flex items-center justify-between border-t border-slate-50 px-6 py-3">
-              <p className="text-xs text-slate-400">
-                Mostrando {prestamos.length} préstamos más recientes
-              </p>
-            </div>
           </Card>
         </section>
 
