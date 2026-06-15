@@ -43,28 +43,35 @@ export default async function DashboardPage() {
     .limit(1)
 
   const activeMembership = memberships?.[0]
-  const hasValidMembership = activeMembership && !isPast(new Date(activeMembership.end_date))
+  const isSuperAdmin = profile?.role === "superadmin"
+  const hasValidMembership = isSuperAdmin || (activeMembership && !isPast(new Date(activeMembership.end_date)))
 
-  // Obtener acceso a portales
-  const { data: portalAccess } = await supabase
-    .from("user_portal_access")
-    .select(`
-      id,
-      portal_id,
-      portals (
+  // Superadmin ve todos los portales activos; usuarios normales solo los asignados
+  let accessiblePortals: any[] = []
+
+  if (isSuperAdmin) {
+    const { data: allPortals } = await supabase
+      .from("portals")
+      .select("id, name, slug, description, url, icon, color, is_active, created_at, updated_at")
+      .eq("is_active", true)
+      .order("name")
+    accessiblePortals = allPortals ?? []
+  } else {
+    const { data: portalAccess } = await supabase
+      .from("user_portal_access")
+      .select(`
         id,
-        name,
-        slug,
-        description,
-        is_active
-      )
-    `)
-    .eq("user_id", user.id)
+        portal_id,
+        portals (
+          id, name, slug, description, url, icon, color, is_active, created_at, updated_at
+        )
+      `)
+      .eq("user_id", user.id)
 
-  // Extraer los portales activos
-  const accessiblePortals = (portalAccess || [])
-    .map((pa: any) => pa.portals)
-    .filter((p: any) => p !== null && p !== undefined && p.is_active)
+    accessiblePortals = (portalAccess || [])
+      .map((pa: any) => pa.portals)
+      .filter((p: any) => p !== null && p !== undefined && p.is_active)
+  }
 
   // Calcular días restantes
   const daysRemaining = activeMembership
