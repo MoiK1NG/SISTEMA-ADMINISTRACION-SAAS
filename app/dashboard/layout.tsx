@@ -21,15 +21,16 @@ export default async function DashboardLayout({
     .single()
 
   if (!profile) {
-    redirect("/login")
-  }
-
-  if (!profile.is_approved) {
+    // No redirigir a /login: el middleware reenviaría a /dashboard → loop infinito.
+    // /pending es una página pública que corta el ciclo.
     redirect("/pending")
   }
 
-  if (!profile.is_active) {
-    redirect("/suspended")
+  const isSuperAdmin = profile.role === 'superadmin'
+
+  if (!isSuperAdmin) {
+    if (!profile.is_approved) redirect("/pending")
+    if (!profile.is_active) redirect("/suspended")
   }
 
   return (

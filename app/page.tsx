@@ -380,6 +380,7 @@ export default function Home() {
             <span className="text-sm font-bold text-slate-700">SaaS Admin</span>
           </div>
           <p className="text-sm text-slate-400">© {new Date().getFullYear()} · Todos los derechos reservados</p>
+
           <div className="flex items-center gap-4 text-sm text-slate-400">
             <Link href="/login" className="hover:text-slate-700 transition-colors">Iniciar sesión</Link>
             <Link href="/signup" className="hover:text-slate-700 transition-colors">Registrarse</Link>

@@ -104,16 +104,21 @@ export async function updateSession(request: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    if (profile && !profile.is_approved && pathname !== '/pending') {
-      const url = request.nextUrl.clone()
-      url.pathname = '/pending'
-      return NextResponse.redirect(url)
-    }
+    // Superadmin tiene acceso total — nunca se bloquea ni se redirige
+    const isSuperAdmin = profile?.role === 'superadmin'
 
-    if (profile && profile.is_approved && !profile.is_active && pathname !== '/suspended') {
-      const url = request.nextUrl.clone()
-      url.pathname = '/suspended'
-      return NextResponse.redirect(url)
+    if (!isSuperAdmin) {
+      if (profile && !profile.is_approved && pathname !== '/pending') {
+        const url = request.nextUrl.clone()
+        url.pathname = '/pending'
+        return NextResponse.redirect(url)
+      }
+
+      if (profile && profile.is_approved && !profile.is_active && pathname !== '/suspended') {
+        const url = request.nextUrl.clone()
+        url.pathname = '/suspended'
+        return NextResponse.redirect(url)
+      }
     }
 
     if (profile && profile.is_approved && profile.is_active && pathname === '/pending') {
@@ -130,10 +135,11 @@ export async function updateSession(request: NextRequest) {
 
     // =======================================================================
     // CAPA 3 – Acceso a portales  /portal/<slug>
+    // Superadmin salta esta verificación — accede a todos los portales
     // =======================================================================
     const portalMatch = pathname.match(PORTAL_ROUTE_RE)
 
-    if (portalMatch) {
+    if (portalMatch && !isSuperAdmin) {
       const slug = portalMatch[1]
 
       // 3a. Obtener el portal por slug y verificar que esté activo
@@ -160,16 +166,15 @@ export async function updateSession(request: NextRequest) {
       }
 
       // 3c. Verificar membresía activa y no expirada
-      //     Una sola query: is_active + rango de fechas en el servidor.
-      const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD
+      const today = new Date().toISOString().split('T')[0]
 
       const { data: membership } = await supabase
         .from('memberships')
         .select('id, end_date')
         .eq('user_id', user.id)
         .eq('is_active', true)
-        .lte('start_date', today)  // started on or before today
-        .gte('end_date', today)    // ends on or after today
+        .lte('start_date', today)
+        .gte('end_date', today)
         .maybeSingle()
 
       if (!membership) {
