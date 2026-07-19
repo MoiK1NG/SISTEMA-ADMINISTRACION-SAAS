@@ -18,7 +18,7 @@ function getInitials(name: string) {
   return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
 }
 
-export const ESTADO_COBRO: Record<EstadoCobro, { label: string; icon: any; classes: string }> = {
+const ESTADO_COBRO: Record<EstadoCobro, { label: string; icon: any; classes: string }> = {
   pendiente: { label: "Pendiente", icon: Clock,         classes: "bg-amber-50  text-amber-700  border-amber-200"    },
   parcial:   { label: "Parcial",   icon: TrendingDown,  classes: "bg-sky-50    text-sky-700    border-sky-200"      },
   pagado:    { label: "Pagado",    icon: CheckCircle2,  classes: "bg-emerald-50 text-emerald-700 border-emerald-200" },
