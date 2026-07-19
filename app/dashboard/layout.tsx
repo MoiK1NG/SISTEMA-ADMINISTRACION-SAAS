@@ -34,9 +34,9 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-muted/30">
+    <div className="min-h-screen bg-[#f8fafc]">
       <DashboardHeader profile={profile} />
-      <main className="container mx-auto px-4 py-6 lg:py-8">
+      <main className="container mx-auto px-4 py-7 lg:py-10 max-w-6xl">
         {children}
       </main>
     </div>

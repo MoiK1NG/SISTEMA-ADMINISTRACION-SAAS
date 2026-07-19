@@ -6,111 +6,67 @@ import { MembershipCard } from "@/components/dashboard/membership-card"
 import { PortalsGrid } from "@/components/dashboard/portals-grid"
 import { AccessExpiredCard } from "@/components/dashboard/access-expired-card"
 import { PortalAccessAlert } from "@/components/dashboard/portal-access-alert"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Sparkles, Shield, Clock } from "lucide-react"
+import { Shield, Grid3X3, CalendarDays, Layers } from "lucide-react"
 
 export default async function DashboardPage() {
   const supabase = await requireClient()
   const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect("/login")
-  }
+  if (!user) redirect("/login")
 
   const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single()
+    .from("profiles").select("*").eq("id", user.id).single()
 
-  // Obtener membresía activa
   const { data: memberships } = await supabase
     .from("memberships")
-    .select(`
-      *,
-      membership_plans (
-        id,
-        name,
-        description,
-        duration_days,
-        price
-      )
-    `)
-    .eq("user_id", user.id)
-    .eq("is_active", true)
-    .order("end_date", { ascending: false })
-    .limit(1)
+    .select("*, membership_plans(id, name, description, duration_days, price)")
+    .eq("user_id", user.id).eq("is_active", true)
+    .order("end_date", { ascending: false }).limit(1)
 
-  const activeMembership = memberships?.[0]
-  const isSuperAdmin = profile?.role === "superadmin"
+  const activeMembership  = memberships?.[0]
+  const isSuperAdmin      = profile?.role === "superadmin"
   const hasValidMembership = isSuperAdmin || (activeMembership && !isPast(new Date(activeMembership.end_date)))
 
-  // Superadmin ve todos los portales activos; usuarios normales solo los asignados
   let accessiblePortals: any[] = []
-
   if (isSuperAdmin) {
     const { data: allPortals } = await supabase
       .from("portals")
       .select("id, name, slug, description, url, icon, color, is_active, created_at, updated_at")
-      .eq("is_active", true)
-      .order("name")
+      .eq("is_active", true).order("name")
     accessiblePortals = allPortals ?? []
   } else {
     const { data: portalAccess } = await supabase
       .from("user_portal_access")
-      .select(`
-        id,
-        portal_id,
-        portals (
-          id, name, slug, description, url, icon, color, is_active, created_at, updated_at
-        )
-      `)
+      .select("id, portal_id, portals(id, name, slug, description, url, icon, color, is_active, created_at, updated_at)")
       .eq("user_id", user.id)
-
     accessiblePortals = (portalAccess || [])
       .map((pa: any) => pa.portals)
       .filter((p: any) => p !== null && p !== undefined && p.is_active)
   }
 
-  // Calcular días restantes
   const daysRemaining = activeMembership
     ? differenceInDays(new Date(activeMembership.end_date), new Date())
     : 0
 
-  // Saludo según la hora
-  const hour = new Date().getHours()
+  const hour     = new Date().getHours()
   const greeting = hour < 12 ? "Buenos días" : hour < 18 ? "Buenas tardes" : "Buenas noches"
+  const firstName = profile?.full_name?.split(" ")[0] ?? ""
 
   return (
     <div className="space-y-8">
-      {/* Suspense requerido por Next.js 15: useSearchParams() no puede
-          bloquear el render del Server Component padre */}
-      <Suspense fallback={null}>
-        <PortalAccessAlert />
-      </Suspense>
+      <Suspense fallback={null}><PortalAccessAlert /></Suspense>
 
-      {/* Header con saludo */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      {/* ── Hero saludo ─────────────────────────────────────────────────── */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            {greeting}{profile?.full_name ? `, ${profile.full_name.split(" ")[0]}` : ""}
+          <p className="text-sm text-slate-500 font-medium">{greeting}{firstName ? `, ${firstName}` : ""} 👋</p>
+          <h1 className="mt-0.5 text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+            Tu espacio de trabajo
           </h1>
-          <p className="text-muted-foreground">
-            Aquí tienes un resumen de tu cuenta y portales disponibles
-          </p>
         </div>
-
-        {hasValidMembership && (
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="gap-1.5 py-1.5 px-3">
-              <Shield className="h-3.5 w-3.5" />
-              {profile?.role === "superadmin"
-                ? "Super Admin"
-                : profile?.role === "admin"
-                ? "Admin"
-                : "Usuario"}
-            </Badge>
+        {isSuperAdmin && (
+          <div className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-2 text-sm font-semibold text-blue-700">
+            <Shield className="h-4 w-4" />
+            Super Admin
           </div>
         )}
       </div>
@@ -119,75 +75,64 @@ export default async function DashboardPage() {
         <AccessExpiredCard />
       ) : (
         <>
-          {/* Estadísticas rápidas */}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Card className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border-primary/20">
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/20">
-                    <Sparkles className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">{accessiblePortals.length}</p>
-                    <p className="text-sm text-muted-foreground">Portales Activos</p>
-                  </div>
+          {/* ── KPI strip ───────────────────────────────────────────────── */}
+          <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-3">
+            <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Portales</p>
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50">
+                  <Layers className="h-4 w-4 text-blue-600" />
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+              <p className="text-3xl font-black text-slate-900">{accessiblePortals.length}</p>
+              <p className="mt-0.5 text-xs text-slate-400">módulos activos</p>
+            </div>
 
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-500/20">
-                    <Clock className="h-5 w-5 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">
-                      {daysRemaining > 0 ? daysRemaining : 0}
-                    </p>
-                    <p className="text-sm text-muted-foreground">Días Restantes</p>
-                  </div>
+            <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Días</p>
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50">
+                  <CalendarDays className="h-4 w-4 text-emerald-600" />
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+              <p className="text-3xl font-black text-slate-900">{Math.max(0, daysRemaining)}</p>
+              <p className="mt-0.5 text-xs text-slate-400">restantes en plan</p>
+            </div>
 
-            <Card className="sm:col-span-2">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Plan Actual</p>
-                    <p className="text-xl font-semibold">
-                      {activeMembership?.membership_plans?.name || "Sin Plan"}
-                    </p>
-                  </div>
-                  <Badge
-                    variant={daysRemaining > 7 ? "success" : daysRemaining > 0 ? "warning" : "destructive"}
-                    className="text-sm"
-                  >
-                    {daysRemaining > 7 ? "Activo" : daysRemaining > 0 ? "Por Expirar" : "Expirado"}
-                  </Badge>
+            <div className="col-span-2 sm:col-span-1 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Plan</p>
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-50">
+                  <Grid3X3 className="h-4 w-4 text-purple-600" />
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Tarjeta de membresía */}
-          <MembershipCard
-            membership={activeMembership}
-            daysRemaining={daysRemaining}
-          />
-
-          {/* Grid de portales */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-xl font-semibold">Tus Portales</h2>
-                <p className="text-sm text-muted-foreground">
-                  Accede a tus herramientas empresariales
-                </p>
+              </div>
+              <p className="text-base font-bold text-slate-900 truncate">
+                {activeMembership?.membership_plans?.name || (isSuperAdmin ? "Super Admin" : "Sin plan")}
+              </p>
+              <div className="mt-1.5 flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <p className="text-xs text-emerald-600 font-medium">Activo</p>
               </div>
             </div>
-            <PortalsGrid portals={(accessiblePortals || []) as any} />
+          </div>
+
+          {/* ── Membresía ───────────────────────────────────────────────── */}
+          {activeMembership && !isSuperAdmin && (
+            <MembershipCard membership={activeMembership as any} daysRemaining={daysRemaining} />
+          )}
+
+          {/* ── Portales ────────────────────────────────────────────────── */}
+          <div>
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">Tus portales</h2>
+                <p className="text-sm text-slate-500">Accede a tus herramientas empresariales</p>
+              </div>
+              <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500">
+                {accessiblePortals.length} activos
+              </span>
+            </div>
+            <PortalsGrid portals={accessiblePortals as any} />
           </div>
         </>
       )}
