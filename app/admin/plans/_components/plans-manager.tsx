@@ -61,7 +61,7 @@ export function PlansManager({ plans }: { plans: Plan[] }) {
     })
   }
 
-  const fmt = (n: number) => new Intl.NumberFormat("es-DO", { style: "currency", currency: "DOP", minimumFractionDigits: 0 }).format(n)
+  const fmt = (n: number) => new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(n)
 
   return (
     <>
@@ -144,7 +144,7 @@ export function PlansManager({ plans }: { plans: Plan[] }) {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label>Precio (DOP)</Label>
+                <Label>Precio (COP)</Label>
                 <Input type="number" min="0" value={form.price} onChange={e => setForm(f => ({ ...f, price: Number(e.target.value) }))} />
               </div>
               <div className="space-y-1.5">

@@ -17,7 +17,7 @@ interface MenuItem  {
   menu_categorias: { nombre: string } | null
 }
 
-const fmt = (n: number) => new Intl.NumberFormat("es-DO", { style: "currency", currency: "DOP", minimumFractionDigits: 0 }).format(n)
+const fmt = (n: number) => new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(n)
 
 function ItemForm({ initial, categorias, onSave, onCancel, isPending }: {
   initial?: Partial<MenuItem>
@@ -44,7 +44,7 @@ function ItemForm({ initial, categorias, onSave, onCancel, isPending }: {
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
-          <Label>Precio (RD$)</Label>
+          <Label>Precio (COP)</Label>
           <Input type="number" min="0" step="0.01" value={precio} onChange={e => setPrecio(e.target.value)} />
         </div>
         <div className="space-y-1.5">

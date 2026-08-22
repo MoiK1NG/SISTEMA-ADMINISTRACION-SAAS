@@ -21,7 +21,7 @@ interface OrdenAbierta {
 }
 
 function fmt(n: number) {
-  return new Intl.NumberFormat("es-DO", { style: "currency", currency: "DOP", minimumFractionDigits: 0 }).format(n)
+  return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(n)
 }
 
 const ESTADO_MESA: Record<string, { label: string; bg: string; border: string; dot: string }> = {

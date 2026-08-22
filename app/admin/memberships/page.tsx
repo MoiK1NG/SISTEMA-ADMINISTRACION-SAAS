@@ -108,13 +108,13 @@ export default async function MembershipsPage() {
                       <td className="px-4 py-3 text-muted-foreground">
                         <div className="flex items-center gap-1.5">
                           <CalendarDays className="h-3.5 w-3.5" />
-                          {new Date(m.start_date).toLocaleDateString("es-DO")}
+                          {new Date(m.start_date).toLocaleDateString("es-CO")}
                         </div>
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">
                         <div className="flex items-center gap-1.5">
                           <CalendarDays className="h-3.5 w-3.5" />
-                          {new Date(m.end_date).toLocaleDateString("es-DO")}
+                          {new Date(m.end_date).toLocaleDateString("es-CO")}
                           {daysLeft >= 0 && daysLeft <= 30 && (
                             <span className="text-[10px] text-amber-600 font-medium">({daysLeft}d)</span>
                           )}
@@ -125,7 +125,7 @@ export default async function MembershipsPage() {
                       </td>
                       <td className="px-4 py-3 text-right font-semibold">
                         {m.membership_plans?.price
-                          ? new Intl.NumberFormat("es-DO", { style: "currency", currency: "DOP", minimumFractionDigits: 0 }).format(m.membership_plans.price)
+                          ? new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(m.membership_plans.price)
                           : "—"}
                       </td>
                     </tr>

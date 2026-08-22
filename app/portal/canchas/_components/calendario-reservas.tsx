@@ -41,7 +41,7 @@ function formatHora(h: number) {
 
 function formatFechaLabel(iso: string) {
   const d = new Date(iso + "T12:00:00")
-  return new Intl.DateTimeFormat("es-DO", { weekday: "long", day: "numeric", month: "long" }).format(d)
+  return new Intl.DateTimeFormat("es-CO", { weekday: "long", day: "numeric", month: "long" }).format(d)
 }
 
 function addDays(iso: string, n: number) {
@@ -51,7 +51,7 @@ function addDays(iso: string, n: number) {
 }
 
 function fmt(n: number) {
-  return new Intl.NumberFormat("es-DO", { style: "currency", currency: "DOP", minimumFractionDigits: 0 }).format(n)
+  return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(n)
 }
 
 function isHoy(iso: string) { return iso === new Date().toISOString().split("T")[0] }
@@ -522,7 +522,7 @@ function ModalNuevaReserva({
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="r-monto">Monto (DOP)</Label>
+          <Label htmlFor="r-monto">Monto (COP)</Label>
           <Input id="r-monto" name="monto" type="number" min="0" step="50" placeholder="1,500" required />
         </div>
 

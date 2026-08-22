@@ -60,7 +60,7 @@ export function AgregarItemButton({ ordenId, menuItems }: { ordenId: string; men
                 className={`w-full text-left px-3 py-2.5 text-sm flex items-center justify-between hover:bg-slate-50 transition-colors ${selected?.id === item.id ? "bg-red-50 font-medium text-red-700" : ""}`}
               >
                 <span>{item.nombre}</span>
-                <span className="text-slate-500">{new Intl.NumberFormat("es-DO",{style:"currency",currency:"DOP",minimumFractionDigits:0}).format(item.precio)}</span>
+                <span className="text-slate-500">{new Intl.NumberFormat("es-CO",{style:"currency",currency:"COP",minimumFractionDigits:0}).format(item.precio)}</span>
               </button>
             ))}
           </div>

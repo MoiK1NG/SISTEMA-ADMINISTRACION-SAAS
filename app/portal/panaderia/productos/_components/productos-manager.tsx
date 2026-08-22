@@ -19,7 +19,7 @@ const CATEGORIAS = ["pan", "pastel", "galleta", "hojaldre", "torta", "dulce", "b
 const UNIDADES   = ["unidad", "docena", "libra", "kg", "bandeja"]
 
 function fmt(n: number) {
-  return new Intl.NumberFormat("es-DO", { style: "currency", currency: "DOP", minimumFractionDigits: 0 }).format(n)
+  return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(n)
 }
 
 function ProductoForm({ initial, onSave, onCancel, isPending }: {
@@ -57,11 +57,11 @@ function ProductoForm({ initial, onSave, onCancel, isPending }: {
           </Select>
         </div>
         <div className="space-y-1.5">
-          <Label>Precio de venta (RD$)</Label>
+          <Label>Precio de venta (COP)</Label>
           <Input type="number" min="0" step="0.01" value={precio} onChange={e => setPrecio(e.target.value)} />
         </div>
         <div className="space-y-1.5">
-          <Label>Costo producción (RD$)</Label>
+          <Label>Costo producción (COP)</Label>
           <Input type="number" min="0" step="0.01" value={costo} onChange={e => setCosto(e.target.value)} />
         </div>
         {initial?.id && (

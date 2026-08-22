@@ -9,7 +9,7 @@ import { OrdenProduccionCard } from "./_components/orden-produccion-card"
 import { NuevaOrdenButton } from "./_components/nueva-orden-button"
 
 function fmtDate(iso: string) {
-  return new Intl.DateTimeFormat("es-DO", { weekday:"long", day:"2-digit", month:"long" }).format(new Date(iso + "T00:00:00"))
+  return new Intl.DateTimeFormat("es-CO", { weekday:"long", day:"2-digit", month:"long" }).format(new Date(iso + "T00:00:00"))
 }
 
 const ESTADO_ORDEN: Record<string, { label: string; variant: any }> = {

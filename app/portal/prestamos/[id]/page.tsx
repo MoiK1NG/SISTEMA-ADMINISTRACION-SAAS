@@ -53,11 +53,11 @@ interface Pago {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function fmt(n: number) {
-  return new Intl.NumberFormat("es-DO", { style: "currency", currency: "DOP", minimumFractionDigits: 0 }).format(n)
+  return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(n)
 }
 
 function fmtDate(iso: string) {
-  return new Intl.DateTimeFormat("es-DO", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(iso))
+  return new Intl.DateTimeFormat("es-CO", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(iso))
 }
 
 function getInitials(name: string) {
@@ -453,7 +453,7 @@ export default async function PrestamoDetailPage({
                       <TableCell className="pl-6">
                         <p className="text-sm text-slate-900">{fmtDate(p.fecha)}</p>
                         <p className="text-[10px] text-slate-400 font-mono">
-                          {new Date(p.created_at).toLocaleTimeString("es-DO", { hour: "2-digit", minute: "2-digit" })}
+                          {new Date(p.created_at).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })}
                         </p>
                       </TableCell>
                       <TableCell>

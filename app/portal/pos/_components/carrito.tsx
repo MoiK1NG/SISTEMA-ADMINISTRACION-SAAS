@@ -3,7 +3,7 @@
 import { Plus, Minus, Trash2, ShoppingBag, Receipt } from "lucide-react"
 import type { ItemCarrito } from "../types"
 
-const IMPUESTO = 0.18   // ITBIS 18%
+const IMPUESTO = 0.19   // IVA 19%
 
 interface Props {
   items:      ItemCarrito[]
@@ -15,8 +15,8 @@ interface Props {
 }
 
 function fmt(n: number) {
-  return new Intl.NumberFormat("es-DO", {
-    style: "currency", currency: "DOP", minimumFractionDigits: 2,
+  return new Intl.NumberFormat("es-CO", {
+    style: "currency", currency: "COP", minimumFractionDigits: 0,
   }).format(n)
 }
 
@@ -121,7 +121,7 @@ export function Carrito({ items, onSumar, onRestar, onEliminar, onCobrar, onLimp
             <span className="font-medium text-slate-700">{fmt(subtotal)}</span>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-slate-500">ITBIS (18%)</span>
+            <span className="text-slate-500">IVA (19%)</span>
             <span className="font-medium text-slate-700">{fmt(impuesto)}</span>
           </div>
           <div className="h-px bg-slate-100" />

@@ -21,7 +21,7 @@ export function CerrarOrdenButton({ ordenId, total, fullWidth }: Props) {
   const [metodo, setMetodo] = useState("efectivo")
   const [isPending, start]  = useTransition()
   const [error, setError]   = useState<string | null>(null)
-  const fmt = (n: number) => new Intl.NumberFormat("es-DO",{style:"currency",currency:"DOP",minimumFractionDigits:0}).format(n)
+  const fmt = (n: number) => new Intl.NumberFormat("es-CO",{style:"currency",currency:"COP",minimumFractionDigits:0}).format(n)
 
   function handleCerrar() {
     setError(null)

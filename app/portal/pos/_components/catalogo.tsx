@@ -128,7 +128,7 @@ export function Catalogo({ productos, carrito, onAgregar }: Props) {
 }
 
 function fmt(n: number) {
-  return new Intl.NumberFormat("es-DO", {
-    style: "currency", currency: "DOP", minimumFractionDigits: 0,
+  return new Intl.NumberFormat("es-CO", {
+    style: "currency", currency: "COP", minimumFractionDigits: 0,
   }).format(n)
 }

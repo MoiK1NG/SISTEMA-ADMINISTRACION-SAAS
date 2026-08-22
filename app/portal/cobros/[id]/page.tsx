@@ -9,10 +9,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { PagarCobroButton } from "../_components/pagar-cobro-button"
 
 function fmt(n: number) {
-  return new Intl.NumberFormat("es-DO",{ style:"currency",currency:"DOP",minimumFractionDigits:0 }).format(n)
+  return new Intl.NumberFormat("es-CO",{ style:"currency",currency:"COP",minimumFractionDigits:0 }).format(n)
 }
 function fmtDate(iso: string) {
-  return new Intl.DateTimeFormat("es-DO",{ day:"2-digit",month:"short",year:"numeric" }).format(new Date(iso))
+  return new Intl.DateTimeFormat("es-CO",{ day:"2-digit",month:"short",year:"numeric" }).format(new Date(iso))
 }
 function getInitials(name: string) {
   return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0,2)

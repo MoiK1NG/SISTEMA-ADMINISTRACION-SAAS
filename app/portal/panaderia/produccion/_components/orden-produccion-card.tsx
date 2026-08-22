@@ -36,7 +36,7 @@ const NEXT_ESTADO: Record<string, string | null> = {
 }
 
 function fmtDate(iso: string) {
-  return new Intl.DateTimeFormat("es-DO", { weekday: "short", day: "2-digit", month: "short" }).format(new Date(iso + "T00:00:00"))
+  return new Intl.DateTimeFormat("es-CO", { weekday: "short", day: "2-digit", month: "short" }).format(new Date(iso + "T00:00:00"))
 }
 
 export function OrdenProduccionCard({ orden }: { orden: OrdenProduccion }) {

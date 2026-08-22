@@ -97,7 +97,7 @@ export default async function PosPage() {
           {/* Centro: fecha y hora */}
           <div className="hidden md:block text-center">
             <p className="text-sm font-semibold text-slate-700">
-              {new Intl.DateTimeFormat("es-DO", {
+              {new Intl.DateTimeFormat("es-CO", {
                 weekday: "long", day: "numeric", month: "long"
               }).format(new Date())}
             </p>

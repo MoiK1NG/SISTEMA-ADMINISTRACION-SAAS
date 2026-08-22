@@ -44,16 +44,16 @@ interface KpiAgente {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function fmt(amount: number) {
-  return new Intl.NumberFormat("es-DO", {
+  return new Intl.NumberFormat("es-CO", {
     style: "currency",
-    currency: "DOP",
+    currency: "COP",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount)
 }
 
 function fmtDate(iso: string) {
-  return new Intl.DateTimeFormat("es-DO", {
+  return new Intl.DateTimeFormat("es-CO", {
     day: "2-digit",
     month: "short",
     year: "numeric",

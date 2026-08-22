@@ -16,8 +16,8 @@ const METODOS: { id: MetodoPago; label: string; icon: React.ElementType }[] = [
 ]
 
 function fmt(n: number) {
-  return new Intl.NumberFormat("es-DO", {
-    style: "currency", currency: "DOP", minimumFractionDigits: 2,
+  return new Intl.NumberFormat("es-CO", {
+    style: "currency", currency: "COP", minimumFractionDigits: 0,
   }).format(n)
 }
 
@@ -81,7 +81,7 @@ export function ModalCobro({ open, items, onClose, onConfirmar }: Props) {
               <div className="rounded-2xl bg-slate-50 p-4 text-center">
                 <p className="text-xs text-slate-500 mb-1">Total a cobrar</p>
                 <p className="text-4xl font-black text-slate-900">{fmt(total)}</p>
-                <p className="text-xs text-slate-400 mt-1">Incluye ITBIS {fmt(impuesto)}</p>
+                <p className="text-xs text-slate-400 mt-1">Incluye IVA {fmt(impuesto)}</p>
               </div>
 
               {/* Método de pago */}

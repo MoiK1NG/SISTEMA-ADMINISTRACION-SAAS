@@ -44,7 +44,7 @@ export function DashboardHeader({ profile }: DashboardHeaderProps) {
             <Building2 className="h-4 w-4 text-white" />
           </div>
           <div className="hidden sm:block">
-            <span className="text-sm font-bold text-slate-900 tracking-tight">5Minutos</span>
+            <span className="text-sm font-bold text-slate-900 tracking-tight">SaaS Admin</span>
             <span className="ml-1.5 text-[10px] font-medium text-slate-400 uppercase tracking-widest hidden md:inline">Sistema</span>
           </div>
         </Link>

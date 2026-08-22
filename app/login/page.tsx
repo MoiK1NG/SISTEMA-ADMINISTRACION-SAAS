@@ -49,37 +49,34 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex">
       {/* ── Panel izquierdo — identidad de marca ──────────────────────────── */}
-      <div className="hidden lg:flex lg:w-[52%] flex-col justify-between relative overflow-hidden bg-gradient-to-br from-[#0f172a] via-[#1e3a5f] to-[#1d4ed8] p-12 text-white">
-        {/* Círculos decorativos */}
-        <div className="absolute -top-32 -right-32 h-96 w-96 rounded-full bg-blue-500/10 blur-3xl" />
-        <div className="absolute -bottom-40 -left-20 h-80 w-80 rounded-full bg-indigo-600/20 blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[600px] w-[600px] rounded-full bg-blue-600/5 border border-blue-400/10" />
+      <div className="hidden lg:flex lg:w-[52%] flex-col justify-between relative overflow-hidden bg-slate-50 border-r border-slate-100 p-12">
+        {/* Manchas decorativas suaves */}
+        <div className="absolute -top-32 -right-32 h-96 w-96 rounded-full bg-blue-100/60 blur-3xl" />
+        <div className="absolute -bottom-40 -left-20 h-80 w-80 rounded-full bg-sky-100/50 blur-3xl" />
 
         {/* Logo */}
         <div className="relative z-10 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 backdrop-blur-sm border border-white/20">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 shadow-sm shadow-blue-600/25">
             <Building2 className="h-5 w-5 text-white" />
           </div>
           <div>
-            <p className="text-base font-bold tracking-tight">5Minutos</p>
-            <p className="text-[11px] text-blue-200/80 uppercase tracking-widest">Sistema Empresarial</p>
+            <p className="text-base font-bold tracking-tight text-slate-900">SaaS Admin</p>
+            <p className="text-[11px] text-slate-400 uppercase tracking-widest">Sistema Empresarial</p>
           </div>
         </div>
 
         {/* Mensaje central */}
         <div className="relative z-10 space-y-8">
           <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 rounded-full border border-blue-400/30 bg-blue-500/10 px-3 py-1.5 text-xs font-medium text-blue-200">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
               Plataforma multi-portal activa
             </div>
-            <h1 className="text-4xl font-black leading-tight tracking-tight">
+            <h1 className="text-4xl font-black leading-tight tracking-tight text-slate-900">
               Gestiona tu negocio<br />
-              <span className="bg-gradient-to-r from-blue-300 to-cyan-300 bg-clip-text text-transparent">
-                sin complicaciones
-              </span>
+              <span className="text-blue-600">sin complicaciones</span>
             </h1>
-            <p className="text-base text-blue-100/70 leading-relaxed max-w-sm">
+            <p className="text-base text-slate-500 leading-relaxed max-w-sm">
               Un sistema completo para préstamos, cobros, restaurantes, panaderías y más.
             </p>
           </div>
@@ -87,10 +84,10 @@ export default function LoginPage() {
           <ul className="space-y-3">
             {FEATURES.map(({ icon: Icon, text }) => (
               <li key={text} className="flex items-center gap-3">
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/10 border border-white/10">
-                  <Icon className="h-3.5 w-3.5 text-blue-300" />
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white border border-slate-200 shadow-sm">
+                  <Icon className="h-3.5 w-3.5 text-blue-600" />
                 </div>
-                <span className="text-sm text-blue-100/80">{text}</span>
+                <span className="text-sm text-slate-600">{text}</span>
               </li>
             ))}
           </ul>
@@ -98,8 +95,8 @@ export default function LoginPage() {
 
         {/* Footer */}
         <div className="relative z-10">
-          <p className="text-xs text-blue-300/50">
-            © {new Date().getFullYear()} 5Minutos · Todos los derechos reservados
+          <p className="text-xs text-slate-400">
+            © {new Date().getFullYear()} SaaS Admin · Todos los derechos reservados
           </p>
         </div>
       </div>
@@ -111,7 +108,7 @@ export default function LoginPage() {
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600">
             <Building2 className="h-4.5 w-4.5 text-white" />
           </div>
-          <span className="text-lg font-bold text-slate-900">5Minutos</span>
+          <span className="text-lg font-bold text-slate-900">SaaS Admin</span>
         </div>
 
         <div className="w-full max-w-sm space-y-8">

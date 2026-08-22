@@ -47,12 +47,12 @@ export function PagarCobroButton({ cobroId, saldoPendiente }: Props) {
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle>Registrar pago</DialogTitle>
-          <DialogDescription>Saldo pendiente: <strong>{new Intl.NumberFormat("es-DO",{style:"currency",currency:"DOP",minimumFractionDigits:0}).format(saldoPendiente)}</strong></DialogDescription>
+          <DialogDescription>Saldo pendiente: <strong>{new Intl.NumberFormat("es-CO",{style:"currency",currency:"COP",minimumFractionDigits:0}).format(saldoPendiente)}</strong></DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="mt-2 space-y-4">
           {error && <p className="rounded-md bg-rose-50 border border-rose-200 px-3 py-2 text-xs text-rose-700">{error}</p>}
           <div className="space-y-1.5">
-            <Label htmlFor="monto">Monto (DOP)</Label>
+            <Label htmlFor="monto">Monto (COP)</Label>
             <div className="relative">
               <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input id="monto" name="monto" type="number" min="1" step="0.01" defaultValue={saldoPendiente} className="pl-9" required />

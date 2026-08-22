@@ -16,7 +16,7 @@ interface Insumo {
 }
 
 const UNIDADES = ["kg", "libra", "g", "litro", "ml", "unidad", "bolsa", "caja", "galón"]
-const fmt = (n: number) => new Intl.NumberFormat("es-DO", { style: "currency", currency: "DOP", minimumFractionDigits: 0 }).format(n)
+const fmt = (n: number) => new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(n)
 
 function NuevoInsumoButton({ isPending, onCreate }: { isPending: boolean; onCreate: (d: any) => void }) {
   const [open, setOpen]  = useState(false)

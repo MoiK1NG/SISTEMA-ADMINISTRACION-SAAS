@@ -21,7 +21,7 @@ export function NuevaVentaButton({ productos }: { productos: Producto[] }) {
   const today = new Date().toISOString().split("T")[0]
   const [fecha, setFecha]  = useState(today)
 
-  const fmt = (n: number) => new Intl.NumberFormat("es-DO", { style: "currency", currency: "DOP", minimumFractionDigits: 0 }).format(n)
+  const fmt = (n: number) => new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(n)
 
   function setQty(id: string, q: number) {
     setQtys(prev => {

@@ -68,35 +68,33 @@ export default function SignupPage() {
   return (
     <div className="min-h-screen flex">
       {/* ── Panel izquierdo ──────────────────────────────────────────────── */}
-      <div className="hidden lg:flex lg:w-[52%] flex-col justify-between relative overflow-hidden bg-gradient-to-br from-[#0f172a] via-[#1e3a5f] to-[#1d4ed8] p-12 text-white">
-        <div className="absolute -top-32 -right-32 h-96 w-96 rounded-full bg-blue-500/10 blur-3xl" />
-        <div className="absolute -bottom-40 -left-20 h-80 w-80 rounded-full bg-indigo-600/20 blur-3xl" />
+      <div className="hidden lg:flex lg:w-[52%] flex-col justify-between relative overflow-hidden bg-slate-50 border-r border-slate-100 p-12">
+        <div className="absolute -top-32 -right-32 h-96 w-96 rounded-full bg-blue-100/60 blur-3xl" />
+        <div className="absolute -bottom-40 -left-20 h-80 w-80 rounded-full bg-sky-100/50 blur-3xl" />
 
         {/* Logo */}
         <div className="relative z-10 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 backdrop-blur-sm border border-white/20">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 shadow-sm shadow-blue-600/25">
             <Building2 className="h-5 w-5 text-white" />
           </div>
           <div>
-            <p className="text-base font-bold tracking-tight">5Minutos</p>
-            <p className="text-[11px] text-blue-200/80 uppercase tracking-widest">Sistema Empresarial</p>
+            <p className="text-base font-bold tracking-tight text-slate-900">SaaS Admin</p>
+            <p className="text-[11px] text-slate-400 uppercase tracking-widest">Sistema Empresarial</p>
           </div>
         </div>
 
         {/* Contenido central */}
         <div className="relative z-10 space-y-8">
           <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 rounded-full border border-blue-400/30 bg-blue-500/10 px-3 py-1.5 text-xs font-medium text-blue-200">
+            <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700">
               <Sparkles className="h-3 w-3" />
               Empieza gratis hoy
             </div>
-            <h1 className="text-4xl font-black leading-tight tracking-tight">
+            <h1 className="text-4xl font-black leading-tight tracking-tight text-slate-900">
               Tu negocio en orden,<br />
-              <span className="bg-gradient-to-r from-blue-300 to-cyan-300 bg-clip-text text-transparent">
-                desde el primer día
-              </span>
+              <span className="text-blue-600">desde el primer día</span>
             </h1>
-            <p className="text-base text-blue-100/70 leading-relaxed max-w-sm">
+            <p className="text-base text-slate-500 leading-relaxed max-w-sm">
               Crea tu cuenta y accede a herramientas diseñadas para pequeños emprendedores.
             </p>
           </div>
@@ -104,17 +102,17 @@ export default function SignupPage() {
           <ul className="space-y-3">
             {PERKS.map(({ icon: Icon, text }) => (
               <li key={text} className="flex items-center gap-3">
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/10 border border-white/10">
-                  <Icon className="h-3.5 w-3.5 text-blue-300" />
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white border border-slate-200 shadow-sm">
+                  <Icon className="h-3.5 w-3.5 text-blue-600" />
                 </div>
-                <span className="text-sm text-blue-100/80">{text}</span>
+                <span className="text-sm text-slate-600">{text}</span>
               </li>
             ))}
           </ul>
         </div>
 
-        <p className="relative z-10 text-xs text-blue-300/50">
-          © {new Date().getFullYear()} 5Minutos · Todos los derechos reservados
+        <p className="relative z-10 text-xs text-slate-400">
+          © {new Date().getFullYear()} SaaS Admin · Todos los derechos reservados
         </p>
       </div>
 
@@ -125,7 +123,7 @@ export default function SignupPage() {
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600">
             <Building2 className="h-4 w-4 text-white" />
           </div>
-          <span className="text-lg font-bold text-slate-900">5Minutos</span>
+          <span className="text-lg font-bold text-slate-900">SaaS Admin</span>
         </div>
 
         <div className="w-full max-w-sm space-y-8">

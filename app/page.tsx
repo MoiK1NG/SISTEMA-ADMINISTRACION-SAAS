@@ -29,7 +29,7 @@ const PORTALES = [
     icon: UtensilsCrossed,
     color: "#F59E0B",
     name: "Punto de Venta",
-    desc: "POS táctil optimizado para tablets. Catálogo por categorías, carrito inteligente, múltiples métodos de pago e ITBIS automático.",
+    desc: "POS táctil optimizado para tablets. Catálogo por categorías, carrito inteligente, múltiples métodos de pago e IVA automático.",
     tags: ["Restaurantes", "Panaderías", "Cafeterías"],
   },
   {
@@ -239,10 +239,10 @@ export default function Home() {
               </h2>
               <p className="mt-4 text-slate-500 leading-relaxed">
                 Interfaz táctil optimizada para restaurantes y panaderías. Catálogo con búsqueda,
-                categorías, carrito con ITBIS automático y 3 métodos de cobro.
+                categorías, carrito con IVA automático y 3 métodos de cobro.
               </p>
               <ul className="mt-6 space-y-3">
-                {["Catálogo visual con emojis y badges de cantidad", "ITBIS 18% calculado automáticamente", "Efectivo con cálculo de vuelto instantáneo", "Tarjeta y transferencia integrados"].map(item => (
+                {["Catálogo visual con emojis y badges de cantidad", "IVA 19% calculado automáticamente", "Efectivo con cálculo de vuelto instantáneo", "Tarjeta y transferencia integrados"].map(item => (
                   <li key={item} className="flex items-start gap-2.5 text-sm text-slate-600">
                     <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" style={{ color: "#f59e0b" }} />
                     {item}
@@ -265,12 +265,12 @@ export default function Home() {
                 </div>
                 <div className="grid grid-cols-3 gap-2 p-4">
                   {[
-                    { e: "🍞", n: "Pan sobao", p: "RD$30" },
-                    { e: "☕", n: "Café", p: "RD$75" },
-                    { e: "🥐", n: "Croissant", p: "RD$95" },
-                    { e: "🍩", n: "Donut", p: "RD$75" },
-                    { e: "🥪", n: "Sandwich", p: "RD$140" },
-                    { e: "🍕", n: "Pizza", p: "RD$220" },
+                    { e: "🍞", n: "Almojábana", p: "$2.500" },
+                    { e: "☕", n: "Café", p: "$3.000" },
+                    { e: "🥐", n: "Croissant", p: "$4.500" },
+                    { e: "🍩", n: "Buñuelo", p: "$1.800" },
+                    { e: "🥪", n: "Sandwich", p: "$8.500" },
+                    { e: "🍕", n: "Pizza", p: "$12.000" },
                   ].map(pr => (
                     <div key={pr.n} className="rounded-xl border border-slate-100 p-2.5 text-center">
                       <div className="text-2xl mb-1">{pr.e}</div>
@@ -282,7 +282,7 @@ export default function Home() {
                 <div className="border-t border-slate-100 px-4 py-3 flex items-center justify-between" style={{ background: "#f8fafc" }}>
                   <div>
                     <p className="text-[10px] text-slate-400">Total</p>
-                    <p className="text-lg font-black text-slate-900">RD$248.50</p>
+                    <p className="text-lg font-black text-slate-900">$24.800</p>
                   </div>
                   <div className="rounded-xl px-4 py-2 text-sm font-bold text-white" style={{ background: "#10b981" }}>
                     💳 Cobrar
