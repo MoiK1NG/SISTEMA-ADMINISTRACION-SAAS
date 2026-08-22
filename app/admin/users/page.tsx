@@ -31,7 +31,7 @@ export default async function UsersPage() {
     .order("created_at", { ascending: false })
 
   const { data: plans } = await supabase!
-    .from("plans")
+    .from("membership_plans")
     .select("*")
 
   const { data: portals } = await supabase!

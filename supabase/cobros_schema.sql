@@ -46,20 +46,30 @@ CREATE INDEX IF NOT EXISTS idx_cobros_estado          ON public.cobros(estado);
 CREATE INDEX IF NOT EXISTS idx_pagos_cobro_cobro_id   ON public.pagos_cobro(cobro_id);
 
 -- ── Función: aplicar pago ─────────────────────────────────────────────────────
+-- SECURITY DEFINER salta la RLS, por eso verifica que el cobro pertenezca al
+-- agente autenticado antes de tocar nada (mismo patrón que registrar_pago).
 CREATE OR REPLACE FUNCTION public.aplicar_pago_cobro(
   p_cobro_id  UUID,
   p_monto     NUMERIC,
   p_fecha     DATE DEFAULT CURRENT_DATE,
   p_nota      TEXT DEFAULT NULL
 ) RETURNS UUID
-LANGUAGE plpgsql SECURITY DEFINER AS $$
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_cobro        RECORD;
   v_nuevo_pagado NUMERIC;
   v_pago_id      UUID;
 BEGIN
-  SELECT * INTO v_cobro FROM public.cobros WHERE id = p_cobro_id FOR UPDATE;
-  IF NOT FOUND THEN RAISE EXCEPTION 'Cobro no encontrado'; END IF;
+  IF p_monto IS NULL OR p_monto <= 0 THEN
+    RAISE EXCEPTION 'El monto debe ser mayor a cero';
+  END IF;
+
+  SELECT * INTO v_cobro FROM public.cobros
+  WHERE id = p_cobro_id AND agente_id = auth.uid()
+  FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'Unauthorized'; END IF;
   IF v_cobro.estado IN ('pagado','cancelado') THEN
     RAISE EXCEPTION 'El cobro ya está % ', v_cobro.estado;
   END IF;
@@ -83,8 +93,13 @@ BEGIN
 END;
 $$;
 
+REVOKE ALL ON FUNCTION public.aplicar_pago_cobro(UUID, NUMERIC, DATE, TEXT) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.aplicar_pago_cobro(UUID, NUMERIC, DATE, TEXT) TO authenticated;
+
 -- ── Vista KPIs ────────────────────────────────────────────────────────────────
-CREATE OR REPLACE VIEW public.kpis_cobros AS
+-- security_invoker: la vista respeta la RLS de `cobros` del usuario que consulta
+CREATE OR REPLACE VIEW public.kpis_cobros
+WITH (security_invoker = true) AS
 SELECT
   agente_id,
   COUNT(*)                                          AS total_cobros,
@@ -95,6 +110,8 @@ SELECT
   COALESCE(SUM(saldo_pendiente) FILTER (WHERE estado = 'vencido'), 0) AS monto_vencido
 FROM public.cobros
 GROUP BY agente_id;
+
+REVOKE ALL ON public.kpis_cobros FROM anon;
 
 -- ── Trigger: marcar vencidos ──────────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION public.marcar_cobros_vencidos()
@@ -117,9 +134,22 @@ ALTER TABLE public.clientes_cobro ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cobros          ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.pagos_cobro     ENABLE ROW LEVEL SECURITY;
 
+-- Requiere public.is_admin() (definida en security_fixes.sql).
+-- Admin/superadmin ven y gestionan los datos de todos los agentes.
+DROP POLICY IF EXISTS "agente_own_clientes_cobro" ON public.clientes_cobro;
 CREATE POLICY "agente_own_clientes_cobro" ON public.clientes_cobro
-  USING (agente_id = auth.uid());
+  FOR ALL TO authenticated
+  USING      (agente_id = auth.uid() OR public.is_admin())
+  WITH CHECK (agente_id = auth.uid() OR public.is_admin());
+
+DROP POLICY IF EXISTS "agente_own_cobros" ON public.cobros;
 CREATE POLICY "agente_own_cobros" ON public.cobros
-  USING (agente_id = auth.uid());
+  FOR ALL TO authenticated
+  USING      (agente_id = auth.uid() OR public.is_admin())
+  WITH CHECK (agente_id = auth.uid() OR public.is_admin());
+
+DROP POLICY IF EXISTS "agente_own_pagos_cobro" ON public.pagos_cobro;
 CREATE POLICY "agente_own_pagos_cobro" ON public.pagos_cobro
-  USING (agente_id = auth.uid());
+  FOR ALL TO authenticated
+  USING      (agente_id = auth.uid() OR public.is_admin())
+  WITH CHECK (agente_id = auth.uid() OR public.is_admin());

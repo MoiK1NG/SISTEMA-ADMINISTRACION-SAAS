@@ -93,7 +93,9 @@ CREATE EXTENSION IF NOT EXISTS btree_gist;
 -- =============================================================================
 -- 5. VISTA: kpis_canchas_agente
 -- =============================================================================
-CREATE OR REPLACE VIEW public.kpis_canchas_agente AS
+-- security_invoker: la vista respeta la RLS de `reservas` del usuario que consulta
+CREATE OR REPLACE VIEW public.kpis_canchas_agente
+WITH (security_invoker = true) AS
 SELECT
   r.agente_id,
   r.fecha,
@@ -108,6 +110,8 @@ SELECT
 FROM public.reservas r
 WHERE r.estado != 'cancelada'
 GROUP BY r.agente_id, r.fecha;
+
+REVOKE ALL ON public.kpis_canchas_agente FROM anon;
 
 
 -- =============================================================================

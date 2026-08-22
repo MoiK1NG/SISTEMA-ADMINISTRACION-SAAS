@@ -122,10 +122,58 @@ ALTER TABLE public.ventas_pan          ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.items_venta_pan     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.movimientos_insumos ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "agente_own_productos_pan"      ON public.productos_pan      USING (agente_id = auth.uid());
-CREATE POLICY "agente_own_insumos_pan"        ON public.insumos_pan        USING (agente_id = auth.uid());
-CREATE POLICY "agente_own_ordenes_prod"       ON public.ordenes_produccion USING (agente_id = auth.uid());
-CREATE POLICY "agente_own_items_prod"         ON public.items_produccion   USING (EXISTS (SELECT 1 FROM public.ordenes_produccion o WHERE o.id = orden_id AND o.agente_id = auth.uid()));
-CREATE POLICY "agente_own_ventas_pan"         ON public.ventas_pan         USING (agente_id = auth.uid());
-CREATE POLICY "agente_own_items_venta_pan"    ON public.items_venta_pan    USING (EXISTS (SELECT 1 FROM public.ventas_pan v WHERE v.id = venta_id AND v.agente_id = auth.uid()));
-CREATE POLICY "agente_own_movimientos_ins"    ON public.movimientos_insumos USING (agente_id = auth.uid());
+-- Requiere public.is_admin() (definida en security_fixes.sql).
+-- Admin/superadmin ven y gestionan los datos de todos los agentes.
+DROP POLICY IF EXISTS "agente_own_productos_pan" ON public.productos_pan;
+CREATE POLICY "agente_own_productos_pan" ON public.productos_pan
+  FOR ALL TO authenticated
+  USING      (agente_id = auth.uid() OR public.is_admin())
+  WITH CHECK (agente_id = auth.uid() OR public.is_admin());
+
+DROP POLICY IF EXISTS "agente_own_insumos_pan" ON public.insumos_pan;
+CREATE POLICY "agente_own_insumos_pan" ON public.insumos_pan
+  FOR ALL TO authenticated
+  USING      (agente_id = auth.uid() OR public.is_admin())
+  WITH CHECK (agente_id = auth.uid() OR public.is_admin());
+
+DROP POLICY IF EXISTS "agente_own_ordenes_prod" ON public.ordenes_produccion;
+CREATE POLICY "agente_own_ordenes_prod" ON public.ordenes_produccion
+  FOR ALL TO authenticated
+  USING      (agente_id = auth.uid() OR public.is_admin())
+  WITH CHECK (agente_id = auth.uid() OR public.is_admin());
+
+DROP POLICY IF EXISTS "agente_own_items_prod" ON public.items_produccion;
+CREATE POLICY "agente_own_items_prod" ON public.items_produccion
+  FOR ALL TO authenticated
+  USING (
+    EXISTS (SELECT 1 FROM public.ordenes_produccion o WHERE o.id = orden_id AND o.agente_id = auth.uid())
+    OR public.is_admin()
+  )
+  WITH CHECK (
+    EXISTS (SELECT 1 FROM public.ordenes_produccion o WHERE o.id = orden_id AND o.agente_id = auth.uid())
+    OR public.is_admin()
+  );
+
+DROP POLICY IF EXISTS "agente_own_ventas_pan" ON public.ventas_pan;
+CREATE POLICY "agente_own_ventas_pan" ON public.ventas_pan
+  FOR ALL TO authenticated
+  USING      (agente_id = auth.uid() OR public.is_admin())
+  WITH CHECK (agente_id = auth.uid() OR public.is_admin());
+
+DROP POLICY IF EXISTS "agente_own_items_venta_pan" ON public.items_venta_pan;
+CREATE POLICY "agente_own_items_venta_pan" ON public.items_venta_pan
+  FOR ALL TO authenticated
+  USING (
+    EXISTS (SELECT 1 FROM public.ventas_pan v WHERE v.id = venta_id AND v.agente_id = auth.uid())
+    OR public.is_admin()
+  )
+  WITH CHECK (
+    EXISTS (SELECT 1 FROM public.ventas_pan v WHERE v.id = venta_id AND v.agente_id = auth.uid())
+    OR public.is_admin()
+  );
+
+DROP POLICY IF EXISTS "agente_own_movimientos_ins" ON public.movimientos_insumos;
+CREATE POLICY "agente_own_movimientos_ins" ON public.movimientos_insumos
+  FOR ALL TO authenticated
+  USING      (agente_id = auth.uid() OR public.is_admin())
+  WITH CHECK (agente_id = auth.uid() OR public.is_admin());

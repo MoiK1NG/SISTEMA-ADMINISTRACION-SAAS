@@ -112,9 +112,46 @@ ALTER TABLE public.ordenes_rest      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.items_orden_rest  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.pagos_rest        ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "agente_own_mesas"           ON public.mesas_rest        USING (agente_id = auth.uid());
-CREATE POLICY "agente_own_menu_cat"        ON public.menu_categorias   USING (agente_id = auth.uid());
-CREATE POLICY "agente_own_menu_items"      ON public.menu_items_rest   USING (agente_id = auth.uid());
-CREATE POLICY "agente_own_ordenes_rest"    ON public.ordenes_rest      USING (agente_id = auth.uid());
-CREATE POLICY "agente_own_items_orden"     ON public.items_orden_rest  USING (EXISTS (SELECT 1 FROM public.ordenes_rest o WHERE o.id = orden_id AND o.agente_id = auth.uid()));
-CREATE POLICY "agente_own_pagos_rest"      ON public.pagos_rest        USING (agente_id = auth.uid());
+-- Requiere public.is_admin() (definida en security_fixes.sql).
+-- Admin/superadmin ven y gestionan los datos de todos los agentes.
+DROP POLICY IF EXISTS "agente_own_mesas" ON public.mesas_rest;
+CREATE POLICY "agente_own_mesas" ON public.mesas_rest
+  FOR ALL TO authenticated
+  USING      (agente_id = auth.uid() OR public.is_admin())
+  WITH CHECK (agente_id = auth.uid() OR public.is_admin());
+
+DROP POLICY IF EXISTS "agente_own_menu_cat" ON public.menu_categorias;
+CREATE POLICY "agente_own_menu_cat" ON public.menu_categorias
+  FOR ALL TO authenticated
+  USING      (agente_id = auth.uid() OR public.is_admin())
+  WITH CHECK (agente_id = auth.uid() OR public.is_admin());
+
+DROP POLICY IF EXISTS "agente_own_menu_items" ON public.menu_items_rest;
+CREATE POLICY "agente_own_menu_items" ON public.menu_items_rest
+  FOR ALL TO authenticated
+  USING      (agente_id = auth.uid() OR public.is_admin())
+  WITH CHECK (agente_id = auth.uid() OR public.is_admin());
+
+DROP POLICY IF EXISTS "agente_own_ordenes_rest" ON public.ordenes_rest;
+CREATE POLICY "agente_own_ordenes_rest" ON public.ordenes_rest
+  FOR ALL TO authenticated
+  USING      (agente_id = auth.uid() OR public.is_admin())
+  WITH CHECK (agente_id = auth.uid() OR public.is_admin());
+
+DROP POLICY IF EXISTS "agente_own_items_orden" ON public.items_orden_rest;
+CREATE POLICY "agente_own_items_orden" ON public.items_orden_rest
+  FOR ALL TO authenticated
+  USING (
+    EXISTS (SELECT 1 FROM public.ordenes_rest o WHERE o.id = orden_id AND o.agente_id = auth.uid())
+    OR public.is_admin()
+  )
+  WITH CHECK (
+    EXISTS (SELECT 1 FROM public.ordenes_rest o WHERE o.id = orden_id AND o.agente_id = auth.uid())
+    OR public.is_admin()
+  );
+
+DROP POLICY IF EXISTS "agente_own_pagos_rest" ON public.pagos_rest;
+CREATE POLICY "agente_own_pagos_rest" ON public.pagos_rest
+  FOR ALL TO authenticated
+  USING      (agente_id = auth.uid() OR public.is_admin())
+  WITH CHECK (agente_id = auth.uid() OR public.is_admin());
