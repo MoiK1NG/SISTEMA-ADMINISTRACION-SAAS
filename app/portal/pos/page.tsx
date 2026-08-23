@@ -1,47 +1,21 @@
 // ─── Server Component ─────────────────────────────────────────────────────────
-// Carga perfil + membresía en servidor. Los productos son mock hasta que
-// se cree la tabla `productos` en Supabase (ver TODO abajo).
+// Carga perfil, membresía, catálogo real y KPI de ventas del día.
 
 import { requireClient } from "@/lib/supabase/require-client"
 import { redirect } from "next/navigation"
-import { UtensilsCrossed } from "lucide-react"
+import Link from "next/link"
+import { UtensilsCrossed, Package, Receipt, Plus } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
 import { PosShell } from "./_components/pos-shell"
 import type { Producto } from "./types"
 
-// ─── Catálogo de demo ─────────────────────────────────────────────────────────
-// TODO: reemplazar con query real → supabase.from("productos").select(...)
-const PRODUCTOS_MOCK: Producto[] = [
-  // Panes
-  { id: "p1",  nombre: "Pan de agua",         precio:  25,  categoria: "panes",   emoji: "🍞",  disponible: true  },
-  { id: "p2",  nombre: "Pan sobao",            precio:  30,  categoria: "panes",   emoji: "🫓",  disponible: true  },
-  { id: "p3",  nombre: "Pan de maíz",          precio:  35,  categoria: "panes",   emoji: "🌽",  disponible: true  },
-  { id: "p4",  nombre: "Baguette",             precio:  80,  categoria: "panes",   emoji: "🥖",  disponible: true  },
-  { id: "p5",  nombre: "Pan de hot dog",       precio:  40,  categoria: "panes",   emoji: "🌭",  disponible: true  },
-  { id: "p6",  nombre: "Croissant",            precio:  95,  categoria: "panes",   emoji: "🥐",  disponible: true  },
-  // Postres
-  { id: "p7",  nombre: "Bizcocho de chocolate",precio: 150,  categoria: "postres", emoji: "🎂",  disponible: true  },
-  { id: "p8",  nombre: "Galletas de vainilla", precio:  60,  categoria: "postres", emoji: "🍪",  disponible: true  },
-  { id: "p9",  nombre: "Donut glaseado",       precio:  75,  categoria: "postres", emoji: "🍩",  disponible: true  },
-  { id: "p10", nombre: "Cupcake",              precio:  90,  categoria: "postres", emoji: "🧁",  disponible: true  },
-  { id: "p11", nombre: "Cheesecake",           precio: 180,  categoria: "postres", emoji: "🍰",  disponible: true  },
-  { id: "p12", nombre: "Brownie",              precio:  85,  categoria: "postres", emoji: "🟫",  disponible: false },
-  // Bebidas
-  { id: "p13", nombre: "Café americano",       precio:  75,  categoria: "bebidas", emoji: "☕",  disponible: true  },
-  { id: "p14", nombre: "Café con leche",       precio:  90,  categoria: "bebidas", emoji: "🥛",  disponible: true  },
-  { id: "p15", nombre: "Jugo de naranja",      precio:  80,  categoria: "bebidas", emoji: "🍊",  disponible: true  },
-  { id: "p16", nombre: "Agua fría",            precio:  30,  categoria: "bebidas", emoji: "💧",  disponible: true  },
-  { id: "p17", nombre: "Té helado",            precio:  65,  categoria: "bebidas", emoji: "🧊",  disponible: true  },
-  { id: "p18", nombre: "Batido de fresa",      precio: 120,  categoria: "bebidas", emoji: "🍓",  disponible: true  },
-  // Salados
-  { id: "p19", nombre: "Empanada de pollo",    precio:  70,  categoria: "salados", emoji: "🥟",  disponible: true  },
-  { id: "p20", nombre: "Pastelito de carne",   precio:  60,  categoria: "salados", emoji: "🥐",  disponible: true  },
-  { id: "p21", nombre: "Sandwich mixto",       precio: 140,  categoria: "salados", emoji: "🥪",  disponible: true  },
-  { id: "p22", nombre: "Pizza personal",       precio: 220,  categoria: "salados", emoji: "🍕",  disponible: true  },
-]
-
 function getInitials(name: string) {
   return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
+}
+
+function fmt(n: number) {
+  return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(n)
 }
 
 export default async function PosPage() {
@@ -64,14 +38,30 @@ export default async function PosPage() {
     .limit(1)
     .maybeSingle()
 
-  // TODO: query real de productos
-  // const { data: productosRaw } = await supabase
-  //   .from("productos")
-  //   .select("*")
-  //   .eq("agente_id", user.id)
-  //   .eq("disponible", true)
-  //   .order("categoria, nombre")
-  const productos: Producto[] = PRODUCTOS_MOCK.filter(p => p.disponible)
+  // ── Catálogo real ─────────────────────────────────────────────────────────
+  const { data: productosRaw } = await supabase
+    .from("productos_pos")
+    .select("id, nombre, precio, categoria, emoji, disponible")
+    .eq("agente_id", user.id)
+    .eq("disponible", true)
+    .order("categoria")
+    .order("nombre")
+
+  const productos: Producto[] = (productosRaw ?? []).map((p: any) => ({
+    ...p,
+    precio: Number(p.precio),
+  }))
+
+  // ── KPI: ventas de hoy ────────────────────────────────────────────────────
+  const hoyInicio = new Date(); hoyInicio.setHours(0, 0, 0, 0)
+  const { data: ventasHoy } = await supabase
+    .from("ventas_pos")
+    .select("total")
+    .eq("agente_id", user.id)
+    .gte("created_at", hoyInicio.toISOString())
+
+  const numVentasHoy   = ventasHoy?.length ?? 0
+  const totalVentasHoy = (ventasHoy ?? []).reduce((s, v) => s + Number(v.total), 0)
 
   const planName = (membership?.membership_plans as any)?.name ?? "Plan Activo"
   const initials = profile?.full_name ? getInitials(profile.full_name) : "U"
@@ -90,17 +80,25 @@ export default async function PosPage() {
             </div>
             <div className="hidden sm:block">
               <p className="text-sm font-bold leading-none text-slate-900">Punto de Venta</p>
-              <p className="text-[11px] text-slate-400 mt-0.5">Restaurante / Panadería</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">Ventas de mostrador</p>
             </div>
           </div>
 
-          {/* Centro: fecha y hora */}
-          <div className="hidden md:block text-center">
-            <p className="text-sm font-semibold text-slate-700">
-              {new Intl.DateTimeFormat("es-CO", {
-                weekday: "long", day: "numeric", month: "long"
-              }).format(new Date())}
-            </p>
+          {/* Centro: navegación + KPI del día */}
+          <div className="flex items-center gap-2">
+            <Button asChild variant="ghost" size="sm" className="gap-1.5 text-xs text-slate-600 hover:text-slate-900">
+              <Link href="/portal/pos/productos"><Package className="h-3.5 w-3.5" />Productos</Link>
+            </Button>
+            <Button asChild variant="ghost" size="sm" className="gap-1.5 text-xs text-slate-600 hover:text-slate-900">
+              <Link href="/portal/pos/ventas"><Receipt className="h-3.5 w-3.5" />Ventas</Link>
+            </Button>
+            {numVentasHoy > 0 && (
+              <div className="hidden md:flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1">
+                <span className="text-xs font-semibold text-amber-700">
+                  Hoy: {numVentasHoy} {numVentasHoy === 1 ? "venta" : "ventas"} · {fmt(totalVentasHoy)}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Derecha: membresía + avatar */}
@@ -118,9 +116,22 @@ export default async function PosPage() {
         </div>
       </header>
 
-      {/* ── POS SHELL (Client Component con todo el estado) ──────────────── */}
+      {/* ── POS SHELL o estado vacío ──────────────────────────────────────── */}
       <div className="flex-1 overflow-hidden p-3 sm:p-4 max-w-[1600px] w-full mx-auto">
-        <PosShell productos={productos} />
+        {productos.length === 0 ? (
+          <div className="flex h-full flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-200 bg-white text-center px-6">
+            <p className="text-5xl mb-4">🛒</p>
+            <p className="text-base font-bold text-slate-900">Tu catálogo está vacío</p>
+            <p className="mt-1.5 text-sm text-slate-500 max-w-sm">
+              Agrega tus productos con nombre, precio y categoría para empezar a vender.
+            </p>
+            <Button asChild className="mt-5 gap-1.5 bg-amber-500 hover:bg-amber-600">
+              <Link href="/portal/pos/productos"><Plus className="h-4 w-4" />Agregar productos</Link>
+            </Button>
+          </div>
+        ) : (
+          <PosShell productos={productos} />
+        )}
       </div>
     </div>
   )

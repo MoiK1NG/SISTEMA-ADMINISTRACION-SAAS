@@ -5,9 +5,11 @@
 // Recibe los productos desde el Server Component (page.tsx) como props.
 
 import { useState, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import { Catalogo }    from "./catalogo"
 import { Carrito }     from "./carrito"
 import { ModalCobro }  from "./modal-cobro"
+import { registrarVentaPos } from "../actions"
 import type { Producto, ItemCarrito } from "../types"
 
 interface Props {
@@ -15,6 +17,7 @@ interface Props {
 }
 
 export function PosShell({ productos }: Props) {
+  const router = useRouter()
   const [carrito,      setCarrito]      = useState<ItemCarrito[]>([])
   const [modalAbierto, setModalAbierto] = useState(false)
 
@@ -53,11 +56,21 @@ export function PosShell({ productos }: Props) {
 
   const limpiar = useCallback(() => setCarrito([]), [])
 
-  const confirmarCobro = useCallback(() => {
-    // TODO: server action registrar venta
+  // ── Cobro real ────────────────────────────────────────────────────────────
+  // El servidor recalcula precios desde el catálogo; acá solo van ids y cantidades.
+  const confirmarCobro = useCallback(async (metodo: string, montoRecibido?: number) => {
+    await registrarVentaPos(
+      carrito.map(i => ({ producto_id: i.producto.id, cantidad: i.cantidad })),
+      metodo,
+      montoRecibido,
+    )
+  }, [carrito])
+
+  const ventaCompletada = useCallback(() => {
     setCarrito([])
     setModalAbierto(false)
-  }, [])
+    router.refresh()
+  }, [router])
 
   return (
     <>
@@ -92,6 +105,7 @@ export function PosShell({ productos }: Props) {
         items={carrito}
         onClose={() => setModalAbierto(false)}
         onConfirmar={confirmarCobro}
+        onVentaCompletada={ventaCompletada}
       />
     </>
   )
