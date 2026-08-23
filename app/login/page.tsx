@@ -145,6 +145,12 @@ export default function LoginPage() {
                 <Label htmlFor="password" className="text-sm font-medium text-slate-700">
                   Contraseña
                 </Label>
+                <Link
+                  href="/forgot-password"
+                  className="text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
+                >
+                  ¿Olvidaste tu contraseña?
+                </Link>
               </div>
               <Input
                 id="password" type="password" autoComplete="current-password"
