@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { OrdenProduccionCard } from "./_components/orden-produccion-card"
 import { NuevaOrdenButton } from "./_components/nueva-orden-button"
+import { PortalNav } from "@/components/portal/portal-nav"
 
 function fmtDate(iso: string) {
   return new Intl.DateTimeFormat("es-CO", { weekday:"long", day:"2-digit", month:"long" }).format(new Date(iso + "T00:00:00"))
@@ -54,6 +55,7 @@ export default async function ProduccionPage() {
           </div>
         </div>
       </header>
+      <PortalNav portal="panaderia" />
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 space-y-6">
         {!ordenHoy && (

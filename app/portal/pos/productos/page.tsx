@@ -4,6 +4,7 @@ import Link from "next/link"
 import { ArrowLeft, Package } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ProductosPosManager } from "./_components/productos-pos-manager"
+import { PortalNav } from "@/components/portal/portal-nav"
 
 export default async function ProductosPosPage() {
   const supabase = await requireClient()
@@ -37,6 +38,7 @@ export default async function ProductosPosPage() {
           </div>
         </div>
       </header>
+      <PortalNav portal="pos" top={14} />
 
       <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
         <ProductosPosManager productos={productos} />

@@ -4,6 +4,7 @@ import Link from "next/link"
 import { ArrowLeft, Package } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ProductosManager } from "./_components/productos-manager"
+import { PortalNav } from "@/components/portal/portal-nav"
 
 export default async function ProductosPage() {
   const supabase = await requireClient()
@@ -31,6 +32,7 @@ export default async function ProductosPage() {
           <div className="ml-auto text-[11px] text-slate-400">{productos.length} productos</div>
         </div>
       </header>
+      <PortalNav portal="panaderia" />
 
       <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
         <ProductosManager productos={productos as any} />

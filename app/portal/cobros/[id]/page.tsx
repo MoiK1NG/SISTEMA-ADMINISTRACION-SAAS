@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { PagarCobroButton } from "../_components/pagar-cobro-button"
+import { PortalNav } from "@/components/portal/portal-nav"
 
 function fmt(n: number) {
   return new Intl.NumberFormat("es-CO",{ style:"currency",currency:"COP",minimumFractionDigits:0 }).format(n)
@@ -72,6 +73,7 @@ export default async function CobroDetailPage({ params }: { params: Promise<{ id
           </span>
         </div>
       </header>
+      <PortalNav portal="cobros" />
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
         {/* Cards resumen */}

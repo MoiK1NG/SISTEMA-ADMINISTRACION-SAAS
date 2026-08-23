@@ -4,6 +4,7 @@ import Link from "next/link"
 import { ArrowLeft, Box } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { InventarioManager } from "./_components/inventario-manager"
+import { PortalNav } from "@/components/portal/portal-nav"
 
 export default async function InventarioPage() {
   const supabase = await requireClient()
@@ -37,6 +38,7 @@ export default async function InventarioPage() {
           <div className="ml-auto text-[11px] text-slate-400">{insumos.length} insumos</div>
         </div>
       </header>
+      <PortalNav portal="panaderia" />
 
       <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
         <InventarioManager insumos={insumos as any} />

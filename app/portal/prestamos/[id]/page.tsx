@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { RegistrarPagoButton } from "./_components/registrar-pago-button"
+import { PortalNav } from "@/components/portal/portal-nav"
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 type EstadoPrestamo = "pendiente" | "activo" | "al_dia" | "en_mora" | "pagado" | "cancelado"
@@ -175,6 +176,7 @@ export default async function PrestamoDetailPage({
           </span>
         </div>
       </header>
+      <PortalNav portal="prestamos" />
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
 

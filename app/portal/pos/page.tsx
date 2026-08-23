@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { PosShell } from "./_components/pos-shell"
 import type { Producto } from "./types"
+import { PortalNav } from "@/components/portal/portal-nav"
 
 function getInitials(name: string) {
   return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
@@ -84,14 +85,8 @@ export default async function PosPage() {
             </div>
           </div>
 
-          {/* Centro: navegación + KPI del día */}
+          {/* Centro: KPI del día */}
           <div className="flex items-center gap-2">
-            <Button asChild variant="ghost" size="sm" className="gap-1.5 text-xs text-slate-600 hover:text-slate-900">
-              <Link href="/portal/pos/productos"><Package className="h-3.5 w-3.5" />Productos</Link>
-            </Button>
-            <Button asChild variant="ghost" size="sm" className="gap-1.5 text-xs text-slate-600 hover:text-slate-900">
-              <Link href="/portal/pos/ventas"><Receipt className="h-3.5 w-3.5" />Ventas</Link>
-            </Button>
             {numVentasHoy > 0 && (
               <div className="hidden md:flex items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-3 py-1">
                 <span className="text-xs font-semibold text-violet-700">
@@ -115,6 +110,7 @@ export default async function PosPage() {
           </div>
         </div>
       </header>
+      <PortalNav portal="pos" top={14} sticky={false} />
 
       {/* ── POS SHELL o estado vacío ──────────────────────────────────────── */}
       <div className="flex-1 overflow-hidden p-3 sm:p-4 max-w-[1600px] w-full mx-auto">

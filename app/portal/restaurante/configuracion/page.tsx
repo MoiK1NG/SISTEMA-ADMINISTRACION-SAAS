@@ -4,6 +4,7 @@ import Link from "next/link"
 import { ArrowLeft, Settings } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ConfiguracionManager } from "./_components/configuracion-manager"
+import { PortalNav } from "@/components/portal/portal-nav"
 
 export default async function ConfiguracionPage() {
   const supabase = await requireClient()
@@ -31,6 +32,7 @@ export default async function ConfiguracionPage() {
           <div className="ml-auto text-[11px] text-slate-400">{mesas.length} mesas</div>
         </div>
       </header>
+      <PortalNav portal="restaurante" />
 
       <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
         <ConfiguracionManager mesas={mesas as any} />

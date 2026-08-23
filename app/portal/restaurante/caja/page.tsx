@@ -5,6 +5,7 @@ import { ArrowLeft, DollarSign, Receipt, TrendingUp, CreditCard } from "lucide-r
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { PortalNav } from "@/components/portal/portal-nav"
 
 function fmt(n: number) {
   return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(n)
@@ -62,6 +63,7 @@ export default async function CajaPage() {
           <p className="text-sm font-semibold text-slate-900">Caja del día</p>
         </div>
       </header>
+      <PortalNav portal="restaurante" />
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 space-y-6">
         {/* KPIs */}

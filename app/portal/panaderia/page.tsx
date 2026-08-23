@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { PortalNav } from "@/components/portal/portal-nav"
 
 function fmt(n: number) {
   return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(n)
@@ -59,7 +60,9 @@ export default async function PanaderiaPage() {
   const saludo = hora < 12 ? "Buenos días" : hora < 18 ? "Buenas tardes" : "Buenas noches"
   const planName = (membership?.membership_plans as any)?.name ?? "Plan Activo"
 
-  const navLinks = [
+  // Tarjetas grandes del final del panel. La navegación entre secciones vive
+  // en <PortalNav>; esto es un atajo visual, no el menú.
+  const accesosRapidos = [
     { href: "/portal/panaderia/produccion", label: "Producción",  icon: ClipboardList },
     { href: "/portal/panaderia/ventas",     label: "Ventas",      icon: ShoppingCart  },
     { href: "/portal/panaderia/inventario", label: "Inventario",  icon: Boxes         },
@@ -80,11 +83,6 @@ export default async function PanaderiaPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {navLinks.map(l => (
-              <Button key={l.href} asChild variant="ghost" size="sm" className="hidden lg:flex gap-1.5 text-slate-600 hover:text-slate-900">
-                <Link href={l.href}><l.icon className="h-3.5 w-3.5" />{l.label}</Link>
-              </Button>
-            ))}
             <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-orange-200 bg-orange-50 px-3 py-1 ml-2">
               <span className="h-1.5 w-1.5 rounded-full bg-orange-500 animate-pulse" />
               <span className="text-xs font-medium text-orange-700">{planName}</span>
@@ -95,6 +93,7 @@ export default async function PanaderiaPage() {
           </div>
         </div>
       </header>
+      <PortalNav portal="panaderia" />
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
         <div>
@@ -229,7 +228,7 @@ export default async function PanaderiaPage() {
 
         {/* Accesos rápidos */}
         <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {navLinks.map(l => (
+          {accesosRapidos.map(l => (
             <Link key={l.href} href={l.href} className="group flex items-center gap-3 rounded-xl border border-slate-100 bg-white p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-50 group-hover:bg-orange-100 transition-colors">
                 <l.icon className="h-5 w-5 text-orange-500" />
