@@ -58,7 +58,7 @@ export default async function VentasPosPage() {
             </Button>
             <div className="h-5 w-px bg-slate-200" />
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-500">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-600">
                 <Receipt className="h-4 w-4 text-white" />
               </div>
               <p className="text-sm font-bold text-slate-900">Ventas</p>
