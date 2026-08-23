@@ -77,7 +77,7 @@ export function ProductosPosManager({ productos }: { productos: ProductoPos[] })
         <p className="text-sm text-slate-500">
           {productos.length} {productos.length === 1 ? "producto" : "productos"} en el catálogo
         </p>
-        <Button size="sm" onClick={openNew} className="gap-1.5 bg-amber-500 hover:bg-amber-600">
+        <Button size="sm" onClick={openNew} className="gap-1.5 bg-violet-600 hover:bg-violet-700">
           <Plus className="h-3.5 w-3.5" />Nuevo producto
         </Button>
       </div>
@@ -107,7 +107,7 @@ export function ProductosPosManager({ productos }: { productos: ProductoPos[] })
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-slate-900 truncate">{p.nombre}</p>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <p className="text-sm font-bold text-amber-600">{fmt(p.precio)}</p>
+                    <p className="text-sm font-bold text-violet-600">{fmt(p.precio)}</p>
                     {!p.disponible && (
                       <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">
                         No disponible
@@ -201,7 +201,7 @@ export function ProductosPosManager({ productos }: { productos: ProductoPos[] })
                 Cancelar
               </Button>
               <Button
-                className="flex-1 bg-amber-500 hover:bg-amber-600"
+                className="flex-1 bg-violet-600 hover:bg-violet-700"
                 onClick={handleSave}
                 disabled={isPending || !form.nombre.trim()}
               >

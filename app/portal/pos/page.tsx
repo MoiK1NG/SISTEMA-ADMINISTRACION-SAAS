@@ -75,7 +75,7 @@ export default async function PosPage() {
 
           {/* Logo */}
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 shadow-sm shadow-amber-500/30">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 shadow-sm shadow-violet-500/30">
               <UtensilsCrossed className="h-4 w-4 text-white" />
             </div>
             <div className="hidden sm:block">
@@ -93,8 +93,8 @@ export default async function PosPage() {
               <Link href="/portal/pos/ventas"><Receipt className="h-3.5 w-3.5" />Ventas</Link>
             </Button>
             {numVentasHoy > 0 && (
-              <div className="hidden md:flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1">
-                <span className="text-xs font-semibold text-amber-700">
+              <div className="hidden md:flex items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-3 py-1">
+                <span className="text-xs font-semibold text-violet-700">
                   Hoy: {numVentasHoy} {numVentasHoy === 1 ? "venta" : "ventas"} · {fmt(totalVentasHoy)}
                 </span>
               </div>
@@ -108,7 +108,7 @@ export default async function PosPage() {
               <span className="text-xs font-medium text-emerald-700">{planName}</span>
             </div>
             <Avatar className="h-7 w-7 ring-2 ring-slate-100">
-              <AvatarFallback className="bg-amber-500/10 text-amber-700 text-[10px] font-bold">
+              <AvatarFallback className="bg-violet-500/10 text-violet-700 text-[10px] font-bold">
                 {initials}
               </AvatarFallback>
             </Avatar>
@@ -125,7 +125,7 @@ export default async function PosPage() {
             <p className="mt-1.5 text-sm text-slate-500 max-w-sm">
               Agrega tus productos con nombre, precio y categoría para empezar a vender.
             </p>
-            <Button asChild className="mt-5 gap-1.5 bg-amber-500 hover:bg-amber-600">
+            <Button asChild className="mt-5 gap-1.5 bg-violet-600 hover:bg-violet-700">
               <Link href="/portal/pos/productos"><Plus className="h-4 w-4" />Agregar productos</Link>
             </Button>
           </div>

@@ -2,8 +2,8 @@
 -- Portales activos del catálogo comercial
 -- Ejecutar en: Supabase → SQL Editor
 --
--- Deja operativos los tres portales del lanzamiento (panadería, canchas y
--- préstamos) y apaga el resto sin borrar su información.
+-- Deja operativos los cuatro portales del lanzamiento (panadería, canchas,
+-- préstamos y punto de venta) y apaga el resto sin borrar su información.
 --
 -- Los slugs deben coincidir EXACTAMENTE con las carpetas de app/portal/,
 -- porque el middleware y las server actions buscan el portal por slug.
@@ -35,6 +35,16 @@ VALUES
    '/portal/prestamos',
    'landmark',
    '#1d4ed8',
+   TRUE),
+
+  -- Complemento de Panadería: mientras ese portal maneja producción e
+  -- inventario, el POS cobra en el mostrador.
+  ('Punto de Venta',
+   'pos',
+   'Cobro rápido desde tablet o celular: catálogo táctil, carrito, IVA automático y vuelto en efectivo.',
+   '/portal/pos',
+   'store',
+   '#8b5cf6',
    TRUE)
 
 ON CONFLICT (slug) DO UPDATE SET
@@ -52,7 +62,7 @@ ON CONFLICT (slug) DO UPDATE SET
 -- is_active a TRUE cuando se quieran ofrecer.
 UPDATE public.portals
 SET is_active = FALSE, updated_at = NOW()
-WHERE slug IN ('cobros', 'restaurante', 'pos');
+WHERE slug IN ('cobros', 'restaurante');
 
 
 -- ── 3. Portales de ejemplo del seed inicial ───────────────────────────────────
