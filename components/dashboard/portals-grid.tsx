@@ -5,6 +5,7 @@ import {
   Grid3X3, Building, Calculator, Users, Package,
   Contact, Briefcase, ShoppingCart, FileText, Settings,
   Globe, ArrowRight, Sparkles,
+  Croissant, Dumbbell, Landmark, Banknote, UtensilsCrossed, Store,
 } from "lucide-react"
 import type { Portal } from "@/lib/types"
 
@@ -23,6 +24,13 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string; style?:
   "file-text":    FileText,
   settings:       Settings,
   globe:          Globe,
+  // Rubros del negocio
+  croissant:      Croissant,        // panadería
+  dumbbell:       Dumbbell,         // canchas sintéticas
+  landmark:       Landmark,         // préstamos
+  banknote:       Banknote,         // cobros
+  utensils:       UtensilsCrossed,  // restaurante
+  store:          Store,            // punto de venta
 }
 
 function hexToRgb(hex: string) {
