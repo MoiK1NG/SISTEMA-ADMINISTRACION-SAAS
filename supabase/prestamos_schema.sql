@@ -301,6 +301,9 @@ BEGIN
 END;
 $$;
 
+REVOKE ALL ON FUNCTION public.registrar_pago(uuid, numeric, date, text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.registrar_pago(uuid, numeric, date, text) TO authenticated;
+
 
 -- =============================================================================
 -- 8. FUNCIÓN: actualizar_mora  (ejecutar via cron diario)
@@ -330,6 +333,9 @@ BEGIN
     );
 END;
 $$;
+
+-- Solo cron/service role: ningún usuario autenticado debe poder ejecutarla
+REVOKE ALL ON FUNCTION public.actualizar_mora() FROM PUBLIC, anon, authenticated;
 
 
 -- =============================================================================
@@ -394,7 +400,10 @@ CREATE TRIGGER trg_cuotas_updated_at
 -- =============================================================================
 -- 11. VISTA: kpis_agente  (para el dashboard del portal, query de 1 línea)
 -- =============================================================================
-CREATE OR REPLACE VIEW public.kpis_agente AS
+-- security_invoker: la vista respeta la RLS de `prestamos` — cada agente ve
+-- solo sus KPIs; admin/superadmin ven todos (vía la rama is_admin de la policy)
+CREATE OR REPLACE VIEW public.kpis_agente
+WITH (security_invoker = true) AS
 SELECT
   p.agente_id,
   COUNT(*)                                          AS total_prestamos,
@@ -409,5 +418,4 @@ SELECT
 FROM public.prestamos p
 GROUP BY p.agente_id;
 
--- RLS en la vista: cada agente solo ve sus propios KPIs
-ALTER VIEW public.kpis_agente OWNER TO postgres;
+REVOKE ALL ON public.kpis_agente FROM anon;

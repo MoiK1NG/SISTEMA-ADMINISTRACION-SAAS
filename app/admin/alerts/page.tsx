@@ -44,7 +44,7 @@ export default async function AlertsPage() {
       .order("created_at", { ascending: false }),
   ])
 
-  const fmt = (date: string) => new Date(date).toLocaleDateString("es-DO", { day: "numeric", month: "short" })
+  const fmt = (date: string) => new Date(date).toLocaleDateString("es-CO", { day: "numeric", month: "short" })
   const totalAlerts = (expiringCritical?.length ?? 0) + (expiringWarning?.length ?? 0) + (pendingUsers?.length ?? 0)
 
   return (
@@ -148,7 +148,7 @@ export default async function AlertsPage() {
                   <p className="text-xs text-blue-600">{u.email}</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <p className="text-xs text-blue-500">{new Date(u.created_at).toLocaleDateString("es-DO")}</p>
+                  <p className="text-xs text-blue-500">{new Date(u.created_at).toLocaleDateString("es-CO")}</p>
                   <Button asChild variant="outline" size="sm" className="h-7 text-xs">
                     <Link href="/admin/users">Revisar <ArrowRight className="h-3 w-3 ml-1" /></Link>
                   </Button>

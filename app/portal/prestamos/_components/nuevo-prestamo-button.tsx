@@ -124,7 +124,7 @@ export function NuevoPrestamoButton() {
 
           {/* Monto */}
           <div className="space-y-1.5">
-            <Label htmlFor="monto" className="text-sm font-medium">Monto (DOP)</Label>
+            <Label htmlFor="monto" className="text-sm font-medium">Monto (COP)</Label>
             <div className="relative">
               <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input id="monto" name="monto" type="number" min="1" step="0.01" placeholder="0.00" className="pl-9" required />

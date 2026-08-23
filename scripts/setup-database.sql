@@ -137,6 +137,10 @@ ALTER TABLE public.user_portal_access ENABLE ROW LEVEL SECURITY;
 
 -- =====================================================
 -- POLÍTICAS RLS - PROFILES
+-- ⚠ Las policies de admin de este bloque son auto-referenciales y causan
+--   recursión de RLS (error 42P17). supabase/security_fixes.sql las
+--   reemplaza por versiones basadas en is_admin() — ejecutarlo SIEMPRE
+--   después de este script.
 -- =====================================================
 DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
 CREATE POLICY "Users can view own profile" ON public.profiles

@@ -71,7 +71,7 @@ export default async function PlansPage() {
             </div>
             <div>
               <p className="text-2xl font-bold">
-                {new Intl.NumberFormat("es-DO", { style: "currency", currency: "DOP", minimumFractionDigits: 0 }).format(totalMRR)}
+                {new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(totalMRR)}
               </p>
               <p className="text-xs text-muted-foreground">MRR de estos planes</p>
             </div>

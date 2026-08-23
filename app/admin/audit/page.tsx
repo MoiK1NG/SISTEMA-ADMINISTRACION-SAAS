@@ -82,7 +82,7 @@ export default async function AuditPage() {
                       return (
                         <tr key={log.id} className="hover:bg-muted/20 transition-colors">
                           <td className="px-4 py-3 text-muted-foreground text-xs whitespace-nowrap">
-                            {new Date(log.created_at).toLocaleString("es-DO", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                            {new Date(log.created_at).toLocaleString("es-CO", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
                           </td>
                           <td className="px-4 py-3">
                             <p className="font-medium text-xs leading-none">{log.admin?.full_name || "—"}</p>

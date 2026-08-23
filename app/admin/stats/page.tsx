@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import { TrendingUp, Users, Grid3X3, CreditCard, Activity } from "lucide-react"
 
 function fmt(n: number) {
-  return new Intl.NumberFormat("es-DO", { style: "currency", currency: "DOP", minimumFractionDigits: 0 }).format(n)
+  return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(n)
 }
 
 export default async function StatsPage() {
@@ -15,7 +15,7 @@ export default async function StatsPage() {
   const months = Array.from({ length: 6 }, (_, i) => {
     const d = new Date()
     d.setMonth(d.getMonth() - (5 - i))
-    return { label: d.toLocaleDateString("es-DO", { month: "short" }), year: d.getFullYear(), month: d.getMonth() + 1 }
+    return { label: d.toLocaleDateString("es-CO", { month: "short" }), year: d.getFullYear(), month: d.getMonth() + 1 }
   })
 
   const [

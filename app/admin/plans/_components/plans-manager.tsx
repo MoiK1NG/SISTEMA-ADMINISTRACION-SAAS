@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Pencil, Trash2, Plus, Users, Clock, DollarSign, Loader2 } from "lucide-react"
+import { Pencil, Trash2, Plus, Users, Clock, DollarSign, Loader2, Layers } from "lucide-react"
 import { createMembershipPlan, updateMembershipPlan, deleteMembershipPlan } from "@/app/admin/actions"
 import { useRouter } from "next/navigation"
 
@@ -61,7 +61,7 @@ export function PlansManager({ plans }: { plans: Plan[] }) {
     })
   }
 
-  const fmt = (n: number) => new Intl.NumberFormat("es-DO", { style: "currency", currency: "DOP", minimumFractionDigits: 0 }).format(n)
+  const fmt = (n: number) => new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(n)
 
   return (
     <>
@@ -144,7 +144,7 @@ export function PlansManager({ plans }: { plans: Plan[] }) {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label>Precio (DOP)</Label>
+                <Label>Precio (COP)</Label>
                 <Input type="number" min="0" value={form.price} onChange={e => setForm(f => ({ ...f, price: Number(e.target.value) }))} />
               </div>
               <div className="space-y-1.5">

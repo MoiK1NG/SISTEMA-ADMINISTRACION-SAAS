@@ -1,8 +1,12 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { requireClient } from "@/lib/supabase/require-client"
+import {
+  requirePortalAccess, montoValido, montoNoNegativo, textoRequerido, unoDe,
+} from "@/lib/portal-security"
 import type { EstadoPago } from "./types"
+
+const ESTADOS_PAGO = ["pendiente", "debe_sena", "pagado"] as const
 
 export async function crearReserva(input: {
   cancha_id:        string
@@ -15,21 +19,35 @@ export async function crearReserva(input: {
   estado_pago:      EstadoPago
   nota?:            string
 }) {
-  const supabase = await requireClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error("No autenticado")
+  const { supabase, user } = await requirePortalAccess("canchas")
+
+  const monto      = montoValido(input.monto, "monto")
+  const estadoPago = unoDe(input.estado_pago, ESTADOS_PAGO, "estado de pago")
+  const horaInicio = Number(input.hora_inicio)
+  const horaFin    = Number(input.hora_fin)
+  if (!Number.isInteger(horaInicio) || !Number.isInteger(horaFin)
+      || horaInicio < 0 || horaFin > 24 || horaFin <= horaInicio) {
+    throw new Error("Horario inválido")
+  }
+
+  // La cancha debe ser del agente
+  const { data: cancha } = await supabase
+    .from("canchas").select("id")
+    .eq("id", input.cancha_id).eq("agente_id", user.id).eq("is_active", true)
+    .maybeSingle()
+  if (!cancha) throw new Error("Cancha no encontrada")
 
   const { error } = await supabase.from("reservas").insert({
     agente_id:        user.id,
     cancha_id:        input.cancha_id,
-    cliente_nombre:   input.cliente_nombre,
+    cliente_nombre:   textoRequerido(input.cliente_nombre, "nombre del cliente"),
     cliente_telefono: input.cliente_telefono ?? null,
     fecha:            input.fecha,
-    hora_inicio:      input.hora_inicio,
-    hora_fin:         input.hora_fin,
-    monto:            input.monto,
-    monto_pagado:     input.estado_pago === "pagado" ? input.monto : 0,
-    estado_pago:      input.estado_pago,
+    hora_inicio:      horaInicio,
+    hora_fin:         horaFin,
+    monto,
+    monto_pagado:     estadoPago === "pagado" ? monto : 0,
+    estado_pago:      estadoPago,
     nota:             input.nota ?? null,
     estado:           "confirmada",
   })
@@ -46,13 +64,22 @@ export async function actualizarEstadoPago(
   estadoPago: EstadoPago,
   montoPagado: number,
 ) {
-  const supabase = await requireClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error("No autenticado")
+  const { supabase, user } = await requirePortalAccess("canchas")
+
+  const estado = unoDe(estadoPago, ESTADOS_PAGO, "estado de pago")
+  const pagado = montoNoNegativo(montoPagado, "monto pagado")
+
+  const { data: reserva } = await supabase
+    .from("reservas").select("id, monto")
+    .eq("id", reservaId).eq("agente_id", user.id).maybeSingle()
+  if (!reserva) throw new Error("Reserva no encontrada")
+  if (pagado > Number(reserva.monto)) {
+    throw new Error("El pago no puede superar el monto de la reserva")
+  }
 
   const { error } = await supabase
     .from("reservas")
-    .update({ estado_pago: estadoPago, monto_pagado: montoPagado, updated_at: new Date().toISOString() })
+    .update({ estado_pago: estado, monto_pagado: pagado, updated_at: new Date().toISOString() })
     .eq("id", reservaId)
     .eq("agente_id", user.id)
 
@@ -63,9 +90,7 @@ export async function actualizarEstadoPago(
 }
 
 export async function cancelarReserva(reservaId: string) {
-  const supabase = await requireClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error("No autenticado")
+  const { supabase, user } = await requirePortalAccess("canchas")
 
   const { error } = await supabase
     .from("reservas")
@@ -80,9 +105,7 @@ export async function cancelarReserva(reservaId: string) {
 }
 
 export async function obtenerCanchas() {
-  const supabase = await requireClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error("No autenticado")
+  const { supabase, user } = await requirePortalAccess("canchas")
 
   const { data, error } = await supabase
     .from("canchas")
