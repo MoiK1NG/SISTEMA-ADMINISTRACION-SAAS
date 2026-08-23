@@ -10,6 +10,7 @@ const CATEGORIAS: { id: Categoria; label: string; emoji: string }[] = [
   { id: "postres", label: "Postres", emoji: "🍰" },
   { id: "bebidas", label: "Bebidas", emoji: "☕" },
   { id: "salados", label: "Salados", emoji: "🥐" },
+  { id: "otros",   label: "Otros",   emoji: "🛒" },
 ]
 
 interface Props {

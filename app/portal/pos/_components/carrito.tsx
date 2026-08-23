@@ -3,7 +3,7 @@
 import { Plus, Minus, Trash2, ShoppingBag, Receipt } from "lucide-react"
 import type { ItemCarrito } from "../types"
 
-const IMPUESTO = 0.19   // IVA 19%
+import { IVA as IMPUESTO } from "../constants"
 
 interface Props {
   items:      ItemCarrito[]

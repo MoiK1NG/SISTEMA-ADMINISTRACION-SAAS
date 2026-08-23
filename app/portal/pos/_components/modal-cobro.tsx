@@ -1,11 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { CheckCircle2, X, Banknote, CreditCard, Smartphone } from "lucide-react"
+import { CheckCircle2, AlertTriangle, Banknote, CreditCard, Smartphone } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { IVA } from "../constants"
 import type { ItemCarrito } from "../types"
-
-const IMPUESTO = 0.18
 
 type MetodoPago = "efectivo" | "tarjeta" | "transferencia"
 
@@ -22,41 +21,55 @@ function fmt(n: number) {
 }
 
 interface Props {
-  open:      boolean
-  items:     ItemCarrito[]
-  onClose:   () => void
-  onConfirmar: (metodo: MetodoPago) => void
+  open:              boolean
+  items:             ItemCarrito[]
+  onClose:           () => void
+  onConfirmar:       (metodo: MetodoPago, montoRecibido?: number) => Promise<void>
+  onVentaCompletada: () => void
 }
 
-export function ModalCobro({ open, items, onClose, onConfirmar }: Props) {
-  const [metodo,    setMetodo]    = useState<MetodoPago>("efectivo")
-  const [cobrado,   setCobrado]   = useState<string>("")
+export function ModalCobro({ open, items, onClose, onConfirmar, onVentaCompletada }: Props) {
+  const [metodo,     setMetodo]     = useState<MetodoPago>("efectivo")
+  const [cobrado,    setCobrado]    = useState<string>("")
   const [procesando, setProcesando] = useState(false)
-  const [exito,     setExito]     = useState(false)
+  const [exito,      setExito]      = useState(false)
+  const [error,      setError]      = useState<string | null>(null)
 
   const subtotal = items.reduce((s, i) => s + i.producto.precio * i.cantidad, 0)
-  const impuesto = subtotal * IMPUESTO
+  const impuesto = Math.round(subtotal * IVA * 100) / 100
   const total    = subtotal + impuesto
-  const vuelto   = metodo === "efectivo" && Number(cobrado) > total
-    ? Number(cobrado) - total
+  const recibido = cobrado !== "" ? Number(cobrado) : undefined
+  const vuelto   = metodo === "efectivo" && recibido != null && recibido > total
+    ? recibido - total
     : 0
+  const efectivoInsuficiente = metodo === "efectivo" && recibido != null && recibido < total
+
+  // El total del ticket se congela al confirmar, así el mensaje de éxito
+  // no cambia cuando el carrito se vacía.
+  const [totalCobrado, setTotalCobrado] = useState(0)
 
   async function handleConfirmar() {
+    setError(null)
     setProcesando(true)
-    // TODO: server action para registrar venta
-    await new Promise(r => setTimeout(r, 800))
-    setProcesando(false)
-    setExito(true)
-    setTimeout(() => {
-      setExito(false)
-      setCobrado("")
-      setMetodo("efectivo")
-      onConfirmar(metodo)
-    }, 1800)
+    try {
+      await onConfirmar(metodo, metodo === "efectivo" ? recibido : undefined)
+      setTotalCobrado(total)
+      setProcesando(false)
+      setExito(true)
+      setTimeout(() => {
+        setExito(false)
+        setCobrado("")
+        setMetodo("efectivo")
+        onVentaCompletada()
+      }, 1800)
+    } catch (err: any) {
+      setProcesando(false)
+      setError(err?.message ?? "No se pudo registrar la venta")
+    }
   }
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={v => { if (!v && !procesando && !exito) onClose() }}>
       <DialogContent className="sm:max-w-sm rounded-3xl p-0 overflow-hidden gap-0">
 
         {/* Estado: éxito */}
@@ -66,7 +79,7 @@ export function ModalCobro({ open, items, onClose, onConfirmar }: Props) {
               <CheckCircle2 className="h-10 w-10 text-emerald-500" />
             </div>
             <p className="text-xl font-bold text-slate-900">¡Cobro exitoso!</p>
-            <p className="text-sm text-slate-500 mt-1">{fmt(total)} procesado</p>
+            <p className="text-sm text-slate-500 mt-1">{fmt(totalCobrado)} registrado</p>
           </div>
         ) : (
           <>
@@ -77,6 +90,13 @@ export function ModalCobro({ open, items, onClose, onConfirmar }: Props) {
             </DialogHeader>
 
             <div className="px-6 py-5 space-y-5">
+              {error && (
+                <div className="flex items-start gap-2.5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3">
+                  <AlertTriangle className="h-4 w-4 text-rose-500 mt-0.5 shrink-0" />
+                  <p className="text-sm text-rose-700">{error}</p>
+                </div>
+              )}
+
               {/* Total grande */}
               <div className="rounded-2xl bg-slate-50 p-4 text-center">
                 <p className="text-xs text-slate-500 mb-1">Total a cobrar</p>
@@ -120,7 +140,7 @@ export function ModalCobro({ open, items, onClose, onConfirmar }: Props) {
                     type="number"
                     value={cobrado}
                     onChange={e => setCobrado(e.target.value)}
-                    placeholder="0.00"
+                    placeholder="0"
                     className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-lg font-bold text-slate-900 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-900/10 text-center"
                   />
                   {vuelto > 0 && (
@@ -128,6 +148,11 @@ export function ModalCobro({ open, items, onClose, onConfirmar }: Props) {
                       <span className="text-sm text-emerald-700">Vuelto</span>
                       <span className="text-base font-bold text-emerald-700">{fmt(vuelto)}</span>
                     </div>
+                  )}
+                  {efectivoInsuficiente && (
+                    <p className="mt-2 text-xs text-rose-600 text-center">
+                      El monto recibido es menor al total
+                    </p>
                   )}
                 </div>
               )}
@@ -137,8 +162,8 @@ export function ModalCobro({ open, items, onClose, onConfirmar }: Props) {
             <div className="px-6 pb-6">
               <button
                 onClick={handleConfirmar}
-                disabled={procesando}
-                className="w-full rounded-2xl bg-emerald-500 py-4 text-base font-bold text-white shadow-lg shadow-emerald-500/25 hover:bg-emerald-600 active:scale-[0.98] transition-all disabled:opacity-70"
+                disabled={procesando || efectivoInsuficiente}
+                className="w-full rounded-2xl bg-emerald-500 py-4 text-base font-bold text-white shadow-lg shadow-emerald-500/25 hover:bg-emerald-600 active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {procesando
                   ? <span className="flex items-center justify-center gap-2">
