@@ -27,7 +27,7 @@ export function CerrarOrdenButton({ ordenId, total, fullWidth }: Props) {
     setError(null)
     start(async () => {
       try {
-        await cerrarOrden(ordenId, total, metodo)
+        await cerrarOrden(ordenId, metodo)
         setOpen(false)
         router.push("/portal/restaurante")
       } catch (err: any) {

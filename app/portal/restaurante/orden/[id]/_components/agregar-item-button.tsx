@@ -28,7 +28,7 @@ export function AgregarItemButton({ ordenId, menuItems }: { ordenId: string; men
     setError(null)
     start(async () => {
       try {
-        await agregarItemOrden(ordenId, selected.id, cantidad, selected.precio, nota || undefined)
+        await agregarItemOrden(ordenId, selected.id, cantidad, nota || undefined)
         setOpen(false)
         setSelected(null); setSearch(""); setCantidad(1); setNota("")
         router.refresh()

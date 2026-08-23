@@ -1,18 +1,16 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { requireClient } from "@/lib/supabase/require-client"
+import { requirePortalAccess, montoValido, textoRequerido } from "@/lib/portal-security"
 
 export async function crearClienteCobro(data: {
   nombre: string; cedula?: string; telefono?: string; direccion?: string
 }) {
-  const supabase = await requireClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error("No autenticado")
+  const { supabase, user } = await requirePortalAccess("cobros")
 
   const { data: cliente, error } = await supabase
     .from("clientes_cobro")
-    .insert({ agente_id: user.id, ...data })
+    .insert({ ...data, agente_id: user.id, nombre: textoRequerido(data.nombre, "nombre del cliente") })
     .select("id").single()
 
   if (error) throw error
@@ -30,19 +28,26 @@ export async function crearCobro(input: {
   fecha_vencimiento?: string
   notas?: string
 }) {
-  const supabase = await requireClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error("No autenticado")
+  const { supabase, user } = await requirePortalAccess("cobros")
+
+  const descripcion = textoRequerido(input.descripcion, "concepto del cobro")
+  const montoTotal  = montoValido(input.monto_total, "monto total")
 
   let clienteId = input.cliente_id
 
-  if (!clienteId) {
+  if (clienteId) {
+    // El cliente debe ser del agente — la FK no respeta RLS
+    const { data: propio } = await supabase
+      .from("clientes_cobro").select("id")
+      .eq("id", clienteId).eq("agente_id", user.id).maybeSingle()
+    if (!propio) throw new Error("Cliente no encontrado")
+  } else {
     if (!input.cliente_nombre) throw new Error("Nombre del cliente requerido")
     const { data: c, error } = await supabase
       .from("clientes_cobro")
       .insert({
         agente_id: user.id,
-        nombre:    input.cliente_nombre,
+        nombre:    textoRequerido(input.cliente_nombre, "nombre del cliente"),
         cedula:    input.cliente_cedula   ?? null,
         telefono:  input.cliente_telefono ?? null,
       })
@@ -56,8 +61,8 @@ export async function crearCobro(input: {
     .insert({
       agente_id:        user.id,
       cliente_id:       clienteId,
-      descripcion:      input.descripcion,
-      monto_total:      input.monto_total,
+      descripcion,
+      monto_total:      montoTotal,
       fecha_vencimiento: input.fecha_vencimiento ?? null,
       notas:            input.notas ?? null,
     })
@@ -74,13 +79,13 @@ export async function registrarPagoCobro(
   fecha?: string,
   nota?: string,
 ) {
-  const supabase = await requireClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error("No autenticado")
+  const { supabase } = await requirePortalAccess("cobros")
+  const montoPago = montoValido(monto, "monto del pago")
 
+  // La RPC valida además que el cobro sea del agente (SECURITY DEFINER con chequeo de dueño)
   const { data, error } = await supabase.rpc("aplicar_pago_cobro", {
     p_cobro_id: cobro_id,
-    p_monto:    monto,
+    p_monto:    montoPago,
     p_fecha:    fecha ?? new Date().toISOString().split("T")[0],
     p_nota:     nota ?? null,
   })
@@ -92,9 +97,7 @@ export async function registrarPagoCobro(
 }
 
 export async function cancelarCobro(cobro_id: string) {
-  const supabase = await requireClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error("No autenticado")
+  const { supabase, user } = await requirePortalAccess("cobros")
 
   const { error } = await supabase
     .from("cobros")
@@ -112,13 +115,16 @@ export async function editarClienteCobro(
   cliente_id: string,
   data: { nombre: string; cedula?: string; telefono?: string; direccion?: string },
 ) {
-  const supabase = await requireClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error("No autenticado")
+  const { supabase, user } = await requirePortalAccess("cobros")
 
   const { error } = await supabase
     .from("clientes_cobro")
-    .update({ nombre: data.nombre, cedula: data.cedula ?? null, telefono: data.telefono ?? null, direccion: data.direccion ?? null })
+    .update({
+      nombre: textoRequerido(data.nombre, "nombre del cliente"),
+      cedula: data.cedula ?? null,
+      telefono: data.telefono ?? null,
+      direccion: data.direccion ?? null,
+    })
     .eq("id", cliente_id).eq("agente_id", user.id)
 
   if (error) throw error
@@ -127,9 +133,7 @@ export async function editarClienteCobro(
 }
 
 export async function obtenerClientesCobro() {
-  const supabase = await requireClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error("No autenticado")
+  const { supabase, user } = await requirePortalAccess("cobros")
 
   const { data, error } = await supabase
     .from("clientes_cobro")

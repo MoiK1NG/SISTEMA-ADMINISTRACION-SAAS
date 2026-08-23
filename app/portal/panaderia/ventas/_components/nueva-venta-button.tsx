@@ -36,10 +36,7 @@ export function NuevaVentaButton({ productos }: { productos: Producto[] }) {
   }, 0)
 
   function handleCreate() {
-    const items = Object.entries(qtys).map(([producto_id, cantidad]) => {
-      const p = productos.find(p => p.id === producto_id)!
-      return { producto_id, cantidad, precio_unitario: p.precio_venta }
-    })
+    const items = Object.entries(qtys).map(([producto_id, cantidad]) => ({ producto_id, cantidad }))
     if (items.length === 0) { setError("Agrega al menos un producto"); return }
     setError(null)
     start(async () => {
