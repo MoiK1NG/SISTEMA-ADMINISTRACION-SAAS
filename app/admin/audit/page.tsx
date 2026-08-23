@@ -4,16 +4,24 @@ import { Badge } from "@/components/ui/badge"
 import { ClipboardList, Info } from "lucide-react"
 
 const ACTION_LABELS: Record<string, { label: string; color: string }> = {
-  approve_user:      { label: "Aprobar usuario",     color: "bg-emerald-100 text-emerald-700" },
-  disapprove_user:   { label: "Desaprobar usuario",  color: "bg-amber-100 text-amber-700"     },
-  toggle_active:     { label: "Activar/Suspender",   color: "bg-blue-100 text-blue-700"       },
-  update_role:       { label: "Cambiar rol",          color: "bg-purple-100 text-purple-700"   },
-  delete_user:       { label: "Eliminar usuario",     color: "bg-red-100 text-red-700"         },
-  assign_membership: { label: "Asignar membresía",   color: "bg-sky-100 text-sky-700"         },
-  create_portal:     { label: "Crear portal",         color: "bg-indigo-100 text-indigo-700"   },
-  delete_portal:     { label: "Eliminar portal",      color: "bg-red-100 text-red-700"         },
-  grant_access:      { label: "Dar acceso portal",    color: "bg-teal-100 text-teal-700"       },
-  revoke_access:     { label: "Quitar acceso portal", color: "bg-orange-100 text-orange-700"   },
+  approve_user:             { label: "Aprobar usuario",      color: "bg-emerald-100 text-emerald-700" },
+  disapprove_user:          { label: "Desaprobar usuario",   color: "bg-amber-100 text-amber-700"     },
+  toggle_active:            { label: "Activar/Suspender",    color: "bg-blue-100 text-blue-700"       },
+  update_role:              { label: "Cambiar rol",           color: "bg-purple-100 text-purple-700"   },
+  delete_user:              { label: "Eliminar usuario",      color: "bg-red-100 text-red-700"         },
+  assign_membership:        { label: "Asignar membresía",    color: "bg-sky-100 text-sky-700"         },
+  update_membership_status: { label: "Cambiar membresía",    color: "bg-sky-100 text-sky-700"         },
+  delete_membership:        { label: "Eliminar membresía",   color: "bg-red-100 text-red-700"         },
+  create_portal:            { label: "Crear portal",          color: "bg-indigo-100 text-indigo-700"   },
+  update_portal:            { label: "Editar portal",         color: "bg-indigo-100 text-indigo-700"   },
+  toggle_portal:            { label: "Activar/Apagar portal", color: "bg-blue-100 text-blue-700"       },
+  delete_portal:            { label: "Eliminar portal",       color: "bg-red-100 text-red-700"         },
+  grant_access:             { label: "Dar acceso portal",     color: "bg-teal-100 text-teal-700"       },
+  revoke_access:            { label: "Quitar acceso portal",  color: "bg-orange-100 text-orange-700"   },
+  update_access:            { label: "Actualizar accesos",    color: "bg-teal-100 text-teal-700"       },
+  create_plan:              { label: "Crear plan",            color: "bg-indigo-100 text-indigo-700"   },
+  update_plan:              { label: "Editar plan",           color: "bg-indigo-100 text-indigo-700"   },
+  delete_plan:              { label: "Eliminar plan",         color: "bg-red-100 text-red-700"         },
 }
 
 export default async function AuditPage() {
