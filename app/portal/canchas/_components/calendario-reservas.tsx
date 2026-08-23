@@ -4,7 +4,7 @@
 // Contiene toda la interactividad: selector de fecha + grid + panel lateral.
 // El Server Component (page.tsx) le pasa los datos iniciales como props.
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { ChevronLeft, ChevronRight, Plus, CalendarDays, Clock, DollarSign, TrendingUp } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -60,14 +60,21 @@ function isTomorrow(iso: string) { return iso === addDays(new Date().toISOString
 // ─── Componente ───────────────────────────────────────────────────────────────
 export function CalendarioReservas({ canchas, reservasIniciales, fechaInicial, ingresosDia }: Props) {
   const router = useRouter()
-  const [fecha, setFecha] = useState(fechaInicial)
-  const [reservas] = useState<Reserva[]>(reservasIniciales)
+  const [isPending, startTransition] = useTransition()
   const [modalOpen, setModalOpen] = useState(false)
   const [slotSeleccionado, setSlotSeleccionado] = useState<{ canchaId: string; hora: number } | null>(null)
 
-  // TODO: cuando cambies de fecha, hacer fetch de reservas_del_dia(fecha)
-  // Por ahora muestra las iniciales (del día de hoy) en cualquier fecha
-  const reservasDia = useMemo(() => reservas, [reservas, fecha])
+  // La fecha vive en la URL (?fecha=): al cambiarla, el Server Component
+  // vuelve a consultar reservas_del_dia e ingresos para ese día.
+  const fecha = fechaInicial
+  const reservasDia = reservasIniciales
+
+  function cambiarFecha(nueva: string) {
+    if (!nueva) return
+    startTransition(() => {
+      router.replace(`/portal/canchas?fecha=${nueva}`, { scroll: false })
+    })
+  }
 
   // Mapa rápido: "canchaId-hora" → reserva
   const reservaMap = useMemo(() => {
@@ -107,7 +114,7 @@ export function CalendarioReservas({ canchas, reservasIniciales, fechaInicial, i
         <div className="flex items-center gap-2">
           {/* Navegación día anterior/siguiente */}
           <button
-            onClick={() => setFecha(f => addDays(f, -1))}
+            onClick={() => cambiarFecha(addDays(fecha, -1))}
             className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-colors"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -125,7 +132,7 @@ export function CalendarioReservas({ canchas, reservasIniciales, fechaInicial, i
               return (
                 <button
                   key={label}
-                  onClick={() => setFecha(target)}
+                  onClick={() => cambiarFecha(target)}
                   className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-all ${
                     active
                       ? "bg-slate-900 text-white shadow-sm"
@@ -139,7 +146,7 @@ export function CalendarioReservas({ canchas, reservasIniciales, fechaInicial, i
           </div>
 
           <button
-            onClick={() => setFecha(f => addDays(f, 1))}
+            onClick={() => cambiarFecha(addDays(fecha, 1))}
             className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-colors"
           >
             <ChevronRight className="h-4 w-4" />
@@ -151,7 +158,7 @@ export function CalendarioReservas({ canchas, reservasIniciales, fechaInicial, i
             <input
               type="date"
               value={fecha}
-              onChange={e => setFecha(e.target.value)}
+              onChange={e => cambiarFecha(e.target.value)}
               className="h-9 rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-900/10"
             />
           </div>
@@ -191,7 +198,7 @@ export function CalendarioReservas({ canchas, reservasIniciales, fechaInicial, i
       </div>
 
       {/* ── GRID + PANEL ───────────────────────────────────────────────────── */}
-      <div className="flex gap-5 items-start">
+      <div className={`flex gap-5 items-start transition-opacity ${isPending ? "opacity-60" : ""}`}>
 
         {/* Grid de reservas — scroll horizontal en mobile */}
         <div className="flex-1 min-w-0 overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm">

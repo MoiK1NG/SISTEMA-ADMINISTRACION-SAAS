@@ -29,7 +29,7 @@ import { RegistrarPagoButton } from "./_components/registrar-pago-button"
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 type EstadoPrestamo = "pendiente" | "activo" | "al_dia" | "en_mora" | "pagado" | "cancelado"
-type EstadoCuota    = "pendiente" | "pagado"  | "vencida" | "parcial"
+type EstadoCuota    = "pendiente" | "pagada"  | "vencida" | "parcial"
 
 interface Cuota {
   id: string
@@ -75,7 +75,7 @@ const ESTADO_PRESTAMO: Record<EstadoPrestamo, { label: string; icon: React.Eleme
 
 const ESTADO_CUOTA: Record<EstadoCuota, { label: string; classes: string }> = {
   pendiente: { label: "Pendiente", classes: "bg-amber-50  text-amber-700  border-amber-200"   },
-  pagado:    { label: "Pagado",    classes: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  pagada:    { label: "Pagada",    classes: "bg-emerald-50 text-emerald-700 border-emerald-200" },
   vencida:   { label: "Vencida",   classes: "bg-rose-50   text-rose-700   border-rose-200"    },
   parcial:   { label: "Parcial",   classes: "bg-sky-50    text-sky-700    border-sky-200"     },
 }
@@ -137,9 +137,9 @@ export default async function PrestamoDetailPage({
   const cliente      = Array.isArray(prestamo.clientes) ? prestamo.clientes[0] : prestamo.clientes
   const estadoCfg    = ESTADO_PRESTAMO[prestamo.estado as EstadoPrestamo] ?? ESTADO_PRESTAMO.activo
   const EstadoIcon   = estadoCfg.icon
-  const cuotasPendientes = cuotas.filter((c) => c.estado !== "pagado")
+  const cuotasPendientes = cuotas.filter((c) => c.estado !== "pagada")
   const proximaCuota     = cuotasPendientes[0] ?? null
-  const cuotasPagadas    = cuotas.filter((c) => c.estado === "pagado").length
+  const cuotasPagadas    = cuotas.filter((c) => c.estado === "pagada").length
   const progreso         = cuotas.length > 0 ? Math.round((cuotasPagadas / cuotas.length) * 100) : 0
   const estaActivo       = ["activo", "al_dia", "en_mora", "pendiente"].includes(prestamo.estado)
 

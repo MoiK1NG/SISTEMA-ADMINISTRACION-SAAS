@@ -10,7 +10,11 @@ function getInitials(name: string) {
   return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
 }
 
-export default async function CanchasPage() {
+export default async function CanchasPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ fecha?: string }>
+}) {
   const supabase = await requireClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect("/login")
@@ -47,11 +51,13 @@ export default async function CanchasPage() {
     precio_hora: c.precio_hora,
   }))
 
-  // ── Reservas de hoy via función RPC ───────────────────────────────────────
+  // ── Reservas del día seleccionado (?fecha=) via función RPC ──────────────
+  const { fecha: fechaParam } = await searchParams
   const fechaHoy = new Date().toISOString().split("T")[0]
+  const fecha = /^\d{4}-\d{2}-\d{2}$/.test(fechaParam ?? "") ? fechaParam! : fechaHoy
 
   const { data: reservasRaw } = await supabase
-    .rpc("reservas_del_dia", { p_fecha: fechaHoy })
+    .rpc("reservas_del_dia", { p_fecha: fecha })
 
   const reservas: Reserva[] = (reservasRaw ?? []).map((r: any) => ({
     id:              r.id,
@@ -72,7 +78,7 @@ export default async function CanchasPage() {
     .from("kpis_canchas_agente")
     .select("ingresos_cobrados")
     .eq("agente_id", user.id)
-    .eq("fecha", fechaHoy)
+    .eq("fecha", fecha)
     .maybeSingle()
 
   const ingresosDia  = Number(kpi?.ingresos_cobrados ?? 0)
@@ -141,7 +147,7 @@ export default async function CanchasPage() {
           <CalendarioReservas
             canchas={canchas}
             reservasIniciales={reservas}
-            fechaInicial={fechaHoy}
+            fechaInicial={fecha}
             ingresosDia={ingresosDia}
           />
         )}
