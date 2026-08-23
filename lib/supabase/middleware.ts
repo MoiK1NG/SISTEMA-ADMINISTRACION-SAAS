@@ -7,7 +7,12 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 // ---------------------------------------------------------------------------
 // Rutas que nunca requieren autenticación
 // ---------------------------------------------------------------------------
-const PUBLIC_ROUTES = ['/', '/login', '/signup', '/auth/callback', '/auth/error']
+// /reset-password es pública a propósito: el usuario llega con una sesión de
+// recuperación recién creada y no debe rebotar al login antes de cambiarla.
+const PUBLIC_ROUTES = [
+  '/', '/login', '/signup', '/forgot-password', '/reset-password',
+  '/auth/callback', '/auth/error',
+]
 
 // Regex que captura /portal/<slug>  →  grupo 1 = slug
 const PORTAL_ROUTE_RE = /^\/portal\/([^/]+)/
