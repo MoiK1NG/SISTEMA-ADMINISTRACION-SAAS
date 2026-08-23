@@ -57,12 +57,14 @@ ON CONFLICT (slug) DO UPDATE SET
   updated_at  = NOW();
 
 
--- ── 2. Portales construidos pero fuera del catálogo por ahora ─────────────────
--- Se apagan, no se borran: conservan sus datos y se reactivan cambiando
--- is_active a TRUE cuando se quieran ofrecer.
+-- ── 2. Todo lo que no esté en el catálogo se apaga ────────────────────────────
+-- Lista blanca en vez de enumerar qué apagar: así no sobrevive activo ningún
+-- portal viejo o creado a mano que no esté contemplado arriba.
+-- Se apagan, no se borran: conservan sus datos y se reactivan poniendo
+-- is_active en TRUE cuando se quieran ofrecer.
 UPDATE public.portals
 SET is_active = FALSE, updated_at = NOW()
-WHERE slug IN ('cobros', 'restaurante');
+WHERE slug NOT IN ('panaderia', 'canchas', 'prestamos', 'pos');
 
 
 -- ── 3. Portales de ejemplo del seed inicial ───────────────────────────────────
