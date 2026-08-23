@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { AgregarItemButton } from "./_components/agregar-item-button"
 import { CerrarOrdenButton } from "./_components/cerrar-orden-button"
+import { PortalNav } from "@/components/portal/portal-nav"
 
 function fmt(n: number) {
   return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(n)
@@ -68,6 +69,7 @@ export default async function OrdenPage({ params }: { params: Promise<{ id: stri
           </span>
         </div>
       </header>
+      <PortalNav portal="restaurante" />
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 space-y-6">
         <div className="flex items-center justify-between">

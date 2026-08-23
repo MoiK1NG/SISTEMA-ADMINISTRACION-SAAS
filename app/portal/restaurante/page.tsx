@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { MesaCard } from "./_components/mesa-card"
+import { PortalNav } from "@/components/portal/portal-nav"
 
 function fmt(n: number) {
   return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(n)
@@ -66,12 +67,6 @@ export default async function RestaurantePage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button asChild variant="ghost" size="sm" className="hidden sm:flex gap-1.5 text-slate-600">
-              <Link href="/portal/restaurante/menu"><BookOpen className="h-4 w-4" />Menú</Link>
-            </Button>
-            <Button asChild variant="ghost" size="sm" className="hidden sm:flex gap-1.5 text-slate-600">
-              <Link href="/portal/restaurante/caja"><ReceiptText className="h-4 w-4" />Caja</Link>
-            </Button>
             <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-3 py-1">
               <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
               <span className="text-xs font-medium text-red-700">{planName}</span>
@@ -82,6 +77,7 @@ export default async function RestaurantePage() {
           </div>
         </div>
       </header>
+      <PortalNav portal="restaurante" />
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

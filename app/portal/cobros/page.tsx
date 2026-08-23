@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { NuevoCobroButton } from "./_components/nuevo-cobro-button"
 import { CobrosTable } from "./_components/cobros-table"
+import { PortalNav } from "@/components/portal/portal-nav"
 
 type EstadoCobro = "pendiente" | "parcial" | "pagado" | "vencido" | "cancelado"
 
@@ -87,9 +88,6 @@ export default async function CobrosPage() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Button asChild variant="ghost" size="sm" className="hidden sm:flex gap-1.5 text-slate-600 hover:text-slate-900">
-              <Link href="/portal/cobros/clientes"><Users className="h-4 w-4" />Clientes</Link>
-            </Button>
             <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
               <span className="text-xs font-medium text-emerald-700">{planName}</span>
@@ -101,6 +99,7 @@ export default async function CobrosPage() {
           </div>
         </div>
       </header>
+      <PortalNav portal="cobros" />
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

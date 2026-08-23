@@ -5,6 +5,7 @@ import { ArrowLeft, Users } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ClientesCobroManager } from "./_components/clientes-cobro-manager"
+import { PortalNav } from "@/components/portal/portal-nav"
 
 export default async function ClientesCobroPage() {
   const supabase = await requireClient()
@@ -34,6 +35,7 @@ export default async function ClientesCobroPage() {
           <div className="ml-auto text-[11px] text-slate-400">{clientes.length} clientes</div>
         </div>
       </header>
+      <PortalNav portal="cobros" />
 
       <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 space-y-6">
         {/* Stats */}

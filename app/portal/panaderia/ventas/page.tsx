@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { NuevaVentaButton } from "./_components/nueva-venta-button"
+import { PortalNav } from "@/components/portal/portal-nav"
 
 function fmt(n: number) {
   return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(n)
@@ -59,6 +60,7 @@ export default async function VentasPage() {
           </div>
         </div>
       </header>
+      <PortalNav portal="panaderia" />
 
       <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 space-y-6">
         {/* KPIs */}

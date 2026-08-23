@@ -18,6 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { NuevoPrestamoButton } from "./_components/nuevo-prestamo-button"
 import { PrestamosTable } from "./_components/prestamos-table"
+import { PortalNav } from "@/components/portal/portal-nav"
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 type EstadoPrestamo = "pendiente" | "activo" | "al_dia" | "en_mora" | "pagado" | "cancelado"
@@ -180,12 +181,6 @@ export default async function PrestamosPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <Button asChild variant="ghost" size="sm" className="hidden sm:flex gap-1.5 text-slate-600 hover:text-slate-900">
-              <Link href="/portal/prestamos/clientes">
-                <Users className="h-4 w-4" />
-                Clientes
-              </Link>
-            </Button>
             <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
               <span className="text-xs font-medium text-emerald-700">{planName}</span>
@@ -205,6 +200,7 @@ export default async function PrestamosPage() {
           </div>
         </div>
       </header>
+      <PortalNav portal="prestamos" />
 
       {/* ── CONTENIDO ─────────────────────────────────────────────────────── */}
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">

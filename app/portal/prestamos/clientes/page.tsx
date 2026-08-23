@@ -5,6 +5,7 @@ import { ArrowLeft, Users, Landmark } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ClientesManager, type ClienteData } from "./_components/clientes-manager"
+import { PortalNav } from "@/components/portal/portal-nav"
 
 export default async function ClientesPage() {
   const supabase = await requireClient()
@@ -48,6 +49,7 @@ export default async function ClientesPage() {
           <p className="text-sm font-semibold text-slate-900">Gestión de Clientes</p>
         </div>
       </header>
+      <PortalNav portal="prestamos" />
 
       <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 space-y-6">
 

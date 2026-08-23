@@ -75,7 +75,7 @@ export function PosShell({ productos }: Props) {
   return (
     <>
       {/* Layout 2 columnas — 70/30 */}
-      <div className="flex gap-4 h-[calc(100vh-5rem)]">
+      <div className="flex gap-4 h-full">
 
         {/* ── Columna izquierda: Catálogo (70%) ─────────────────────────── */}
         <div className="flex-[7] min-w-0 overflow-hidden">

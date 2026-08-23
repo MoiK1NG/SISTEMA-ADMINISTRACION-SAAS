@@ -4,6 +4,7 @@ import Link from "next/link"
 import { ArrowLeft, BookOpen } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { MenuManager } from "./_components/menu-manager"
+import { PortalNav } from "@/components/portal/portal-nav"
 
 export default async function MenuPage() {
   const supabase = await requireClient()
@@ -39,6 +40,7 @@ export default async function MenuPage() {
           <div className="ml-auto text-[11px] text-slate-400">{items.length} platos · {categorias.length} categorías</div>
         </div>
       </header>
+      <PortalNav portal="restaurante" />
 
       <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
         <MenuManager items={items as any} categorias={categorias as any} />
