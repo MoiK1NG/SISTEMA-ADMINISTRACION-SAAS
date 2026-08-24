@@ -25,9 +25,11 @@ export default async function UsersPage() {
   }
 
   // 3. Obtenemos los datos necesarios para la tabla usando aserción de no-nulo
+  // La tabla necesita la membresía anidada: sin este join la columna
+  // "Membresía" siempre mostraba "Sin Membresía".
   const { data: users } = await supabase!
     .from("profiles")
-    .select("*")
+    .select("*, memberships(*, membership_plans(*))")
     .order("created_at", { ascending: false })
 
   const { data: plans } = await supabase!

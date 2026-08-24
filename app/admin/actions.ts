@@ -264,6 +264,49 @@ export async function updateMembershipStatus(
   return { success: true }
 }
 
+export async function extendMembership(membershipId: string, dias: number) {
+  const { supabase, user } = await verifyAdmin()
+
+  if (!Number.isInteger(dias) || dias === 0 || Math.abs(dias) > 3650) {
+    throw new Error("Cantidad de días inválida")
+  }
+
+  const { data: actual } = await supabase
+    .from("memberships")
+    .select("end_date, user_id")
+    .eq("id", membershipId)
+    .maybeSingle()
+
+  if (!actual) throw new Error("Membresía no encontrada")
+
+  // Si ya venció, se extiende desde hoy; si está vigente, desde su vencimiento.
+  const hoy = new Date(); hoy.setHours(0, 0, 0, 0)
+  const vence = new Date(actual.end_date + "T00:00:00")
+  const base = vence < hoy ? hoy : vence
+  const nuevo = new Date(base)
+  nuevo.setDate(nuevo.getDate() + dias)
+
+  const nuevoFin = nuevo.toISOString().split("T")[0]
+
+  const { error } = await supabase
+    .from("memberships")
+    .update({ end_date: nuevoFin, status: "active" })
+    .eq("id", membershipId)
+
+  if (error) throw error
+
+  await logAudit(supabase, user.id, {
+    action: "extend_membership", entity_type: "membership", entity_id: membershipId,
+    entity_name: await nombreUsuario(supabase, actual.user_id),
+    details: { dias, end_date: nuevoFin },
+  })
+
+  revalidatePath("/admin/users")
+  revalidatePath("/admin/memberships")
+  revalidatePath("/admin")
+  return { success: true, end_date: nuevoFin }
+}
+
 export async function deleteMembership(membershipId: string) {
   const { supabase, user } = await verifyAdmin()
 
