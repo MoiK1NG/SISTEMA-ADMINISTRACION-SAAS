@@ -1,5 +1,3 @@
-import { requireClient } from "@/lib/supabase/require-client"
-import { redirect } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, ShoppingBag, TrendingUp } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -7,6 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { NuevaVentaButton } from "./_components/nueva-venta-button"
 import { PortalNav } from "@/components/portal/portal-nav"
+import { BannerVerComo } from "@/components/portal/banner-ver-como"
+import { resolverAgente } from "@/lib/admin-context"
 
 function fmt(n: number) {
   return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(n)
@@ -16,9 +16,9 @@ function fmtDate(iso: string) {
 }
 
 export default async function VentasPage() {
-  const supabase = await requireClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect("/login")
+  // agenteId es el dueño de los datos que se muestran: el propio usuario, o
+  // el cliente que un admin está inspeccionando en modo lectura.
+  const { supabase, agenteId, viendoA } = await resolverAgente()
 
   const today = new Date().toISOString().split("T")[0]
   const hace7 = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
@@ -27,13 +27,13 @@ export default async function VentasPage() {
     supabase
       .from("ventas_pan")
       .select("id, fecha, total, notas, items_venta_pan(cantidad, precio_unitario, productos_pan(nombre))")
-      .eq("agente_id", user.id)
+      .eq("agente_id", agenteId)
       .order("fecha", { ascending: false })
       .limit(30),
     supabase
       .from("productos_pan")
       .select("id, nombre, precio_venta, unidad")
-      .eq("agente_id", user.id)
+      .eq("agente_id", agenteId)
       .eq("activo", true)
       .order("nombre"),
   ])
@@ -61,6 +61,7 @@ export default async function VentasPage() {
         </div>
       </header>
       <PortalNav portal="panaderia" />
+      {viendoA && <BannerVerComo nombre={viendoA.full_name || viendoA.email} email={viendoA.email} />}
 
       <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 space-y-6">
         {/* KPIs */}

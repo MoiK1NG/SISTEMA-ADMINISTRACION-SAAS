@@ -1,21 +1,21 @@
-import { requireClient } from "@/lib/supabase/require-client"
-import { redirect } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Users } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ClientesCobroManager } from "./_components/clientes-cobro-manager"
 import { PortalNav } from "@/components/portal/portal-nav"
+import { BannerVerComo } from "@/components/portal/banner-ver-como"
+import { resolverAgente } from "@/lib/admin-context"
 
 export default async function ClientesCobroPage() {
-  const supabase = await requireClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect("/login")
+  // agenteId es el dueño de los datos que se muestran: el propio usuario, o
+  // el cliente que un admin está inspeccionando en modo lectura.
+  const { supabase, agenteId, viendoA } = await resolverAgente()
 
   const { data } = await supabase
     .from("clientes_cobro")
     .select("id, nombre, cedula, telefono, direccion, cobros(id, estado)")
-    .eq("agente_id", user.id)
+    .eq("agente_id", agenteId)
     .order("nombre")
 
   const clientes = data ?? []
@@ -36,6 +36,7 @@ export default async function ClientesCobroPage() {
         </div>
       </header>
       <PortalNav portal="cobros" />
+      {viendoA && <BannerVerComo nombre={viendoA.full_name || viendoA.email} email={viendoA.email} />}
 
       <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 space-y-6">
         {/* Stats */}

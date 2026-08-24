@@ -1,5 +1,3 @@
-import { requireClient } from "@/lib/supabase/require-client"
-import { redirect } from "next/navigation"
 import Link from "next/link"
 import { Banknote, AlertTriangle, CheckCircle2, Clock, CircleDot, TrendingDown, Users, Plus, ChevronRight, Search } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -8,6 +6,8 @@ import { Button } from "@/components/ui/button"
 import { NuevoCobroButton } from "./_components/nuevo-cobro-button"
 import { CobrosTable } from "./_components/cobros-table"
 import { PortalNav } from "@/components/portal/portal-nav"
+import { BannerVerComo } from "@/components/portal/banner-ver-como"
+import { resolverAgente } from "@/lib/admin-context"
 
 type EstadoCobro = "pendiente" | "parcial" | "pagado" | "vencido" | "cancelado"
 
@@ -28,21 +28,21 @@ const ESTADO_COBRO: Record<EstadoCobro, { label: string; icon: any; classes: str
 }
 
 export default async function CobrosPage() {
-  const supabase = await requireClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect("/login")
+  // agenteId es el dueño de los datos que se muestran: el propio usuario, o
+  // el cliente que un admin está inspeccionando en modo lectura.
+  const { supabase, agenteId, viendoA } = await resolverAgente()
 
   const { data: profile } = await supabase
-    .from("profiles").select("full_name, email").eq("id", user.id).single()
+    .from("profiles").select("full_name, email").eq("id", agenteId).single()
 
   const { data: membership } = await supabase
     .from("memberships").select("end_date, membership_plans(name)")
-    .eq("user_id", user.id).gte("end_date", new Date().toISOString().split("T")[0])
+    .eq("user_id", agenteId).gte("end_date", new Date().toISOString().split("T")[0])
     .order("end_date", { ascending: false }).limit(1).maybeSingle()
 
   // KPIs
   const { data: kpiRaw } = await supabase
-    .from("kpis_cobros").select("*").eq("agente_id", user.id).maybeSingle()
+    .from("kpis_cobros").select("*").eq("agente_id", agenteId).maybeSingle()
 
   const kpi = {
     total_facturado:   Number(kpiRaw?.total_facturado   ?? 0),
@@ -57,7 +57,7 @@ export default async function CobrosPage() {
   const { data: cobrosRaw } = await supabase
     .from("cobros")
     .select("id, descripcion, monto_total, monto_pagado, saldo_pendiente, estado, fecha_vencimiento, created_at, clientes_cobro(nombre)")
-    .eq("agente_id", user.id)
+    .eq("agente_id", agenteId)
     .order("created_at", { ascending: false })
 
   const cobros = (cobrosRaw ?? []).map((c) => ({
@@ -100,6 +100,7 @@ export default async function CobrosPage() {
         </div>
       </header>
       <PortalNav portal="cobros" />
+      {viendoA && <BannerVerComo nombre={viendoA.full_name || viendoA.email} email={viendoA.email} />}
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

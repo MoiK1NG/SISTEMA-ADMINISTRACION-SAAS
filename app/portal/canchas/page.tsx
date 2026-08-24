@@ -1,11 +1,11 @@
 // ─── Server Component ─────────────────────────────────────────────────────────
-import { requireClient } from "@/lib/supabase/require-client"
-import { redirect } from "next/navigation"
 import { Dumbbell } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { CalendarioReservas } from "./_components/calendario-reservas"
 import type { Cancha, Reserva } from "./types"
 import { PortalNav } from "@/components/portal/portal-nav"
+import { BannerVerComo } from "@/components/portal/banner-ver-como"
+import { resolverAgente } from "@/lib/admin-context"
 
 function getInitials(name: string) {
   return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
@@ -16,22 +16,22 @@ export default async function CanchasPage({
 }: {
   searchParams: Promise<{ fecha?: string }>
 }) {
-  const supabase = await requireClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect("/login")
+  // agenteId es el dueño de los datos que se muestran: el propio usuario, o
+  // el cliente que un admin está inspeccionando en modo lectura.
+  const { supabase, agenteId, viendoA } = await resolverAgente()
 
   // ── Perfil ────────────────────────────────────────────────────────────────
   const { data: profile } = await supabase
     .from("profiles")
     .select("full_name, email")
-    .eq("id", user.id)
+    .eq("id", agenteId)
     .single()
 
   // ── Membresía ─────────────────────────────────────────────────────────────
   const { data: membership } = await supabase
     .from("memberships")
     .select("end_date, membership_plans(name)")
-    .eq("user_id", user.id)
+    .eq("user_id", agenteId)
     .gte("end_date", new Date().toISOString().split("T")[0])
     .order("end_date", { ascending: false })
     .limit(1)
@@ -41,7 +41,7 @@ export default async function CanchasPage({
   const { data: canchasRaw } = await supabase
     .from("canchas")
     .select("id, nombre, tipo, precio_hora, orden")
-    .eq("agente_id", user.id)
+    .eq("agente_id", agenteId)
     .eq("is_active", true)
     .order("orden")
 
@@ -52,13 +52,22 @@ export default async function CanchasPage({
     precio_hora: c.precio_hora,
   }))
 
-  // ── Reservas del día seleccionado (?fecha=) via función RPC ──────────────
+  // ── Reservas del día seleccionado (?fecha=) ──────────────────────────────
   const { fecha: fechaParam } = await searchParams
   const fechaHoy = new Date().toISOString().split("T")[0]
   const fecha = /^\d{4}-\d{2}-\d{2}$/.test(fechaParam ?? "") ? fechaParam! : fechaHoy
 
+  // Consulta directa en vez de la RPC reservas_del_dia: esa función fija
+  // auth.uid() por dentro, así que en modo "ver como cliente" devolvería una
+  // agenda vacía. La RLS ya garantiza que solo se vean las reservas propias
+  // (o todas, si es admin).
   const { data: reservasRaw } = await supabase
-    .rpc("reservas_del_dia", { p_fecha: fecha })
+    .from("reservas")
+    .select("id, cancha_id, cliente_nombre, cliente_telefono, hora_inicio, hora_fin, monto, monto_pagado, estado_pago, estado, nota")
+    .eq("agente_id", agenteId)
+    .eq("fecha", fecha)
+    .neq("estado", "cancelada")
+    .order("hora_inicio")
 
   const reservas: Reserva[] = (reservasRaw ?? []).map((r: any) => ({
     id:              r.id,
@@ -78,7 +87,7 @@ export default async function CanchasPage({
   const { data: kpi } = await supabase
     .from("kpis_canchas_agente")
     .select("ingresos_cobrados")
-    .eq("agente_id", user.id)
+    .eq("agente_id", agenteId)
     .eq("fecha", fecha)
     .maybeSingle()
 
@@ -124,6 +133,7 @@ export default async function CanchasPage({
         </div>
       </header>
       <PortalNav portal="canchas" />
+      {viendoA && <BannerVerComo nombre={viendoA.full_name || viendoA.email} email={viendoA.email} />}
 
       {/* ── CONTENIDO ─────────────────────────────────────────────────────── */}
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">

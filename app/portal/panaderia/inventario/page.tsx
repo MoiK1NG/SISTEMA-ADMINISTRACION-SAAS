@@ -1,20 +1,20 @@
-import { requireClient } from "@/lib/supabase/require-client"
-import { redirect } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Box } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { InventarioManager } from "./_components/inventario-manager"
 import { PortalNav } from "@/components/portal/portal-nav"
+import { BannerVerComo } from "@/components/portal/banner-ver-como"
+import { resolverAgente } from "@/lib/admin-context"
 
 export default async function InventarioPage() {
-  const supabase = await requireClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect("/login")
+  // agenteId es el dueño de los datos que se muestran: el propio usuario, o
+  // el cliente que un admin está inspeccionando en modo lectura.
+  const { supabase, agenteId, viendoA } = await resolverAgente()
 
   const { data } = await supabase
     .from("insumos_pan")
     .select("id, nombre, unidad, stock_actual, stock_minimo, precio_unidad")
-    .eq("agente_id", user.id)
+    .eq("agente_id", agenteId)
     .order("nombre")
 
   const insumos = data ?? []
@@ -39,6 +39,7 @@ export default async function InventarioPage() {
         </div>
       </header>
       <PortalNav portal="panaderia" />
+      {viendoA && <BannerVerComo nombre={viendoA.full_name || viendoA.email} email={viendoA.email} />}
 
       <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
         <InventarioManager insumos={insumos as any} />

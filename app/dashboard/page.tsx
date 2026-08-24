@@ -1,5 +1,3 @@
-import { requireClient } from "@/lib/supabase/require-client"
-import { redirect } from "next/navigation"
 import { differenceInDays, isPast } from "date-fns"
 import { Suspense } from "react"
 import { MembershipCard } from "@/components/dashboard/membership-card"
@@ -7,19 +5,21 @@ import { PortalsGrid } from "@/components/dashboard/portals-grid"
 import { AccessExpiredCard } from "@/components/dashboard/access-expired-card"
 import { PortalAccessAlert } from "@/components/dashboard/portal-access-alert"
 import { Shield, Grid3X3, CalendarDays, Layers } from "lucide-react"
+import { resolverAgente } from "@/lib/admin-context"
+import { BannerVerComo } from "@/components/portal/banner-ver-como"
 
 export default async function DashboardPage() {
-  const supabase = await requireClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect("/login")
+  // Si un admin activó "ver como cliente", el dashboard lista los portales
+  // y la membresía de ese cliente, no los propios.
+  const { supabase, agenteId, viendoA } = await resolverAgente()
 
   const { data: profile } = await supabase
-    .from("profiles").select("*").eq("id", user.id).single()
+    .from("profiles").select("*").eq("id", agenteId).single()
 
   const { data: memberships } = await supabase
     .from("memberships")
     .select("*, membership_plans(id, name, description, duration_days, price)")
-    .eq("user_id", user.id).eq("is_active", true)
+    .eq("user_id", agenteId).eq("is_active", true)
     .order("end_date", { ascending: false }).limit(1)
 
   const activeMembership  = memberships?.[0]
@@ -37,7 +37,7 @@ export default async function DashboardPage() {
     const { data: portalAccess } = await supabase
       .from("user_portal_access")
       .select("id, portal_id, portals(id, name, slug, description, url, icon, color, is_active, created_at, updated_at)")
-      .eq("user_id", user.id)
+      .eq("user_id", agenteId)
     accessiblePortals = (portalAccess || [])
       .map((pa: any) => pa.portals)
       .filter((p: any) => p !== null && p !== undefined && p.is_active)
@@ -53,6 +53,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
+      {viendoA && <BannerVerComo nombre={viendoA.full_name || viendoA.email} email={viendoA.email} />}
       <Suspense fallback={null}><PortalAccessAlert /></Suspense>
 
       {/* ── Hero saludo ─────────────────────────────────────────────────── */}

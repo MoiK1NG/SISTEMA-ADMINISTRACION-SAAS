@@ -1,9 +1,9 @@
-import { requireClient } from "@/lib/supabase/require-client"
-import { redirect } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Receipt, Banknote, CreditCard, Smartphone, TrendingUp } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { PortalNav } from "@/components/portal/portal-nav"
+import { BannerVerComo } from "@/components/portal/banner-ver-como"
+import { resolverAgente } from "@/lib/admin-context"
 
 function fmt(n: number) {
   return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(n)
@@ -19,9 +19,9 @@ const METODO_META: Record<string, { label: string; icon: any; classes: string }>
 }
 
 export default async function VentasPosPage() {
-  const supabase = await requireClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect("/login")
+  // agenteId es el dueño de los datos que se muestran: el propio usuario, o
+  // el cliente que un admin está inspeccionando en modo lectura.
+  const { supabase, agenteId, viendoA } = await resolverAgente()
 
   const hoyInicio = new Date(); hoyInicio.setHours(0, 0, 0, 0)
   const hace7 = new Date();     hace7.setDate(hace7.getDate() - 7); hace7.setHours(0, 0, 0, 0)
@@ -30,7 +30,7 @@ export default async function VentasPosPage() {
   const { data: ventas7d } = await supabase
     .from("ventas_pos")
     .select("total, metodo, created_at")
-    .eq("agente_id", user.id)
+    .eq("agente_id", agenteId)
     .gte("created_at", hace7.toISOString())
 
   const deHoy      = (ventas7d ?? []).filter(v => new Date(v.created_at) >= hoyInicio)
@@ -45,7 +45,7 @@ export default async function VentasPosPage() {
   const { data: ventas } = await supabase
     .from("ventas_pos")
     .select("id, subtotal, impuesto, total, metodo, monto_recibido, created_at, items_venta_pos(nombre, cantidad)")
-    .eq("agente_id", user.id)
+    .eq("agente_id", agenteId)
     .order("created_at", { ascending: false })
     .limit(30)
 
@@ -68,6 +68,7 @@ export default async function VentasPosPage() {
         </div>
       </header>
       <PortalNav portal="pos" top={14} />
+      {viendoA && <BannerVerComo nombre={viendoA.full_name || viendoA.email} email={viendoA.email} />}
 
       <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 space-y-6">
 

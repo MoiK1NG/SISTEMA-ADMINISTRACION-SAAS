@@ -1,8 +1,6 @@
 // ─── Server Component ─────────────────────────────────────────────────────────
 // Carga perfil, membresía, catálogo real y KPI de ventas del día.
 
-import { requireClient } from "@/lib/supabase/require-client"
-import { redirect } from "next/navigation"
 import Link from "next/link"
 import { UtensilsCrossed, Package, Receipt, Plus } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -10,6 +8,8 @@ import { Button } from "@/components/ui/button"
 import { PosShell } from "./_components/pos-shell"
 import type { Producto } from "./types"
 import { PortalNav } from "@/components/portal/portal-nav"
+import { BannerVerComo } from "@/components/portal/banner-ver-como"
+import { resolverAgente } from "@/lib/admin-context"
 
 function getInitials(name: string) {
   return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
@@ -20,20 +20,20 @@ function fmt(n: number) {
 }
 
 export default async function PosPage() {
-  const supabase = await requireClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect("/login")
+  // agenteId es el dueño de los datos que se muestran: el propio usuario, o
+  // el cliente que un admin está inspeccionando en modo lectura.
+  const { supabase, agenteId, viendoA } = await resolverAgente()
 
   const { data: profile } = await supabase
     .from("profiles")
     .select("full_name, email")
-    .eq("id", user.id)
+    .eq("id", agenteId)
     .single()
 
   const { data: membership } = await supabase
     .from("memberships")
     .select("end_date, membership_plans(name)")
-    .eq("user_id", user.id)
+    .eq("user_id", agenteId)
     .gte("end_date", new Date().toISOString().split("T")[0])
     .order("end_date", { ascending: false })
     .limit(1)
@@ -43,7 +43,7 @@ export default async function PosPage() {
   const { data: productosRaw } = await supabase
     .from("productos_pos")
     .select("id, nombre, precio, categoria, emoji, disponible")
-    .eq("agente_id", user.id)
+    .eq("agente_id", agenteId)
     .eq("disponible", true)
     .order("categoria")
     .order("nombre")
@@ -58,7 +58,7 @@ export default async function PosPage() {
   const { data: ventasHoy } = await supabase
     .from("ventas_pos")
     .select("total")
-    .eq("agente_id", user.id)
+    .eq("agente_id", agenteId)
     .gte("created_at", hoyInicio.toISOString())
 
   const numVentasHoy   = ventasHoy?.length ?? 0
@@ -111,6 +111,7 @@ export default async function PosPage() {
         </div>
       </header>
       <PortalNav portal="pos" top={14} sticky={false} />
+      {viendoA && <BannerVerComo nombre={viendoA.full_name || viendoA.email} email={viendoA.email} />}
 
       {/* ── POS SHELL o estado vacío ──────────────────────────────────────── */}
       <div className="flex-1 overflow-hidden p-3 sm:p-4 max-w-[1600px] w-full mx-auto">

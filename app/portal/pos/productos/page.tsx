@@ -1,20 +1,20 @@
-import { requireClient } from "@/lib/supabase/require-client"
-import { redirect } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Package } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ProductosPosManager } from "./_components/productos-pos-manager"
 import { PortalNav } from "@/components/portal/portal-nav"
+import { BannerVerComo } from "@/components/portal/banner-ver-como"
+import { resolverAgente } from "@/lib/admin-context"
 
 export default async function ProductosPosPage() {
-  const supabase = await requireClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect("/login")
+  // agenteId es el dueño de los datos que se muestran: el propio usuario, o
+  // el cliente que un admin está inspeccionando en modo lectura.
+  const { supabase, agenteId, viendoA } = await resolverAgente()
 
   const { data: productosRaw } = await supabase
     .from("productos_pos")
     .select("id, nombre, categoria, emoji, precio, disponible")
-    .eq("agente_id", user.id)
+    .eq("agente_id", agenteId)
     .order("categoria")
     .order("nombre")
 
@@ -39,6 +39,7 @@ export default async function ProductosPosPage() {
         </div>
       </header>
       <PortalNav portal="pos" top={14} />
+      {viendoA && <BannerVerComo nombre={viendoA.full_name || viendoA.email} email={viendoA.email} />}
 
       <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
         <ProductosPosManager productos={productos} />

@@ -1,5 +1,3 @@
-import { requireClient } from "@/lib/supabase/require-client"
-import { redirect } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, ChefHat, ClipboardList, CheckCircle2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,6 +6,8 @@ import { Badge } from "@/components/ui/badge"
 import { OrdenProduccionCard } from "./_components/orden-produccion-card"
 import { NuevaOrdenButton } from "./_components/nueva-orden-button"
 import { PortalNav } from "@/components/portal/portal-nav"
+import { BannerVerComo } from "@/components/portal/banner-ver-como"
+import { resolverAgente } from "@/lib/admin-context"
 
 function fmtDate(iso: string) {
   return new Intl.DateTimeFormat("es-CO", { weekday:"long", day:"2-digit", month:"long" }).format(new Date(iso + "T00:00:00"))
@@ -21,17 +21,17 @@ const ESTADO_ORDEN: Record<string, { label: string; variant: any }> = {
 }
 
 export default async function ProduccionPage() {
-  const supabase = await requireClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect("/login")
+  // agenteId es el dueño de los datos que se muestran: el propio usuario, o
+  // el cliente que un admin está inspeccionando en modo lectura.
+  const { supabase, agenteId, viendoA } = await resolverAgente()
 
   const { data: productosRaw } = await supabase
-    .from("productos_pan").select("id, nombre, categoria").eq("agente_id", user.id).eq("activo", true).order("nombre")
+    .from("productos_pan").select("id, nombre, categoria").eq("agente_id", agenteId).eq("activo", true).order("nombre")
 
   const { data: ordenesRaw } = await supabase
     .from("ordenes_produccion")
     .select("id, fecha, estado, notas, items_produccion(id, cantidad_plan, cantidad_real, productos_pan(nombre))")
-    .eq("agente_id", user.id)
+    .eq("agente_id", agenteId)
     .order("fecha", { ascending: false })
     .limit(20)
 
@@ -56,6 +56,7 @@ export default async function ProduccionPage() {
         </div>
       </header>
       <PortalNav portal="panaderia" />
+      {viendoA && <BannerVerComo nombre={viendoA.full_name || viendoA.email} email={viendoA.email} />}
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 space-y-6">
         {!ordenHoy && (

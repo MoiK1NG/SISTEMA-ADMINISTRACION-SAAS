@@ -13,6 +13,8 @@ const ACTION_LABELS: Record<string, { label: string; color: string }> = {
   update_membership_status: { label: "Cambiar membresía",    color: "bg-sky-100 text-sky-700"         },
   extend_membership:        { label: "Extender membresía",  color: "bg-sky-100 text-sky-700"         },
   delete_membership:        { label: "Eliminar membresía",   color: "bg-red-100 text-red-700"         },
+  ver_como_cliente:         { label: "Ver portales de cliente", color: "bg-violet-100 text-violet-700" },
+  salir_ver_como:           { label: "Salir de vista cliente", color: "bg-slate-100 text-slate-600"   },
   create_portal:            { label: "Crear portal",          color: "bg-indigo-100 text-indigo-700"   },
   update_portal:            { label: "Editar portal",         color: "bg-indigo-100 text-indigo-700"   },
   toggle_portal:            { label: "Activar/Apagar portal", color: "bg-blue-100 text-blue-700"       },
