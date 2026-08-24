@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import {
   Users, LayoutDashboard, CreditCard, Grid3X3,
-  BarChart3, Bell, ClipboardList, Layers,
+  BarChart3, Bell, ClipboardList, Layers, TrendingUp,
 } from "lucide-react"
 
 const NAV_MAIN = [
@@ -17,6 +17,7 @@ const NAV_MAIN = [
 ]
 
 const NAV_ANALYTICS = [
+  { title: "Actividad",    href: "/admin/actividad", icon: TrendingUp  },
   { title: "Estadísticas", href: "/admin/stats",  icon: BarChart3     },
   { title: "Alertas",      href: "/admin/alerts", icon: Bell          },
   { title: "Auditoría",    href: "/admin/audit",  icon: ClipboardList },
