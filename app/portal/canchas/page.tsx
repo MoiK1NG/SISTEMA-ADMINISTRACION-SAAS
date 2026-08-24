@@ -5,6 +5,7 @@ import { Dumbbell } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { CalendarioReservas } from "./_components/calendario-reservas"
 import type { Cancha, Reserva } from "./types"
+import { PortalNav } from "@/components/portal/portal-nav"
 
 function getInitials(name: string) {
   return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
@@ -122,6 +123,7 @@ export default async function CanchasPage({
           </div>
         </div>
       </header>
+      <PortalNav portal="canchas" />
 
       {/* ── CONTENIDO ─────────────────────────────────────────────────────── */}
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">

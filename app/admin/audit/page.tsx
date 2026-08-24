@@ -11,6 +11,7 @@ const ACTION_LABELS: Record<string, { label: string; color: string }> = {
   delete_user:              { label: "Eliminar usuario",      color: "bg-red-100 text-red-700"         },
   assign_membership:        { label: "Asignar membresía",    color: "bg-sky-100 text-sky-700"         },
   update_membership_status: { label: "Cambiar membresía",    color: "bg-sky-100 text-sky-700"         },
+  extend_membership:        { label: "Extender membresía",  color: "bg-sky-100 text-sky-700"         },
   delete_membership:        { label: "Eliminar membresía",   color: "bg-red-100 text-red-700"         },
   create_portal:            { label: "Crear portal",          color: "bg-indigo-100 text-indigo-700"   },
   update_portal:            { label: "Editar portal",         color: "bg-indigo-100 text-indigo-700"   },
