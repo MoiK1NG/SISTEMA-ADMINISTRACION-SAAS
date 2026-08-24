@@ -1,5 +1,4 @@
-import { requireClient } from "@/lib/supabase/require-client"
-import { redirect, notFound } from "next/navigation"
+import { notFound } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Plus, UtensilsCrossed, CheckCircle2, Clock, ChefHat } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,6 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { AgregarItemButton } from "./_components/agregar-item-button"
 import { CerrarOrdenButton } from "./_components/cerrar-orden-button"
 import { PortalNav } from "@/components/portal/portal-nav"
+import { BannerVerComo } from "@/components/portal/banner-ver-como"
+import { resolverAgente } from "@/lib/admin-context"
 
 function fmt(n: number) {
   return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(n)
@@ -22,14 +23,14 @@ const ESTADO_ITEM: Record<string, { label: string; classes: string }> = {
 
 export default async function OrdenPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const supabase = await requireClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect("/login")
+  // agenteId es el dueño de los datos que se muestran: el propio usuario, o
+  // el cliente que un admin está inspeccionando en modo lectura.
+  const { supabase, agenteId, viendoA } = await resolverAgente()
 
   const { data: orden } = await supabase
     .from("ordenes_rest")
     .select("id, total, estado, notas, created_at, mesas_rest(numero, capacidad)")
-    .eq("id", id).eq("agente_id", user.id).single()
+    .eq("id", id).eq("agente_id", agenteId).single()
 
   if (!orden) notFound()
 
@@ -42,7 +43,7 @@ export default async function OrdenPage({ params }: { params: Promise<{ id: stri
   const { data: menuItems } = await supabase
     .from("menu_items_rest")
     .select("id, nombre, precio, categoria_id, menu_categorias(nombre)")
-    .eq("agente_id", user.id).eq("disponible", true).order("nombre")
+    .eq("agente_id", agenteId).eq("disponible", true).order("nombre")
 
   const items   = itemsRaw ?? []
   const mesa    = Array.isArray(orden.mesas_rest) ? orden.mesas_rest[0] : orden.mesas_rest
@@ -70,6 +71,7 @@ export default async function OrdenPage({ params }: { params: Promise<{ id: stri
         </div>
       </header>
       <PortalNav portal="restaurante" />
+      {viendoA && <BannerVerComo nombre={viendoA.full_name || viendoA.email} email={viendoA.email} />}
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 space-y-6">
         <div className="flex items-center justify-between">

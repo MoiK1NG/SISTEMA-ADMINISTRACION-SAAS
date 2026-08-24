@@ -1,4 +1,6 @@
+import { cookies } from "next/headers"
 import { requireClient } from "@/lib/supabase/require-client"
+import { COOKIE_VER_COMO } from "@/lib/admin-context"
 
 /**
  * Puerta de acceso para server actions de portales.
@@ -13,6 +15,16 @@ export async function requirePortalAccess(slug: string) {
   const supabase = await requireClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error("No autenticado")
+
+  // Modo "ver como cliente": es de sola lectura. Si se permitieran las
+  // escrituras, los datos se crearían con el agente_id del admin y no del
+  // cliente que está inspeccionando.
+  if ((await cookies()).get(COOKIE_VER_COMO)?.value) {
+    throw new Error(
+      "Estás viendo los datos de un cliente en modo lectura. " +
+      "Volvé a tu cuenta para hacer cambios."
+    )
+  }
 
   const { data: profile } = await supabase
     .from("profiles")

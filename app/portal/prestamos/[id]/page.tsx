@@ -1,5 +1,4 @@
-import { requireClient } from "@/lib/supabase/require-client"
-import { redirect, notFound } from "next/navigation"
+import { notFound } from "next/navigation"
 import Link from "next/link"
 import {
   ArrowLeft,
@@ -27,6 +26,8 @@ import {
 import { Button } from "@/components/ui/button"
 import { RegistrarPagoButton } from "./_components/registrar-pago-button"
 import { PortalNav } from "@/components/portal/portal-nav"
+import { BannerVerComo } from "@/components/portal/banner-ver-como"
+import { resolverAgente } from "@/lib/admin-context"
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 type EstadoPrestamo = "pendiente" | "activo" | "al_dia" | "en_mora" | "pagado" | "cancelado"
@@ -88,9 +89,9 @@ export default async function PrestamoDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const supabase = await requireClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect("/login")
+  // agenteId es el dueño de los datos que se muestran: el propio usuario, o
+  // el cliente que un admin está inspeccionando en modo lectura.
+  const { supabase, agenteId, viendoA } = await resolverAgente()
 
   // ── Préstamo + cliente ────────────────────────────────────────────────────
   const { data: prestamo } = await supabase
@@ -102,7 +103,7 @@ export default async function PrestamoDetailPage({
       clientes ( id, nombre, cedula, telefono, direccion )
     `)
     .eq("id", id)
-    .eq("agente_id", user.id)
+    .eq("agente_id", agenteId)
     .single()
 
   if (!prestamo) notFound()
@@ -177,6 +178,7 @@ export default async function PrestamoDetailPage({
         </div>
       </header>
       <PortalNav portal="prestamos" />
+      {viendoA && <BannerVerComo nombre={viendoA.full_name || viendoA.email} email={viendoA.email} />}
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
 

@@ -1,5 +1,4 @@
-import { requireClient } from "@/lib/supabase/require-client"
-import { redirect, notFound } from "next/navigation"
+import { notFound } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Banknote, User, Calendar, CheckCircle2, Clock, AlertTriangle, Receipt } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,6 +7,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { PagarCobroButton } from "../_components/pagar-cobro-button"
 import { PortalNav } from "@/components/portal/portal-nav"
+import { BannerVerComo } from "@/components/portal/banner-ver-como"
+import { resolverAgente } from "@/lib/admin-context"
 
 function fmt(n: number) {
   return new Intl.NumberFormat("es-CO",{ style:"currency",currency:"COP",minimumFractionDigits:0 }).format(n)
@@ -29,14 +30,14 @@ const ESTADO: Record<string,{ label:string; icon:any; classes:string }> = {
 
 export default async function CobroDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const supabase = await requireClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect("/login")
+  // agenteId es el dueño de los datos que se muestran: el propio usuario, o
+  // el cliente que un admin está inspeccionando en modo lectura.
+  const { supabase, agenteId, viendoA } = await resolverAgente()
 
   const { data: cobro } = await supabase
     .from("cobros")
     .select("id, descripcion, monto_total, monto_pagado, saldo_pendiente, estado, fecha_vencimiento, notas, created_at, clientes_cobro(id,nombre,cedula,telefono,direccion)")
-    .eq("id", id).eq("agente_id", user.id).single()
+    .eq("id", id).eq("agente_id", agenteId).single()
 
   if (!cobro) notFound()
 
@@ -74,6 +75,7 @@ export default async function CobroDetailPage({ params }: { params: Promise<{ id
         </div>
       </header>
       <PortalNav portal="cobros" />
+      {viendoA && <BannerVerComo nombre={viendoA.full_name || viendoA.email} email={viendoA.email} />}
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
         {/* Cards resumen */}

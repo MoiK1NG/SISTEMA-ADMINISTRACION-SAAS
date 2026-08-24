@@ -1,26 +1,26 @@
-import { requireClient } from "@/lib/supabase/require-client"
-import { redirect } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, BookOpen } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { MenuManager } from "./_components/menu-manager"
 import { PortalNav } from "@/components/portal/portal-nav"
+import { BannerVerComo } from "@/components/portal/banner-ver-como"
+import { resolverAgente } from "@/lib/admin-context"
 
 export default async function MenuPage() {
-  const supabase = await requireClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect("/login")
+  // agenteId es el dueño de los datos que se muestran: el propio usuario, o
+  // el cliente que un admin está inspeccionando en modo lectura.
+  const { supabase, agenteId, viendoA } = await resolverAgente()
 
   const [{ data: itemsRaw }, { data: categoriasRaw }] = await Promise.all([
     supabase
       .from("menu_items_rest")
       .select("id, nombre, descripcion, precio, disponible, categoria_id, menu_categorias(nombre)")
-      .eq("agente_id", user.id)
+      .eq("agente_id", agenteId)
       .order("nombre"),
     supabase
       .from("menu_categorias")
       .select("id, nombre, orden")
-      .eq("agente_id", user.id)
+      .eq("agente_id", agenteId)
       .order("orden"),
   ])
 
@@ -41,6 +41,7 @@ export default async function MenuPage() {
         </div>
       </header>
       <PortalNav portal="restaurante" />
+      {viendoA && <BannerVerComo nombre={viendoA.full_name || viendoA.email} email={viendoA.email} />}
 
       <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
         <MenuManager items={items as any} categorias={categorias as any} />

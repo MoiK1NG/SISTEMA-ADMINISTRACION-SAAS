@@ -1,6 +1,4 @@
 // ─── Server Component ────────────────────────────────────────────────────────
-import { requireClient } from "@/lib/supabase/require-client"
-import { redirect } from "next/navigation"
 import Link from "next/link"
 import {
   AlertTriangle,
@@ -19,6 +17,8 @@ import { Button } from "@/components/ui/button"
 import { NuevoPrestamoButton } from "./_components/nuevo-prestamo-button"
 import { PrestamosTable } from "./_components/prestamos-table"
 import { PortalNav } from "@/components/portal/portal-nav"
+import { BannerVerComo } from "@/components/portal/banner-ver-como"
+import { resolverAgente } from "@/lib/admin-context"
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 type EstadoPrestamo = "pendiente" | "activo" | "al_dia" | "en_mora" | "pagado" | "cancelado"
@@ -77,22 +77,22 @@ const ESTADO: Record<EstadoPrestamo, { label: string; icon: React.ElementType; c
 
 // ─── Página ───────────────────────────────────────────────────────────────────
 export default async function PrestamosPage() {
-  const supabase = await requireClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect("/login")
+  // agenteId es el dueño de los datos que se muestran: el propio usuario, o
+  // el cliente que un admin está inspeccionando en modo lectura.
+  const { supabase, agenteId, viendoA } = await resolverAgente()
 
   // ── Perfil ────────────────────────────────────────────────────────────────
   const { data: profile } = await supabase
     .from("profiles")
     .select("full_name, email, role")
-    .eq("id", user.id)
+    .eq("id", agenteId)
     .single()
 
   // ── Membresía activa ──────────────────────────────────────────────────────
   const { data: membership } = await supabase
     .from("memberships")
     .select("end_date, membership_plans(name)")
-    .eq("user_id", user.id)
+    .eq("user_id", agenteId)
     .gte("end_date", new Date().toISOString().split("T")[0])
     .order("end_date", { ascending: false })
     .limit(1)
@@ -102,7 +102,7 @@ export default async function PrestamosPage() {
   const { data: kpiRaw } = await supabase
     .from("kpis_agente")
     .select("*")
-    .eq("agente_id", user.id)
+    .eq("agente_id", agenteId)
     .maybeSingle()
 
   const kpi: KpiAgente = {
@@ -130,7 +130,7 @@ export default async function PrestamosPage() {
       created_at,
       clientes ( nombre )
     `)
-    .eq("agente_id", user.id)
+    .eq("agente_id", agenteId)
     .order("created_at", { ascending: false })
 
   // Para cada préstamo, obtener la próxima cuota pendiente/vencida
@@ -201,6 +201,7 @@ export default async function PrestamosPage() {
         </div>
       </header>
       <PortalNav portal="prestamos" />
+      {viendoA && <BannerVerComo nombre={viendoA.full_name || viendoA.email} email={viendoA.email} />}
 
       {/* ── CONTENIDO ─────────────────────────────────────────────────────── */}
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">

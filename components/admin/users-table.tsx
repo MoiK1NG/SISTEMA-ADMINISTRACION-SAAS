@@ -22,7 +22,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, Check, X, Trash2, CreditCard, Grid3X3, Shield } from "lucide-react"
+import { MoreHorizontal, Check, X, Trash2, CreditCard, Grid3X3, Shield, Eye } from "lucide-react"
 import type { Profile, MembershipPlan, Portal, Membership, MembershipStatus } from "@/lib/types"
 import {
   approveUser,
@@ -31,6 +31,8 @@ import {
   deleteUser,
   updateUserRole,
 } from "@/app/admin/actions"
+import { verComoCliente } from "@/app/admin/ver-como-actions"
+import { useRouter } from "next/navigation"
 import { MembershipDialog } from "./membership-dialog"
 import { PortalAccessDialog } from "./portal-access-dialog"
 
@@ -52,6 +54,20 @@ export function UsersTable({ users, plans, portals, currentUserRole }: UsersTabl
   const [membershipDialogOpen, setMembershipDialogOpen] = useState(false)
   const [portalAccessDialogOpen, setPortalAccessDialogOpen] = useState(false)
   const [loading, setLoading] = useState<string | null>(null)
+  const router = useRouter()
+
+  // Abre los portales del cliente en modo lectura, para dar soporte.
+  const handleVerComo = async (userId: string) => {
+    setLoading(userId)
+    try {
+      await verComoCliente(userId)
+      router.push("/dashboard")
+      router.refresh()
+    } catch (error: any) {
+      alert(error?.message ?? "No se pudo abrir la vista del cliente")
+    }
+    setLoading(null)
+  }
 
   const handleApprove = async (userId: string) => {
     setLoading(userId)
@@ -254,6 +270,15 @@ export function UsersTable({ users, plans, portals, currentUserRole }: UsersTabl
                         >
                           <CreditCard className="mr-2 h-4 w-4" />
                           Gestionar Membresía
+                        </DropdownMenuItem>
+
+                        {/* Ver sus portales en modo lectura */}
+                        <DropdownMenuItem
+                          onClick={() => handleVerComo(user.id)}
+                          className="cursor-pointer"
+                        >
+                          <Eye className="mr-2 h-4 w-4" />
+                          Ver sus portales
                         </DropdownMenuItem>
                         
                         {/* Gestionar Acceso a Portales */}

@@ -1,5 +1,3 @@
-import { requireClient } from "@/lib/supabase/require-client"
-import { redirect } from "next/navigation"
 import Link from "next/link"
 import { ChefHat, Package, ShoppingCart, TrendingUp, AlertTriangle, ClipboardList, BarChart3, Boxes } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -7,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { PortalNav } from "@/components/portal/portal-nav"
+import { BannerVerComo } from "@/components/portal/banner-ver-como"
+import { resolverAgente } from "@/lib/admin-context"
 
 function fmt(n: number) {
   return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(n)
@@ -19,13 +19,13 @@ function getInitials(name: string) {
 }
 
 export default async function PanaderiaPage() {
-  const supabase = await requireClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect("/login")
+  // agenteId es el dueño de los datos que se muestran: el propio usuario, o
+  // el cliente que un admin está inspeccionando en modo lectura.
+  const { supabase, agenteId, viendoA } = await resolverAgente()
 
-  const { data: profile } = await supabase.from("profiles").select("full_name, email").eq("id", user.id).single()
+  const { data: profile } = await supabase.from("profiles").select("full_name, email").eq("id", agenteId).single()
   const { data: membership } = await supabase.from("memberships").select("end_date, membership_plans(name)")
-    .eq("user_id", user.id).gte("end_date", new Date().toISOString().split("T")[0])
+    .eq("user_id", agenteId).gte("end_date", new Date().toISOString().split("T")[0])
     .order("end_date", { ascending: false }).limit(1).maybeSingle()
 
   const today = new Date().toISOString().split("T")[0]
@@ -37,12 +37,12 @@ export default async function PanaderiaPage() {
     { data: ventasHoyRaw },
     { data: ventas7Raw },
   ] = await Promise.all([
-    supabase.from("productos_pan").select("id, nombre, categoria, precio_venta, activo").eq("agente_id", user.id).eq("activo", true),
-    supabase.from("insumos_pan").select("id, nombre, unidad, stock_actual, stock_minimo").eq("agente_id", user.id),
+    supabase.from("productos_pan").select("id, nombre, categoria, precio_venta, activo").eq("agente_id", agenteId).eq("activo", true),
+    supabase.from("insumos_pan").select("id, nombre, unidad, stock_actual, stock_minimo").eq("agente_id", agenteId),
     supabase.from("ordenes_produccion").select("id, estado, items_produccion(producto_id, cantidad_plan, cantidad_real, productos_pan(nombre))")
-      .eq("agente_id", user.id).eq("fecha", today).limit(1).maybeSingle(),
-    supabase.from("ventas_pan").select("id, total, items_venta_pan(cantidad, precio_unitario, subtotal)").eq("agente_id", user.id).eq("fecha", today),
-    supabase.from("ventas_pan").select("fecha, total").eq("agente_id", user.id)
+      .eq("agente_id", agenteId).eq("fecha", today).limit(1).maybeSingle(),
+    supabase.from("ventas_pan").select("id, total, items_venta_pan(cantidad, precio_unitario, subtotal)").eq("agente_id", agenteId).eq("fecha", today),
+    supabase.from("ventas_pan").select("fecha, total").eq("agente_id", agenteId)
       .gte("fecha", new Date(Date.now() - 7 * 86400000).toISOString().split("T")[0]).order("fecha", { ascending: false }),
   ])
 
@@ -94,6 +94,7 @@ export default async function PanaderiaPage() {
         </div>
       </header>
       <PortalNav portal="panaderia" />
+      {viendoA && <BannerVerComo nombre={viendoA.full_name || viendoA.email} email={viendoA.email} />}
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
         <div>

@@ -1,22 +1,22 @@
-import { requireClient } from "@/lib/supabase/require-client"
-import { redirect } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Users, Landmark } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ClientesManager, type ClienteData } from "./_components/clientes-manager"
 import { PortalNav } from "@/components/portal/portal-nav"
+import { BannerVerComo } from "@/components/portal/banner-ver-como"
+import { resolverAgente } from "@/lib/admin-context"
 
 export default async function ClientesPage() {
-  const supabase = await requireClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect("/login")
+  // agenteId es el dueño de los datos que se muestran: el propio usuario, o
+  // el cliente que un admin está inspeccionando en modo lectura.
+  const { supabase, agenteId, viendoA } = await resolverAgente()
 
   // Clientes del agente con conteo de préstamos
   const { data: clientesRaw } = await supabase
     .from("clientes")
     .select("id, nombre, cedula, telefono, direccion, prestamos(id, estado)")
-    .eq("agente_id", user.id)
+    .eq("agente_id", agenteId)
     .order("nombre")
 
   const clientes: ClienteData[] = (clientesRaw ?? []).map((c) => ({
@@ -50,6 +50,7 @@ export default async function ClientesPage() {
         </div>
       </header>
       <PortalNav portal="prestamos" />
+      {viendoA && <BannerVerComo nombre={viendoA.full_name || viendoA.email} email={viendoA.email} />}
 
       <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 space-y-6">
 
