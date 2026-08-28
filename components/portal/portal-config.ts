@@ -11,6 +11,14 @@ export interface Seccion {
 
 /** Secciones de cada portal. La primera es siempre la raíz del portal. */
 export const PORTALES: Record<string, { nombre: string; color: string; secciones: Seccion[] }> = {
+  farmacia: {
+    nombre: "Farmacia",
+    color: "#0d9488",
+    secciones: [
+      { href: "/portal/farmacia",        label: "Panel",  icon: LayoutDashboard },
+      { href: "/portal/farmacia/equipo", label: "Equipo", icon: Users           },
+    ],
+  },
   panaderia: {
     nombre: "Panadería",
     color: "#f97316",

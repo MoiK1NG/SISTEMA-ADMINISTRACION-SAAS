@@ -52,17 +52,11 @@ export async function requirePortalAccess(slug: string) {
     .maybeSingle()
   if (!access) throw new Error("No tienes acceso a este portal")
 
-  const today = new Date().toISOString().split("T")[0]
-  const { data: membership } = await supabase
-    .from("memberships")
-    .select("id")
-    .eq("user_id", user.id)
-    .eq("status", "active")
-    .lte("start_date", today)
-    .gte("end_date", today)
-    .limit(1)
-    .maybeSingle()
-  if (!membership) throw new Error("Membresía expirada o inactiva")
+  // Vigente si tiene membresía propia O si es empleado de un negocio cuyo
+  // dueño la tiene (regente y cajeros de una farmacia no pagan aparte).
+  const { data: vigente } = await supabase
+    .rpc("tiene_membresia_vigente", { p_user: user.id })
+  if (!vigente) throw new Error("Membresía expirada o inactiva")
 
   return { supabase, user }
 }
