@@ -1,6 +1,7 @@
 import {
   LayoutDashboard, ClipboardList, ShoppingCart, Boxes, Package,
   Users, Receipt, UtensilsCrossed, Settings, Grid2x2, Banknote,
+  Calculator, Truck, Wallet,
 } from "lucide-react"
 
 export interface Seccion {
@@ -16,10 +17,13 @@ export const PORTALES: Record<string, { nombre: string; color: string; secciones
     color: "#0d9488",
     secciones: [
       { href: "/portal/farmacia",            label: "Panel",      icon: LayoutDashboard },
-      { href: "/portal/farmacia/pos",        label: "Caja",       icon: Grid2x2         },
+      { href: "/portal/farmacia/pos",        label: "Vender",     icon: Grid2x2         },
       { href: "/portal/farmacia/ventas",     label: "Ventas",     icon: Receipt         },
       { href: "/portal/farmacia/pedidos",    label: "Pedidos",    icon: ClipboardList   },
       { href: "/portal/farmacia/inventario", label: "Inventario", icon: Boxes           },
+      { href: "/portal/farmacia/caja",       label: "Cierre",     icon: Calculator      },
+      { href: "/portal/farmacia/compras",    label: "Compras",    icon: Truck           },
+      { href: "/portal/farmacia/finanzas",   label: "Finanzas",   icon: Wallet          },
       { href: "/portal/farmacia/equipo",     label: "Equipo",     icon: Users           },
     ],
   },
