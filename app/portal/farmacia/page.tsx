@@ -27,9 +27,9 @@ export default async function FarmaciaPage() {
 
   // Módulos por fase — se van encendiendo a medida que se construyen
   const modulos = [
-    { label: "Inventario",  desc: "Códigos de barras, lotes, vencimientos y equivalentes", icon: Boxes,        fase: "Fase 1 · en construcción" },
-    { label: "Ventas (POS)", desc: "Escaneo, pago mixto y pedidos pendientes",             icon: ShoppingCart, fase: "Fase 2" },
-    { label: "Caja y finanzas", desc: "Cierre ciego, flujo de caja y márgenes",            icon: Calculator,   fase: "Fase 3" },
+    { label: "Inventario",  desc: "Códigos de barras, lotes, vencimientos y equivalentes", icon: Boxes,        fase: "Disponible", href: "/portal/farmacia/inventario" },
+    { label: "Ventas (POS)", desc: "Escaneo, pago mixto y pedidos pendientes",             icon: ShoppingCart, fase: "Fase 2", href: null },
+    { label: "Caja y finanzas", desc: "Cierre ciego, flujo de caja y márgenes",            icon: Calculator,   fase: "Fase 3", href: null },
   ]
 
   return (
@@ -120,18 +120,32 @@ export default async function FarmaciaPage() {
             <section>
               <h2 className="mb-4 text-sm font-bold text-slate-900">Módulos del sistema</h2>
               <div className="grid gap-4 sm:grid-cols-3">
-                {modulos.map(m => (
-                  <div key={m.label} className="rounded-2xl border border-dashed border-slate-200 bg-white p-5">
-                    <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-teal-50">
-                      <m.icon className="h-4 w-4 text-teal-600" />
+                {modulos.map(m => {
+                  const contenido = (
+                    <>
+                      <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-teal-50">
+                        <m.icon className="h-4 w-4 text-teal-600" />
+                      </div>
+                      <p className="text-sm font-bold text-slate-900">{m.label}</p>
+                      <p className="mt-1 text-xs leading-relaxed text-slate-500">{m.desc}</p>
+                      <span className={`mt-3 inline-block rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                        m.href ? "bg-teal-50 text-teal-700" : "bg-slate-100 text-slate-400"
+                      }`}>
+                        {m.fase}
+                      </span>
+                    </>
+                  )
+                  return m.href ? (
+                    <Link key={m.label} href={m.href}
+                          className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
+                      {contenido}
+                    </Link>
+                  ) : (
+                    <div key={m.label} className="rounded-2xl border border-dashed border-slate-200 bg-white p-5">
+                      {contenido}
                     </div>
-                    <p className="text-sm font-bold text-slate-900">{m.label}</p>
-                    <p className="mt-1 text-xs leading-relaxed text-slate-500">{m.desc}</p>
-                    <span className="mt-3 inline-block rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                      {m.fase}
-                    </span>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </section>
           </>
