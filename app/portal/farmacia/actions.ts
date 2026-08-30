@@ -434,3 +434,98 @@ export async function cancelarPedidoFarmacia(pedidoId: string, motivo: string) {
   revalidatePath("/portal/farmacia/pedidos")
   return { success: true }
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FASE 3 · CAJA Y FINANZAS
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Cierre CIEGO: cualquier miembro cierra; declara lo contado y la RPC calcula
+// lo esperado en el servidor. La UI nunca recibe lo esperado antes de cerrar.
+export async function cerrarCajaFarmacia(declarado: {
+  efectivo: number; tarjeta_debito: number; tarjeta_credito: number; transferencia: number
+}, notas?: string) {
+  const { supabase } = await requireNegocioAccion(["dueno", "regente", "cajero"])
+
+  const limpio = {
+    efectivo:        montoNoNegativo(declarado.efectivo ?? 0, "efectivo contado"),
+    tarjeta_debito:  montoNoNegativo(declarado.tarjeta_debito ?? 0, "monto en débito"),
+    tarjeta_credito: montoNoNegativo(declarado.tarjeta_credito ?? 0, "monto en crédito"),
+    transferencia:   montoNoNegativo(declarado.transferencia ?? 0, "monto en transferencias"),
+  }
+
+  const { data, error } = await supabase.rpc("cerrar_caja_farmacia", {
+    p_declarado: limpio,
+    p_notas:     notas?.trim() || null,
+  })
+  if (error) throw new Error(error.message)
+
+  revalidatePath("/portal/farmacia/caja")
+  revalidatePath("/portal/farmacia/finanzas")
+  return data as {
+    cierre_id: string
+    esperado: Record<string, number>
+    declarado: Record<string, number>
+    diferencia: Record<string, number>
+    num_ventas: number
+  }
+}
+
+// ── Cuentas por pagar (dueño y regente) ──────────────────────────────────────
+export async function crearCuentaPagarFarmacia(input: {
+  proveedor_id?: string | null
+  concepto: string
+  monto_total: number
+  fecha_vencimiento?: string | null
+  notas?: string
+}) {
+  const { supabase, negocioId, user } = await requireNegocioAccion(["dueno", "regente"])
+
+  const { error } = await supabase.from("cuentas_pagar_farmacia").insert({
+    negocio_id:        negocioId,
+    proveedor_id:      input.proveedor_id || null,
+    concepto:          textoRequerido(input.concepto, "concepto"),
+    monto_total:       montoValido(input.monto_total, "monto"),
+    fecha_vencimiento: input.fecha_vencimiento || null,
+    notas:             input.notas?.trim() || null,
+    user_id:           user.id,
+  })
+  if (error) throw new Error(error.message)
+
+  revalidatePath("/portal/farmacia/compras")
+  revalidatePath("/portal/farmacia/finanzas")
+  return { success: true }
+}
+
+export async function abonarCuentaPagarFarmacia(cuentaId: string, monto: number, metodo?: string, nota?: string) {
+  const { supabase } = await requireNegocioAccion(["dueno", "regente"])
+
+  const { error } = await supabase.rpc("abonar_cxp_farmacia", {
+    p_cuenta: cuentaId,
+    p_monto:  montoValido(monto, "abono"),
+    p_metodo: metodo ? unoDe(metodo, METODOS_PAGO_FARMACIA, "método") : null,
+    p_nota:   nota?.trim() || null,
+  })
+  if (error) throw new Error(error.message)
+
+  revalidatePath("/portal/farmacia/compras")
+  revalidatePath("/portal/farmacia/finanzas")
+  return { success: true }
+}
+
+export async function anularCuentaPagarFarmacia(cuentaId: string, motivo: string) {
+  const { supabase, negocioId, user } = await requireNegocioAccion(["dueno"])
+
+  const nota = textoRequerido(motivo, "motivo")
+  const { error } = await supabase
+    .from("cuentas_pagar_farmacia")
+    .update({ estado: "anulada", notas: nota })
+    .eq("id", cuentaId).eq("negocio_id", negocioId)
+    .in("estado", ["pendiente", "parcial"])
+  if (error) throw new Error(error.message)
+
+  await logEquipo(supabase, user.id, "anular_cxp_farmacia", { cuenta_id: cuentaId, motivo: nota })
+
+  revalidatePath("/portal/farmacia/compras")
+  revalidatePath("/portal/farmacia/finanzas")
+  return { success: true }
+}
