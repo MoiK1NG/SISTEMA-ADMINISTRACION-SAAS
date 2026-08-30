@@ -15,8 +15,9 @@ export const PORTALES: Record<string, { nombre: string; color: string; secciones
     nombre: "Farmacia",
     color: "#0d9488",
     secciones: [
-      { href: "/portal/farmacia",        label: "Panel",  icon: LayoutDashboard },
-      { href: "/portal/farmacia/equipo", label: "Equipo", icon: Users           },
+      { href: "/portal/farmacia",            label: "Panel",      icon: LayoutDashboard },
+      { href: "/portal/farmacia/inventario", label: "Inventario", icon: Boxes           },
+      { href: "/portal/farmacia/equipo",     label: "Equipo",     icon: Users           },
     ],
   },
   panaderia: {
