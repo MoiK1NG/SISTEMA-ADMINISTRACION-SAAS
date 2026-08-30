@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { requireNegocioAccion, type RolFarmacia } from "@/lib/farmacia/contexto"
 import { montoNoNegativo, montoValido, textoRequerido, unoDe } from "@/lib/portal-security"
+import { METODOS_PAGO_FARMACIA } from "@/lib/farmacia/pos-constants"
 
 const ROLES = ["dueno", "regente", "cajero"] as const
 
@@ -267,5 +268,169 @@ export async function actualizarEstanteria(loteId: string, productoId: string, e
   if (error) throw new Error(error.message)
 
   revalidatePath(`/portal/farmacia/inventario/${productoId}`)
+  return { success: true }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FASE 2 · POS — cualquier miembro vende; anular es de dueño/regente
+// ═══════════════════════════════════════════════════════════════════════════
+
+
+const ESTADOS_PEDIDO = ["pagado", "pedido", "recibido", "notificado", "entregado", "cancelado"] as const
+
+// El orden del flujo: de cada estado solo se puede avanzar al siguiente
+const SIGUIENTE_ESTADO: Record<string, string> = {
+  pagado: "pedido", pedido: "recibido", recibido: "notificado", notificado: "entregado",
+}
+
+export async function registrarVentaFarmacia(input: {
+  items:   { producto_id: string; cantidad: number }[]
+  pagos:   { metodo: string; monto: number }[]
+  cliente_id?: string | null
+}) {
+  const { supabase } = await requireNegocioAccion(["dueno", "regente", "cajero"])
+
+  if (!input.items?.length) throw new Error("La venta debe tener al menos un producto")
+  if (!input.pagos?.length) throw new Error("Falta el pago")
+
+  const items = input.items.map(i => ({
+    producto_id: i.producto_id,
+    cantidad: montoValido(i.cantidad, "cantidad"),
+  }))
+  const pagos = input.pagos.map(p => ({
+    metodo: unoDe(p.metodo, METODOS_PAGO_FARMACIA, "método de pago"),
+    monto:  montoValido(p.monto, "monto del pago"),
+  }))
+
+  const { data, error } = await supabase.rpc("registrar_venta_farmacia", {
+    p_items:   items,
+    p_pagos:   pagos,
+    p_cliente: input.cliente_id || null,
+  })
+  if (error) throw new Error(error.message)
+
+  revalidatePath("/portal/farmacia/pos")
+  revalidatePath("/portal/farmacia/ventas")
+  revalidatePath("/portal/farmacia/inventario")
+  return data as { venta_id: string; numero: number; total: number; vuelto: number }
+}
+
+export async function anularVentaFarmacia(ventaId: string, motivo: string) {
+  const { supabase, user } = await requireNegocioAccion(["dueno", "regente"])
+
+  const { error } = await supabase.rpc("anular_venta_farmacia", {
+    p_venta:  ventaId,
+    p_motivo: textoRequerido(motivo, "motivo de la anulación"),
+  })
+  if (error) throw new Error(error.message)
+
+  await logEquipo(supabase, user.id, "anular_venta_farmacia", { venta_id: ventaId, motivo })
+
+  revalidatePath("/portal/farmacia/ventas")
+  revalidatePath("/portal/farmacia/inventario")
+  return { success: true }
+}
+
+// ── Clientes (el cajero puede registrarlos, según el brief) ──────────────────
+export async function crearClienteFarmacia(data: { nombre: string; cedula?: string; telefono?: string }) {
+  const { supabase, negocioId } = await requireNegocioAccion(["dueno", "regente", "cajero"])
+
+  const { data: cliente, error } = await supabase
+    .from("clientes_farmacia")
+    .insert({
+      negocio_id: negocioId,
+      nombre:   textoRequerido(data.nombre, "nombre del cliente"),
+      cedula:   data.cedula?.trim() || null,
+      telefono: data.telefono?.trim() || null,
+    })
+    .select("id, nombre, cedula, telefono").single()
+  if (error) {
+    if (error.code === "23505") throw new Error("Ya existe un cliente con esa cédula")
+    throw new Error(error.message)
+  }
+
+  revalidatePath("/portal/farmacia/pos")
+  return cliente
+}
+
+// ── Pedidos pendientes ────────────────────────────────────────────────────────
+export async function crearPedidoFarmacia(input: {
+  cliente_id:  string
+  producto_id?: string | null
+  descripcion: string
+  cantidad:    number
+  total:       number
+  monto_pagado: number
+  metodo_pago?: string | null
+  notas?:      string
+}) {
+  const { supabase, negocioId, user } = await requireNegocioAccion(["dueno", "regente", "cajero"])
+
+  const total  = montoNoNegativo(input.total, "total del encargo")
+  const pagado = montoNoNegativo(input.monto_pagado, "monto pagado")
+  if (pagado > total) throw new Error("Lo pagado no puede superar el total")
+  if (pagado > 0 && !input.metodo_pago) throw new Error("Indica el método del pago")
+
+  const { error } = await supabase.from("pedidos_farmacia").insert({
+    negocio_id:  negocioId,
+    cliente_id:  input.cliente_id,
+    producto_id: input.producto_id || null,
+    descripcion: textoRequerido(input.descripcion, "descripción del encargo"),
+    cantidad:    montoValido(input.cantidad, "cantidad"),
+    total,
+    monto_pagado: pagado,
+    metodo_pago: input.metodo_pago ? unoDe(input.metodo_pago, METODOS_PAGO_FARMACIA, "método de pago") : null,
+    notas:       input.notas?.trim() || null,
+    user_id:     user.id,
+  })
+  if (error) throw new Error(error.message)
+
+  revalidatePath("/portal/farmacia/pedidos")
+  return { success: true }
+}
+
+export async function avanzarPedidoFarmacia(pedidoId: string) {
+  const { supabase, negocioId } = await requireNegocioAccion(["dueno", "regente", "cajero"])
+
+  const { data: pedido } = await supabase
+    .from("pedidos_farmacia").select("estado")
+    .eq("id", pedidoId).eq("negocio_id", negocioId).maybeSingle()
+  if (!pedido) throw new Error("Pedido no encontrado")
+
+  const siguiente = SIGUIENTE_ESTADO[pedido.estado]
+  if (!siguiente) throw new Error("Este pedido ya no puede avanzar")
+
+  const { error } = await supabase
+    .from("pedidos_farmacia").update({ estado: siguiente })
+    .eq("id", pedidoId).eq("negocio_id", negocioId)
+  if (error) throw new Error(error.message)
+
+  revalidatePath("/portal/farmacia/pedidos")
+  return { estado: siguiente }
+}
+
+export async function cancelarPedidoFarmacia(pedidoId: string, motivo: string) {
+  const { supabase, negocioId, user } = await requireNegocioAccion(["dueno", "regente"])
+
+  const { data: pedido } = await supabase
+    .from("pedidos_farmacia").select("estado, descripcion")
+    .eq("id", pedidoId).eq("negocio_id", negocioId).maybeSingle()
+  if (!pedido) throw new Error("Pedido no encontrado")
+  if (pedido.estado === "entregado" || pedido.estado === "cancelado") {
+    throw new Error("Este pedido ya está cerrado")
+  }
+
+  const nota = textoRequerido(motivo, "motivo de la cancelación")
+  const { error } = await supabase
+    .from("pedidos_farmacia")
+    .update({ estado: "cancelado", notas: nota })
+    .eq("id", pedidoId).eq("negocio_id", negocioId)
+  if (error) throw new Error(error.message)
+
+  await logEquipo(supabase, user.id, "cancelar_pedido_farmacia", {
+    pedido_id: pedidoId, descripcion: pedido.descripcion, motivo: nota,
+  })
+
+  revalidatePath("/portal/farmacia/pedidos")
   return { success: true }
 }

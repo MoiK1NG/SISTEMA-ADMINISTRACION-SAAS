@@ -28,7 +28,7 @@ export default async function FarmaciaPage() {
   // Módulos por fase — se van encendiendo a medida que se construyen
   const modulos = [
     { label: "Inventario",  desc: "Códigos de barras, lotes, vencimientos y equivalentes", icon: Boxes,        fase: "Disponible", href: "/portal/farmacia/inventario" },
-    { label: "Ventas (POS)", desc: "Escaneo, pago mixto y pedidos pendientes",             icon: ShoppingCart, fase: "Fase 2", href: null },
+    { label: "Ventas (POS)", desc: "Escaneo, pago mixto y pedidos pendientes",             icon: ShoppingCart, fase: "Disponible", href: "/portal/farmacia/pos" },
     { label: "Caja y finanzas", desc: "Cierre ciego, flujo de caja y márgenes",            icon: Calculator,   fase: "Fase 3", href: null },
   ]
 
