@@ -170,19 +170,12 @@ export async function updateSession(request: NextRequest) {
         return redirectWithError(request, '/dashboard', 'no_access')
       }
 
-      // 3c. Verificar membresía activa y no expirada
-      const today = new Date().toISOString().split('T')[0]
+      // 3c. Membresía vigente: propia, o heredada del dueño del negocio
+      // (los empleados de una farmacia no pagan membresía aparte)
+      const { data: vigente } = await supabase
+        .rpc('tiene_membresia_vigente', { p_user: user.id })
 
-      const { data: membership } = await supabase
-        .from('memberships')
-        .select('id, end_date')
-        .eq('user_id', user.id)
-        .eq('is_active', true)
-        .lte('start_date', today)
-        .gte('end_date', today)
-        .maybeSingle()
-
-      if (!membership) {
+      if (!vigente) {
         return redirectWithError(request, '/dashboard', 'membership_expired')
       }
 

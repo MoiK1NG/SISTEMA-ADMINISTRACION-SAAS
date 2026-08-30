@@ -5,7 +5,7 @@ import {
   Grid3X3, Building, Calculator, Users, Package,
   Contact, Briefcase, ShoppingCart, FileText, Settings,
   Globe, ArrowRight, Sparkles,
-  Croissant, Dumbbell, Landmark, Banknote, UtensilsCrossed, Store,
+  Croissant, Dumbbell, Landmark, Banknote, UtensilsCrossed, Store, Pill,
 } from "lucide-react"
 import type { Portal } from "@/lib/types"
 
@@ -31,6 +31,7 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string; style?:
   banknote:       Banknote,         // cobros
   utensils:       UtensilsCrossed,  // restaurante
   store:          Store,            // punto de venta
+  pill:           Pill,             // farmacia
 }
 
 function hexToRgb(hex: string) {
