@@ -4,7 +4,7 @@ import { PortalNav } from "@/components/portal/portal-nav"
 import { BannerVerComo } from "@/components/portal/banner-ver-como"
 import { contextoFarmacia } from "@/lib/farmacia/contexto"
 import { METODO_PAGO_LABEL, type MetodoPagoFarmacia } from "@/lib/farmacia/pos-constants"
-import { ExportarCsv } from "./_components/exportar-csv"
+import { ExportarCsv } from "@/components/farmacia/exportar-csv"
 
 const fmt = (n: number) =>
   new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(n)

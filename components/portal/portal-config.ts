@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, ClipboardList, ShoppingCart, Boxes, Package,
   Users, Receipt, UtensilsCrossed, Settings, Grid2x2, Banknote,
-  Calculator, Truck, Wallet,
+  Calculator, Truck, Wallet, FileText, HeartPulse,
 } from "lucide-react"
 
 export interface Seccion {
@@ -23,6 +23,8 @@ export const PORTALES: Record<string, { nombre: string; color: string; secciones
       { href: "/portal/farmacia/inventario", label: "Inventario", icon: Boxes           },
       { href: "/portal/farmacia/caja",       label: "Cierre",     icon: Calculator      },
       { href: "/portal/farmacia/compras",    label: "Compras",    icon: Truck           },
+      { href: "/portal/farmacia/recetas",    label: "Recetas",    icon: FileText        },
+      { href: "/portal/farmacia/pacientes",  label: "Pacientes",  icon: HeartPulse      },
       { href: "/portal/farmacia/finanzas",   label: "Finanzas",   icon: Wallet          },
       { href: "/portal/farmacia/equipo",     label: "Equipo",     icon: Users           },
     ],

@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { registrarVentaFarmacia, crearClienteFarmacia } from "../../actions"
+import { registrarVentaFarmacia, crearClienteFarmacia, type RecetaVenta } from "../../actions"
 import { METODOS_PAGO_FARMACIA, METODO_PAGO_LABEL, type MetodoPagoFarmacia } from "@/lib/farmacia/pos-constants"
 
 export interface ProductoPos {
@@ -268,6 +268,7 @@ export function PosFarmacia({ productos, clientes, soloLectura }: Props) {
         open={cobroAbierto}
         total={total}
         items={carrito.map(i => ({ producto_id: i.producto.id, cantidad: i.cantidad }))}
+        productosRx={carrito.filter(i => i.producto.requiere_receta).map(i => i.producto.nombre)}
         clienteId={cliente?.id ?? null}
         onClose={() => setCobroAbierto(false)}
         onCompletada={ventaCompletada}
@@ -405,10 +406,15 @@ function SelectorCliente({ clientes, value, onChange, disabled }: {
 }
 
 /* ── Cobro con pago mixto ─────────────────────────────────────────────────── */
-function ModalCobroMixto({ open, total, items, clienteId, onClose, onCompletada }: {
+const RECETA_VACIA = {
+  paciente_nombre: "", paciente_documento: "", medico_nombre: "", medico_registro: "", numero_receta: "",
+}
+
+function ModalCobroMixto({ open, total, items, productosRx, clienteId, onClose, onCompletada }: {
   open:      boolean
   total:     number
   items:     { producto_id: string; cantidad: number }[]
+  productosRx: string[]
   clienteId: string | null
   onClose:   () => void
   onCompletada: (r: { numero: number; total: number; vuelto: number }) => void
@@ -416,14 +422,23 @@ function ModalCobroMixto({ open, total, items, clienteId, onClose, onCompletada 
   const [montos, setMontos] = useState<Record<MetodoPagoFarmacia, string>>({
     efectivo: "", tarjeta_debito: "", tarjeta_credito: "", transferencia: "",
   })
+  const [receta, setReceta] = useState(RECETA_VACIA)
   const [error, setError] = useState<string | null>(null)
   const [isPending, start] = useTransition()
+
+  const hayRx = productosRx.length > 0
+  const recetaCompleta = !hayRx || (
+    receta.paciente_nombre.trim() !== "" &&
+    receta.paciente_documento.trim() !== "" &&
+    receta.medico_nombre.trim() !== "" &&
+    receta.numero_receta.trim() !== ""
+  )
 
   const pagado     = METODOS_PAGO_FARMACIA.reduce((s, m) => s + (Number(montos[m]) || 0), 0)
   const noEfectivo = pagado - (Number(montos.efectivo) || 0)
   const falta      = Math.max(0, total - pagado)
   const vuelto     = Math.max(0, pagado - total)
-  const valido     = pagado >= total && noEfectivo <= total
+  const valido     = pagado >= total && noEfectivo <= total && recetaCompleta
 
   function setMonto(m: MetodoPagoFarmacia, v: string) {
     setMontos(prev => ({ ...prev, [m]: v }))
@@ -441,8 +456,16 @@ function ModalCobroMixto({ open, total, items, clienteId, onClose, onCompletada 
       .map(m => ({ metodo: m, monto: Number(montos[m]) }))
     start(async () => {
       try {
-        const r = await registrarVentaFarmacia({ items, pagos, cliente_id: clienteId })
+        const datosReceta: RecetaVenta | null = hayRx ? {
+          paciente_nombre:    receta.paciente_nombre,
+          paciente_documento: receta.paciente_documento,
+          medico_nombre:      receta.medico_nombre,
+          medico_registro:    receta.medico_registro || undefined,
+          numero_receta:      receta.numero_receta,
+        } : null
+        const r = await registrarVentaFarmacia({ items, pagos, cliente_id: clienteId, receta: datosReceta })
         setMontos({ efectivo: "", tarjeta_debito: "", tarjeta_credito: "", transferencia: "" })
+        setReceta(RECETA_VACIA)
         onCompletada(r)
       } catch (e: any) { setError(e?.message ?? "No se pudo registrar la venta") }
     })
@@ -459,6 +482,30 @@ function ModalCobroMixto({ open, total, items, clienteId, onClose, onCompletada 
             <p className="text-xs text-slate-500">Total a cobrar</p>
             <p className="text-3xl font-black text-slate-900">{fmt(total)}</p>
           </div>
+
+          {hayRx && (
+            <div className="space-y-2.5 rounded-2xl border border-violet-200 bg-violet-50/60 p-4">
+              <p className="text-xs font-bold uppercase tracking-wider text-violet-800">
+                💊 Control especial — receta obligatoria
+              </p>
+              <p className="text-[11px] leading-relaxed text-violet-700">
+                {productosRx.join(", ")} {productosRx.length === 1 ? "requiere" : "requieren"} receta.
+                Estos datos van al libro de control.
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                <Input placeholder="Paciente *" value={receta.paciente_nombre}
+                       onChange={e => setReceta(r => ({ ...r, paciente_nombre: e.target.value }))} className="h-9 bg-white" />
+                <Input placeholder="Documento *" value={receta.paciente_documento}
+                       onChange={e => setReceta(r => ({ ...r, paciente_documento: e.target.value }))} className="h-9 bg-white" />
+                <Input placeholder="Médico *" value={receta.medico_nombre}
+                       onChange={e => setReceta(r => ({ ...r, medico_nombre: e.target.value }))} className="h-9 bg-white" />
+                <Input placeholder="Registro médico" value={receta.medico_registro}
+                       onChange={e => setReceta(r => ({ ...r, medico_registro: e.target.value }))} className="h-9 bg-white" />
+              </div>
+              <Input placeholder="Número de receta *" value={receta.numero_receta}
+                     onChange={e => setReceta(r => ({ ...r, numero_receta: e.target.value }))} className="h-9 bg-white" />
+            </div>
+          )}
 
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">

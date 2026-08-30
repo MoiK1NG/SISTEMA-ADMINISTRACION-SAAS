@@ -30,6 +30,7 @@ export default async function FarmaciaPage() {
     { label: "Inventario",  desc: "Códigos de barras, lotes, vencimientos y equivalentes", icon: Boxes,        fase: "Disponible", href: "/portal/farmacia/inventario" },
     { label: "Ventas (POS)", desc: "Escaneo, pago mixto y pedidos pendientes",             icon: ShoppingCart, fase: "Disponible", href: "/portal/farmacia/pos" },
     { label: "Caja y finanzas", desc: "Cierre ciego, flujo de caja y márgenes",            icon: Calculator,   fase: "Disponible", href: "/portal/farmacia/finanzas" },
+    { label: "Recetas y pacientes", desc: "Libro de control y tratamientos crónicos",        icon: Users,        fase: "Disponible", href: "/portal/farmacia/recetas" },
   ]
 
   return (
@@ -119,7 +120,7 @@ export default async function FarmaciaPage() {
             {/* ── Módulos en camino ──────────────────────────────────────────── */}
             <section>
               <h2 className="mb-4 text-sm font-bold text-slate-900">Módulos del sistema</h2>
-              <div className="grid gap-4 sm:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {modulos.map(m => {
                   const contenido = (
                     <>

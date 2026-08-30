@@ -283,10 +283,20 @@ const SIGUIENTE_ESTADO: Record<string, string> = {
   pagado: "pedido", pedido: "recibido", recibido: "notificado", notificado: "entregado",
 }
 
+export interface RecetaVenta {
+  paciente_nombre:    string
+  paciente_documento: string
+  medico_nombre:      string
+  medico_registro?:   string
+  numero_receta:      string
+  notas?:             string
+}
+
 export async function registrarVentaFarmacia(input: {
   items:   { producto_id: string; cantidad: number }[]
   pagos:   { metodo: string; monto: number }[]
   cliente_id?: string | null
+  receta?: RecetaVenta | null
 }) {
   const { supabase } = await requireNegocioAccion(["dueno", "regente", "cajero"])
 
@@ -302,16 +312,28 @@ export async function registrarVentaFarmacia(input: {
     monto:  montoValido(p.monto, "monto del pago"),
   }))
 
+  // La RPC vuelve a exigir receta completa si hay productos controlados
+  const receta = input.receta ? {
+    paciente_nombre:    textoRequerido(input.receta.paciente_nombre, "nombre del paciente"),
+    paciente_documento: textoRequerido(input.receta.paciente_documento, "documento del paciente"),
+    medico_nombre:      textoRequerido(input.receta.medico_nombre, "nombre del médico"),
+    medico_registro:    input.receta.medico_registro?.trim() || null,
+    numero_receta:      textoRequerido(input.receta.numero_receta, "número de receta"),
+    notas:              input.receta.notas?.trim() || null,
+  } : null
+
   const { data, error } = await supabase.rpc("registrar_venta_farmacia", {
     p_items:   items,
     p_pagos:   pagos,
     p_cliente: input.cliente_id || null,
+    p_receta:  receta,
   })
   if (error) throw new Error(error.message)
 
   revalidatePath("/portal/farmacia/pos")
   revalidatePath("/portal/farmacia/ventas")
   revalidatePath("/portal/farmacia/inventario")
+  revalidatePath("/portal/farmacia/recetas")
   return data as { venta_id: string; numero: number; total: number; vuelto: number }
 }
 
@@ -527,5 +549,67 @@ export async function anularCuentaPagarFarmacia(cuentaId: string, motivo: string
 
   revalidatePath("/portal/farmacia/compras")
   revalidatePath("/portal/farmacia/finanzas")
+  return { success: true }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FASE 4 · CRM — tratamientos crónicos (todo el equipo los gestiona)
+// ═══════════════════════════════════════════════════════════════════════════
+
+export async function crearTratamiento(input: {
+  cliente_id: string
+  producto_id?: string | null
+  producto_nombre: string
+  dias_duracion: number
+  ultima_compra?: string
+  notas?: string
+}) {
+  const { supabase, negocioId, user } = await requireNegocioAccion(["dueno", "regente", "cajero"])
+
+  const dias = Number(input.dias_duracion)
+  if (!Number.isInteger(dias) || dias < 1 || dias > 365) {
+    throw new Error("La duración debe ser entre 1 y 365 días")
+  }
+
+  const { error } = await supabase.from("tratamientos_farmacia").insert({
+    negocio_id:      negocioId,
+    cliente_id:      input.cliente_id,
+    producto_id:     input.producto_id || null,
+    producto_nombre: textoRequerido(input.producto_nombre, "medicamento"),
+    dias_duracion:   dias,
+    ultima_compra:   input.ultima_compra || new Date().toISOString().split("T")[0],
+    notas:           input.notas?.trim() || null,
+    user_id:         user.id,
+  })
+  if (error) throw new Error(error.message)
+
+  revalidatePath("/portal/farmacia/pacientes")
+  return { success: true }
+}
+
+/** El paciente volvió a comprar: el ciclo arranca de nuevo desde hoy. */
+export async function renovarTratamiento(tratamientoId: string) {
+  const { supabase, negocioId } = await requireNegocioAccion(["dueno", "regente", "cajero"])
+
+  const { error } = await supabase
+    .from("tratamientos_farmacia")
+    .update({ ultima_compra: new Date().toISOString().split("T")[0] })
+    .eq("id", tratamientoId).eq("negocio_id", negocioId)
+  if (error) throw new Error(error.message)
+
+  revalidatePath("/portal/farmacia/pacientes")
+  return { success: true }
+}
+
+export async function alternarTratamiento(tratamientoId: string, activo: boolean) {
+  const { supabase, negocioId } = await requireNegocioAccion(["dueno", "regente", "cajero"])
+
+  const { error } = await supabase
+    .from("tratamientos_farmacia")
+    .update({ activo })
+    .eq("id", tratamientoId).eq("negocio_id", negocioId)
+  if (error) throw new Error(error.message)
+
+  revalidatePath("/portal/farmacia/pacientes")
   return { success: true }
 }
