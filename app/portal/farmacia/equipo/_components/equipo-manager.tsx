@@ -163,10 +163,11 @@ export function EquipoManager({ miembros, puedeGestionar, miUserId }: Props) {
           <div className="mt-2 space-y-4">
             {error && <p className="rounded bg-rose-50 px-3 py-2 text-xs text-rose-600">{error}</p>}
 
-            <p className="rounded-xl border border-slate-100 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-500">
-              La persona primero debe <strong>crear su cuenta</strong> en la página de registro
-              con el correo que ingreses acá. No paga membresía: hereda la del negocio.
-            </p>
+            <div className="space-y-1 rounded-xl border border-slate-100 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-500">
+              <p><strong>1.</strong> La persona crea su cuenta en la página de registro (botón &quot;Regístrate&quot; del login) con el correo que vas a ingresar acá.</p>
+              <p><strong>2.</strong> Tú la agregas con ese correo y eliges su rol.</p>
+              <p>Al agregarla queda <strong>activada al instante</strong> — no paga membresía (hereda la del negocio) ni necesita aprobación de nadie más.</p>
+            </div>
 
             <div className="space-y-1.5">
               <Label>Correo de la persona</Label>

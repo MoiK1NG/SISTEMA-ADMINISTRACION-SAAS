@@ -2,13 +2,14 @@
 
 import { useMemo, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { Plus, Loader2, ArrowRight, Ban, MessageCircle } from "lucide-react"
+import { Plus, Loader2, ArrowRight, Ban, MessageCircle, PackageCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
   crearPedidoFarmacia, avanzarPedidoFarmacia, cancelarPedidoFarmacia,
+  entregarPedidoFarmacia, crearClienteFarmacia,
 } from "../../actions"
 import { METODOS_PAGO_FARMACIA, METODO_PAGO_LABEL } from "@/lib/farmacia/pos-constants"
 
@@ -38,7 +39,7 @@ const ESTADOS: Record<string, { label: string; clases: string; siguiente: string
   pagado:     { label: "Pagado",     clases: "bg-blue-50 text-blue-700 border-blue-200",          siguiente: "Marcar pedido al proveedor" },
   pedido:     { label: "Pedido",     clases: "bg-amber-50 text-amber-700 border-amber-200",       siguiente: "Marcar recibido" },
   recibido:   { label: "Recibido",   clases: "bg-violet-50 text-violet-700 border-violet-200",    siguiente: "Marcar avisado" },
-  notificado: { label: "Avisado",    clases: "bg-teal-50 text-teal-700 border-teal-200",          siguiente: "Marcar entregado" },
+  notificado: { label: "Avisado",    clases: "bg-teal-50 text-teal-700 border-teal-200",          siguiente: null },
   entregado:  { label: "Entregado",  clases: "bg-emerald-50 text-emerald-700 border-emerald-200", siguiente: null },
   cancelado:  { label: "Cancelado",  clases: "bg-slate-100 text-slate-500 border-slate-200",      siguiente: null },
 }
@@ -46,6 +47,7 @@ const ESTADOS: Record<string, { label: string; clases: string; siguiente: string
 const FORM_VACIO = {
   cliente_id: "", descripcion: "", cantidad: 1, total: 0, monto_pagado: 0, metodo_pago: "", notas: "",
 }
+const CLIENTE_VACIO = { nombre: "", cedula: "", telefono: "" }
 
 interface Props {
   pedidos:       FilaPedido[]
@@ -60,6 +62,9 @@ export function PedidosFarmacia({ pedidos, clientes, esGestor, soloLectura, nomb
   const [filtro, setFiltro] = useState<"abiertos" | "todos">("abiertos")
   const [nuevoAbierto, setNuevoAbierto] = useState(false)
   const [form, setForm] = useState(FORM_VACIO)
+  const [nuevoCliente, setNuevoCliente] = useState<typeof CLIENTE_VACIO | null>(null)
+  const [entregando, setEntregando] = useState<FilaPedido | null>(null)
+  const [metodoSaldo, setMetodoSaldo] = useState("")
   const [cancelando, setCancelando] = useState<FilaPedido | null>(null)
   const [motivo, setMotivo] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -88,7 +93,36 @@ export function PedidosFarmacia({ pedidos, clientes, esGestor, soloLectura, nomb
         metodo_pago: form.metodo_pago || null,
         producto_id: null,
       }),
-      () => { setNuevoAbierto(false); setForm(FORM_VACIO) },
+      () => { setNuevoAbierto(false); setForm(FORM_VACIO); setNuevoCliente(null) },
+    )
+  }
+
+  function crearClienteInline() {
+    if (!nuevoCliente) return
+    correr(
+      async () => {
+        const c = await crearClienteFarmacia(nuevoCliente)
+        setForm(f => ({ ...f, cliente_id: (c as any).id }))
+      },
+      () => setNuevoCliente(null),
+    )
+  }
+
+  function abrirEntrega(p: FilaPedido) {
+    setError(null)
+    setMetodoSaldo("")
+    if (p.total - p.pagado > 0.009) {
+      setEntregando(p)   // hay saldo: pedir el método del cobro
+    } else {
+      correr(() => entregarPedidoFarmacia(p.id))
+    }
+  }
+
+  function confirmarEntrega() {
+    if (!entregando) return
+    correr(
+      () => entregarPedidoFarmacia(entregando.id, metodoSaldo),
+      () => setEntregando(null),
     )
   }
 
@@ -104,7 +138,7 @@ export function PedidosFarmacia({ pedidos, clientes, esGestor, soloLectura, nomb
 
   return (
     <div className="space-y-4">
-      {error && !nuevoAbierto && !cancelando && (
+      {error && !nuevoAbierto && !cancelando && !entregando && (
         <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm text-rose-700">{error}</p>
       )}
 
@@ -143,6 +177,7 @@ export function PedidosFarmacia({ pedidos, clientes, esGestor, soloLectura, nomb
           {visibles.map(p => {
             const est = ESTADOS[p.estado] ?? ESTADOS.pagado
             const saldo = p.total - p.pagado
+            const entregable = ["recibido", "notificado"].includes(p.estado)
             return (
               <div key={p.id} className="flex flex-col rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
                 <div className="flex items-start justify-between gap-2">
@@ -168,7 +203,7 @@ export function PedidosFarmacia({ pedidos, clientes, esGestor, soloLectura, nomb
                     </span>
                     <span className="tabular-nums text-emerald-600">{fmt(p.pagado)}</span>
                   </div>
-                  {saldo > 0 && (
+                  {saldo > 0 && p.estado !== "cancelado" && (
                     <div className="flex justify-between font-semibold">
                       <span className="text-slate-400">Debe al retirar</span>
                       <span className="tabular-nums text-rose-600">{fmt(saldo)}</span>
@@ -178,13 +213,22 @@ export function PedidosFarmacia({ pedidos, clientes, esGestor, soloLectura, nomb
                 </div>
 
                 {!soloLectura && (
-                  <div className="mt-4 flex items-center gap-2 border-t border-slate-50 pt-3">
+                  <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-slate-50 pt-3">
                     {est.siguiente && (
                       <Button size="sm" variant="outline"
                               className="h-8 flex-1 gap-1 text-xs"
                               disabled={isPending}
                               onClick={() => correr(() => avanzarPedidoFarmacia(p.id))}>
                         {est.siguiente}<ArrowRight className="h-3 w-3" />
+                      </Button>
+                    )}
+                    {entregable && (
+                      <Button size="sm"
+                              className="h-8 flex-1 gap-1 bg-teal-600 text-xs hover:bg-teal-700"
+                              disabled={isPending}
+                              onClick={() => abrirEntrega(p)}>
+                        <PackageCheck className="h-3.5 w-3.5" />
+                        {saldo > 0 ? `Entregar y cobrar ${fmt(saldo)}` : "Entregar"}
                       </Button>
                     )}
                     {p.estado === "recibido" && p.telefono && (
@@ -194,7 +238,7 @@ export function PedidosFarmacia({ pedidos, clientes, esGestor, soloLectura, nomb
                         <MessageCircle className="h-3.5 w-3.5" />WhatsApp
                       </a>
                     )}
-                    {esGestor && est.siguiente && (
+                    {esGestor && !["entregado", "cancelado"].includes(p.estado) && (
                       <button onClick={() => { setError(null); setMotivo(""); setCancelando(p) }}
                               className="shrink-0 rounded-lg p-1.5 text-slate-300 hover:bg-rose-50 hover:text-rose-600"
                               title="Cancelar encargo">
@@ -210,8 +254,8 @@ export function PedidosFarmacia({ pedidos, clientes, esGestor, soloLectura, nomb
       )}
 
       <p className="text-xs text-slate-400">
-        Flujo: Pagado → Pedido al proveedor → Recibido → Avisado → Entregado. El botón de
-        WhatsApp aparece al marcar &quot;Recibido&quot; y abre el chat con el mensaje listo.
+        Flujo: Pagado → Pedido al proveedor → Recibido → Avisado → Entregado. Al entregar,
+        el sistema cobra el saldo pendiente y ese pago entra al cierre de caja del día.
       </p>
 
       {/* ── Dialog nuevo encargo ─────────────────────────────────────────────── */}
@@ -223,21 +267,51 @@ export function PedidosFarmacia({ pedidos, clientes, esGestor, soloLectura, nomb
 
             <div className="space-y-1.5">
               <Label>Cliente * (necesita teléfono para avisarle)</Label>
-              <select
-                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                value={form.cliente_id}
-                onChange={e => setForm(f => ({ ...f, cliente_id: e.target.value }))}
-              >
-                <option value="">— Selecciona un cliente —</option>
-                {clientes.map(c => (
-                  <option key={c.id} value={c.id}>
-                    {c.nombre}{c.telefono ? ` · ${c.telefono}` : " · SIN TELÉFONO"}
-                  </option>
-                ))}
-              </select>
-              <p className="text-[11px] text-slate-400">
-                ¿No está? Créalo desde la Caja (selector de cliente) y vuelve acá.
-              </p>
+              {nuevoCliente === null ? (
+                <>
+                  <select
+                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                    value={form.cliente_id}
+                    onChange={e => setForm(f => ({ ...f, cliente_id: e.target.value }))}
+                  >
+                    <option value="">— Selecciona un cliente —</option>
+                    {clientes.map(c => (
+                      <option key={c.id} value={c.id}>
+                        {c.nombre}{c.telefono ? ` · ${c.telefono}` : " · SIN TELÉFONO"}
+                      </option>
+                    ))}
+                  </select>
+                  <button type="button" onClick={() => setNuevoCliente(CLIENTE_VACIO)}
+                          className="flex items-center gap-1 text-xs font-semibold text-teal-700 hover:underline">
+                    <Plus className="h-3 w-3" />Crear cliente nuevo
+                  </button>
+                </>
+              ) : (
+                <div className="space-y-2 rounded-xl border border-teal-100 bg-teal-50/50 p-3">
+                  <Input autoFocus placeholder="Nombre *" value={nuevoCliente.nombre}
+                         onChange={e => setNuevoCliente(c => c && ({ ...c, nombre: e.target.value }))} className="bg-white" />
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input placeholder="Cédula" value={nuevoCliente.cedula}
+                           onChange={e => setNuevoCliente(c => c && ({ ...c, cedula: e.target.value }))} className="bg-white" />
+                    <Input placeholder="Teléfono" value={nuevoCliente.telefono}
+                           onChange={e => setNuevoCliente(c => c && ({ ...c, telefono: e.target.value }))} className="bg-white" />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button type="button" size="sm" variant="outline" className="flex-1 text-xs"
+                            onClick={() => setNuevoCliente(null)}>Cancelar</Button>
+                    <Button type="button" size="sm" className="flex-1 bg-teal-600 text-xs hover:bg-teal-700"
+                            disabled={isPending || !nuevoCliente.nombre.trim()}
+                            onClick={crearClienteInline}>
+                      {isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "Crear y usar"}
+                    </Button>
+                  </div>
+                </div>
+              )}
+              {form.cliente_id && nuevoCliente === null && (
+                <p className="text-[11px] text-emerald-600">
+                  ✓ {clientes.find(c => c.id === form.cliente_id)?.nombre ?? "Cliente seleccionado"}
+                </p>
+              )}
             </div>
 
             <div className="grid grid-cols-[1fr_90px] gap-3">
@@ -297,6 +371,48 @@ export function PedidosFarmacia({ pedidos, clientes, esGestor, soloLectura, nomb
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Dialog entregar y cobrar saldo ───────────────────────────────────── */}
+      <Dialog open={entregando !== null} onOpenChange={v => { if (!v) setEntregando(null) }}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader><DialogTitle>Entregar y cobrar el saldo</DialogTitle></DialogHeader>
+          {entregando && (
+            <div className="mt-2 space-y-4">
+              {error && <p className="rounded bg-rose-50 px-3 py-2 text-xs text-rose-600">{error}</p>}
+              <div className="rounded-2xl bg-slate-50 p-4 text-center">
+                <p className="text-xs text-slate-500">{entregando.descripcion} · {entregando.cliente}</p>
+                <p className="mt-1 text-2xl font-black text-slate-900">{fmt(entregando.total - entregando.pagado)}</p>
+                <p className="text-[11px] text-slate-400">
+                  saldo pendiente (pagó {fmt(entregando.pagado)} de {fmt(entregando.total)})
+                </p>
+              </div>
+              <div className="space-y-1.5">
+                <Label>¿Cómo paga el saldo? *</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {METODOS_PAGO_FARMACIA.map(m => (
+                    <button key={m} type="button" onClick={() => setMetodoSaldo(m)}
+                            className={`rounded-lg border px-3 py-2 text-xs font-semibold transition-colors ${
+                              metodoSaldo === m
+                                ? "border-teal-600 bg-teal-50 text-teal-700"
+                                : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                            }`}>
+                      {METODO_PAGO_LABEL[m]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <Button variant="outline" className="flex-1" onClick={() => setEntregando(null)}>Cancelar</Button>
+                <Button className="flex-1 bg-teal-600 hover:bg-teal-700"
+                        disabled={isPending || !metodoSaldo}
+                        onClick={confirmarEntrega}>
+                  {isPending ? <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />Registrando…</> : "Cobrar y entregar"}
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 

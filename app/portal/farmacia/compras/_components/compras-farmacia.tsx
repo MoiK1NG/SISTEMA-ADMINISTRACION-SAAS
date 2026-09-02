@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
   crearCuentaPagarFarmacia, abonarCuentaPagarFarmacia, anularCuentaPagarFarmacia,
+  crearProveedorFarmacia,
 } from "../../actions"
 import { METODOS_PAGO_FARMACIA, METODO_PAGO_LABEL } from "@/lib/farmacia/pos-constants"
 
@@ -51,6 +52,8 @@ export function ComprasFarmacia({ cuentas, proveedores, esDueno, soloLectura }: 
   const [filtro, setFiltro] = useState<"abiertas" | "todas">("abiertas")
   const [nuevaAbierta, setNuevaAbierta] = useState(false)
   const [form, setForm] = useState(FORM_VACIO)
+  const [buscaProv, setBuscaProv] = useState("")
+  const [provAbierto, setProvAbierto] = useState(false)
   const [abonando, setAbonando] = useState<FilaCuenta | null>(null)
   const [abono, setAbono] = useState("")
   const [metodoAbono, setMetodoAbono] = useState("")
@@ -199,12 +202,53 @@ export function ComprasFarmacia({ cuentas, proveedores, esDueno, soloLectura }: 
             </div>
             <div className="space-y-1.5">
               <Label>Proveedor</Label>
-              <select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                      value={form.proveedor_id}
-                      onChange={e => setForm(f => ({ ...f, proveedor_id: e.target.value }))}>
-                <option value="">— Sin proveedor —</option>
-                {proveedores.map(p => <option key={p.id} value={p.id}>{p.nombre}</option>)}
-              </select>
+              {form.proveedor_id ? (
+                <div className="flex items-center justify-between rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-sm">
+                  <span className="font-medium text-teal-800">
+                    {proveedores.find(p => p.id === form.proveedor_id)?.nombre ?? buscaProv}
+                  </span>
+                  <button type="button" className="text-xs text-teal-600 hover:underline"
+                          onClick={() => { setForm(f => ({ ...f, proveedor_id: "" })); setBuscaProv("") }}>
+                    cambiar
+                  </button>
+                </div>
+              ) : (
+                <div className="relative">
+                  <Input
+                    placeholder="Busca o escribe uno nuevo…"
+                    value={buscaProv}
+                    onChange={e => { setBuscaProv(e.target.value); setProvAbierto(true) }}
+                    onFocus={() => setProvAbierto(true)}
+                  />
+                  {provAbierto && buscaProv.trim() !== "" && (
+                    <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
+                      {proveedores
+                        .filter(p => p.nombre.toLowerCase().includes(buscaProv.toLowerCase()))
+                        .slice(0, 6)
+                        .map(p => (
+                          <button key={p.id} type="button"
+                                  className="block w-full px-3 py-2 text-left text-sm hover:bg-teal-50"
+                                  onClick={() => { setForm(f => ({ ...f, proveedor_id: p.id })); setProvAbierto(false) }}>
+                            {p.nombre}
+                          </button>
+                        ))}
+                      <button type="button"
+                              className="block w-full border-t border-slate-100 px-3 py-2 text-left text-sm font-semibold text-teal-700 hover:bg-teal-50"
+                              disabled={isPending}
+                              onClick={() => correr(
+                                async () => {
+                                  const nuevo = await crearProveedorFarmacia(buscaProv.trim())
+                                  proveedores.push(nuevo as { id: string; nombre: string })
+                                  setForm(f => ({ ...f, proveedor_id: (nuevo as any).id }))
+                                },
+                                () => setProvAbierto(false),
+                              )}>
+                        + Crear proveedor «{buscaProv.trim()}»
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">

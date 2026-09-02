@@ -166,13 +166,15 @@ export function ProductoFormDialog({ open, onOpenChange, producto, proveedores, 
             </div>
             <div className="space-y-1.5">
               <Label>Categoría</Label>
-              <select
-                className={selectClases}
+              <Input
+                list="categorias-farmacia"
+                placeholder="Elige o escribe una nueva…"
                 value={form.categoria}
                 onChange={e => setForm(f => ({ ...f, categoria: e.target.value }))}
-              >
-                {CATEGORIAS.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
+              />
+              <datalist id="categorias-farmacia">
+                {CATEGORIAS.map(c => <option key={c} value={c} />)}
+              </datalist>
             </div>
           </div>
 
@@ -237,9 +239,9 @@ export function ProductoFormDialog({ open, onOpenChange, producto, proveedores, 
 
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="space-y-1.5">
-              <Label>Registro INVIMA</Label>
+              <Label>Registro sanitario (INVIMA / ISP / SEREMI)</Label>
               <Input
-                placeholder="INVIMA 2020M-…"
+                placeholder="Ej: INVIMA 2020M-0012345"
                 value={form.registro_invima}
                 onChange={e => setForm(f => ({ ...f, registro_invima: e.target.value }))}
               />

@@ -28,7 +28,26 @@ const fmt = (n: number) =>
 const fmtHora = (ts: string) =>
   new Intl.DateTimeFormat("es-CO", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(ts))
 
-export function VentasFarmacia({ ventas, esGestor }: { ventas: FilaVenta[]; esGestor: boolean }) {
+export interface FilaEncargo {
+  id:          string
+  descripcion: string
+  cantidad:    number
+  total:       number
+  pagado:      number
+  estado:      string
+  creada:      string
+  cliente:     string
+  pagos:       { metodo: string; monto: number; fecha: string }[]
+}
+
+const ESTADO_ENCARGO: Record<string, string> = {
+  pagado: "Pagado", pedido: "Pedido", recibido: "Recibido",
+  notificado: "Avisado", entregado: "Entregado", cancelado: "Cancelado",
+}
+
+export function VentasFarmacia({ ventas, encargos, esGestor }: {
+  ventas: FilaVenta[]; encargos: FilaEncargo[]; esGestor: boolean
+}) {
   const router = useRouter()
   const [anulando, setAnulando] = useState<FilaVenta | null>(null)
   const [motivo, setMotivo] = useState("")
@@ -138,6 +157,72 @@ export function VentasFarmacia({ ventas, esGestor }: { ventas: FilaVenta[]; esGe
         Anular una venta requiere autorización de dueño o regente, deja el motivo registrado y
         repone el stock a los mismos lotes de donde salió.
       </p>
+
+      {/* ── Encargos y sus pagos ─────────────────────────────────────────────── */}
+      <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
+        <div className="border-b border-slate-50 px-5 py-4">
+          <p className="text-sm font-bold text-slate-900">Encargos (últimos 7 días)</p>
+          <p className="mt-0.5 text-xs text-slate-400">
+            Los pagos de encargos (anticipos y saldos al entregar) también entran al cierre de caja
+          </p>
+        </div>
+        {encargos.length === 0 ? (
+          <p className="py-10 text-center text-sm text-slate-400">Sin encargos en la semana</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-100 bg-slate-50/60">
+                  <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-slate-400">Fecha</th>
+                  <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-slate-400">Encargo</th>
+                  <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-slate-400">Cliente</th>
+                  <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-slate-400">Estado</th>
+                  <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-slate-400">Pagos</th>
+                  <th className="px-4 py-2.5 text-right text-[10px] font-bold uppercase tracking-wider text-slate-400">Total</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {encargos.map(p => {
+                  const saldo = p.total - p.pagado
+                  return (
+                    <tr key={p.id} className={p.estado === "cancelado" ? "opacity-50" : "hover:bg-slate-50/50"}>
+                      <td className="whitespace-nowrap px-4 py-3 text-xs text-slate-500">{fmtHora(p.creada)}</td>
+                      <td className="px-4 py-3 text-xs font-semibold text-slate-800">
+                        {p.cantidad > 1 ? `${p.cantidad}× ` : ""}{p.descripcion}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-slate-500">{p.cliente}</td>
+                      <td className="px-4 py-3">
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                          p.estado === "entregado" ? "bg-emerald-50 text-emerald-700"
+                          : p.estado === "cancelado" ? "bg-slate-100 text-slate-500"
+                          : "bg-blue-50 text-blue-700"
+                        }`}>
+                          {ESTADO_ENCARGO[p.estado] ?? p.estado}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-wrap gap-1">
+                          {p.pagos.map((pg, i) => (
+                            <span key={i} className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-medium text-slate-600">
+                              {METODO_PAGO_LABEL[pg.metodo as MetodoPagoFarmacia] ?? pg.metodo} {fmt(pg.monto)}
+                            </span>
+                          ))}
+                          {saldo > 0.009 && p.estado !== "cancelado" && (
+                            <span className="rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-600">
+                              debe {fmt(saldo)}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-right font-bold tabular-nums text-slate-900">{fmt(p.total)}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
       {/* Dialog anulación */}
       <Dialog open={anulando !== null} onOpenChange={v => { if (!v) setAnulando(null) }}>
