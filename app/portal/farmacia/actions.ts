@@ -415,12 +415,15 @@ export async function avanzarPedidoFarmacia(pedidoId: string) {
   const { supabase, negocioId } = await requireNegocioAccion(["dueno", "regente", "cajero"])
 
   const { data: pedido } = await supabase
-    .from("pedidos_farmacia").select("estado")
+    .from("pedidos_farmacia").select("estado, total, monto_pagado")
     .eq("id", pedidoId).eq("negocio_id", negocioId).maybeSingle()
   if (!pedido) throw new Error("Pedido no encontrado")
 
   const siguiente = SIGUIENTE_ESTADO[pedido.estado]
   if (!siguiente) throw new Error("Este pedido ya no puede avanzar")
+  if (siguiente === "entregado" && Number(pedido.total) - Number(pedido.monto_pagado) > 0.009) {
+    throw new Error("Cobra el saldo antes de entregar (usa el botón Entregar y cobrar)")
+  }
 
   const { error } = await supabase
     .from("pedidos_farmacia").update({ estado: siguiente })
@@ -611,5 +614,56 @@ export async function alternarTratamiento(tratamientoId: string, activo: boolean
   if (error) throw new Error(error.message)
 
   revalidatePath("/portal/farmacia/pacientes")
+  return { success: true }
+}
+
+// ── Ajustes cliente 1: pagos de encargos ─────────────────────────────────────
+
+/** Abono a un encargo (anticipo extra). Queda en caja por la fecha del pago. */
+export async function abonarPedidoFarmacia(pedidoId: string, monto: number, metodo: string) {
+  const { supabase } = await requireNegocioAccion(["dueno", "regente", "cajero"])
+
+  const { error } = await supabase.rpc("abonar_pedido_farmacia", {
+    p_pedido: pedidoId,
+    p_monto:  montoValido(monto, "abono"),
+    p_metodo: unoDe(metodo, METODOS_PAGO_FARMACIA, "método"),
+  })
+  if (error) throw new Error(error.message)
+
+  revalidatePath("/portal/farmacia/pedidos")
+  revalidatePath("/portal/farmacia/ventas")
+  return { success: true }
+}
+
+/** Entrega el encargo cobrando el saldo si lo hay (el método es obligatorio en ese caso). */
+export async function entregarPedidoFarmacia(pedidoId: string, metodoSaldo?: string) {
+  const { supabase, negocioId } = await requireNegocioAccion(["dueno", "regente", "cajero"])
+
+  const { data: pedido } = await supabase
+    .from("pedidos_farmacia").select("estado, total, monto_pagado")
+    .eq("id", pedidoId).eq("negocio_id", negocioId).maybeSingle()
+  if (!pedido) throw new Error("Pedido no encontrado")
+  if (!["recibido", "notificado"].includes(pedido.estado)) {
+    throw new Error("El encargo debe estar recibido para entregarlo")
+  }
+
+  const saldo = Number(pedido.total) - Number(pedido.monto_pagado)
+  if (saldo > 0.009) {
+    if (!metodoSaldo) throw new Error("Indica cómo pagó el saldo")
+    const { error: errAbono } = await supabase.rpc("abonar_pedido_farmacia", {
+      p_pedido: pedidoId,
+      p_monto:  Math.round(saldo * 100) / 100,
+      p_metodo: unoDe(metodoSaldo, METODOS_PAGO_FARMACIA, "método"),
+    })
+    if (errAbono) throw new Error(errAbono.message)
+  }
+
+  const { error } = await supabase
+    .from("pedidos_farmacia").update({ estado: "entregado" })
+    .eq("id", pedidoId).eq("negocio_id", negocioId)
+  if (error) throw new Error(error.message)
+
+  revalidatePath("/portal/farmacia/pedidos")
+  revalidatePath("/portal/farmacia/ventas")
   return { success: true }
 }

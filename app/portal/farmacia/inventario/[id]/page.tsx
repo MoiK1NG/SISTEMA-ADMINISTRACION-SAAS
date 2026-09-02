@@ -97,7 +97,7 @@ export default async function ProductoFarmaciaPage({
     ["Laboratorio",      lab?.nombre ?? null],
     ["Proveedor",        prov?.nombre ?? null],
     ["Categoría",        producto.categoria],
-    ["Registro INVIMA",  producto.registro_invima],
+    ["Registro sanitario",  producto.registro_invima],
   ]
 
   return (

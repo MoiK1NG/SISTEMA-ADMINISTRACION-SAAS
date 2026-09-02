@@ -2,7 +2,7 @@ import { Receipt } from "lucide-react"
 import { PortalNav } from "@/components/portal/portal-nav"
 import { BannerVerComo } from "@/components/portal/banner-ver-como"
 import { contextoFarmacia } from "@/lib/farmacia/contexto"
-import { VentasFarmacia, type FilaVenta } from "./_components/ventas-farmacia"
+import { VentasFarmacia, type FilaVenta, type FilaEncargo } from "./_components/ventas-farmacia"
 
 export default async function VentasFarmaciaPage() {
   const { supabase, viendoA, negocio, rol } = await contextoFarmacia()
@@ -18,6 +18,16 @@ export default async function VentasFarmaciaPage() {
 
   const hace7 = new Date(); hace7.setDate(hace7.getDate() - 7); hace7.setHours(0, 0, 0, 0)
 
+  const encargosQuery = supabase
+    .from("pedidos_farmacia")
+    .select(`id, descripcion, cantidad, total, monto_pagado, estado, created_at,
+      clientes_farmacia(nombre),
+      pagos_pedido_farmacia(metodo, monto, created_at)`)
+    .eq("negocio_id", negocio.id)
+    .gte("created_at", hace7.toISOString())
+    .order("created_at", { ascending: false })
+    .limit(100)
+
   const { data: ventasRaw } = await supabase
     .from("ventas_farmacia")
     .select(`id, numero, total, estado, created_at, anulada_motivo,
@@ -28,6 +38,25 @@ export default async function VentasFarmaciaPage() {
     .gte("created_at", hace7.toISOString())
     .order("created_at", { ascending: false })
     .limit(100)
+
+  const { data: encargosRaw } = await encargosQuery
+
+  const encargos: FilaEncargo[] = (encargosRaw ?? []).map((p: any) => {
+    const cli = Array.isArray(p.clientes_farmacia) ? p.clientes_farmacia[0] : p.clientes_farmacia
+    return {
+      id:          p.id,
+      descripcion: p.descripcion,
+      cantidad:    Number(p.cantidad),
+      total:       Number(p.total),
+      pagado:      Number(p.monto_pagado),
+      estado:      p.estado,
+      creada:      p.created_at,
+      cliente:     cli?.nombre ?? "—",
+      pagos:       (p.pagos_pedido_farmacia ?? []).map((pg: any) => ({
+        metodo: pg.metodo, monto: Number(pg.monto), fecha: pg.created_at,
+      })),
+    }
+  })
 
   const ventas: FilaVenta[] = (ventasRaw ?? []).map((v: any) => {
     const cli = Array.isArray(v.clientes_farmacia) ? v.clientes_farmacia[0] : v.clientes_farmacia
@@ -63,7 +92,7 @@ export default async function VentasFarmaciaPage() {
       {viendoA && <BannerVerComo nombre={viendoA.full_name || viendoA.email} email={viendoA.email} />}
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <VentasFarmacia ventas={ventas} esGestor={esGestor} />
+        <VentasFarmacia ventas={ventas} encargos={encargos} esGestor={esGestor} />
       </main>
     </div>
   )

@@ -2,7 +2,7 @@ import { Calculator } from "lucide-react"
 import { PortalNav } from "@/components/portal/portal-nav"
 import { BannerVerComo } from "@/components/portal/banner-ver-como"
 import { contextoFarmacia } from "@/lib/farmacia/contexto"
-import { CierreCaja, type FilaCierre } from "./_components/cierre-caja"
+import { CierreCaja, type FilaCierre, type VentaTurno } from "./_components/cierre-caja"
 
 export default async function CajaFarmaciaPage() {
   const { supabase, agenteId, viendoA, negocio, rol } = await contextoFarmacia()
@@ -27,9 +27,30 @@ export default async function CajaFarmaciaPage() {
     .limit(30)
   if (!esGestor) query = query.eq("user_id", agenteId)
 
-  const [{ data: cierresRaw }, { data: equipo }] = await Promise.all([
+  // El turno actual arranca donde terminó el último cierre del negocio
+  const { data: ultimoCierre } = await supabase
+    .from("cierres_caja_farmacia")
+    .select("periodo_hasta")
+    .eq("negocio_id", negocio.id)
+    .order("periodo_hasta", { ascending: false })
+    .limit(1).maybeSingle()
+  const desde = ultimoCierre?.periodo_hasta ?? "1970-01-01T00:00:00Z"
+
+  const [{ data: cierresRaw }, { data: equipo }, { data: ventasRaw }, { data: pagosPedidoRaw }] = await Promise.all([
     query,
     supabase.rpc("equipo_negocio", { p_negocio: negocio.id }),
+    supabase.from("ventas_farmacia")
+      .select("id, numero, total, created_at, items_venta_farmacia(nombre, cantidad), pagos_venta_farmacia(metodo, monto)")
+      .eq("negocio_id", negocio.id).eq("estado", "completada")
+      .gt("created_at", desde)
+      .order("created_at", { ascending: false })
+      .limit(200),
+    supabase.from("pagos_pedido_farmacia")
+      .select("id, metodo, monto, created_at, pedidos_farmacia!inner(negocio_id, descripcion)")
+      .eq("pedidos_farmacia.negocio_id", negocio.id)
+      .gt("created_at", desde)
+      .order("created_at", { ascending: false })
+      .limit(100),
   ])
 
   const nombrePorUsuario = new Map<string, string>((equipo ?? []).map((m: any) => [m.user_id, m.nombre]))
@@ -45,6 +66,30 @@ export default async function CajaFarmaciaPage() {
     ventas:     c.num_ventas,
     notas:      c.notas,
   }))
+
+  const ventasTurno: VentaTurno[] = [
+    ...(ventasRaw ?? []).map((v: any) => ({
+      id:     v.id as string,
+      numero: v.numero as number,
+      hora:   v.created_at as string,
+      total:  Number(v.total),
+      items:  (v.items_venta_farmacia ?? []).map((i: any) => `${Number(i.cantidad)}× ${i.nombre}`).join(", "),
+      pagos:  (v.pagos_venta_farmacia ?? []).map((p: any) => ({ metodo: p.metodo, monto: Number(p.monto) })),
+      tipo:   "venta" as const,
+    })),
+    ...(pagosPedidoRaw ?? []).map((pg: any) => {
+      const ped = Array.isArray(pg.pedidos_farmacia) ? pg.pedidos_farmacia[0] : pg.pedidos_farmacia
+      return {
+        id:     pg.id as string,
+        numero: 0,
+        hora:   pg.created_at as string,
+        total:  Number(pg.monto),
+        items:  ped?.descripcion ?? "Encargo",
+        pagos:  [{ metodo: pg.metodo, monto: Number(pg.monto) }],
+        tipo:   "encargo" as const,
+      }
+    }),
+  ].sort((a, b) => b.hora.localeCompare(a.hora))
 
   return (
     <div className="min-h-screen bg-[#fafafa]">
@@ -65,6 +110,7 @@ export default async function CajaFarmaciaPage() {
       <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
         <CierreCaja
           cierres={cierres}
+          ventasTurno={ventasTurno}
           esGestor={esGestor}
           soloLectura={Boolean(viendoA)}
         />

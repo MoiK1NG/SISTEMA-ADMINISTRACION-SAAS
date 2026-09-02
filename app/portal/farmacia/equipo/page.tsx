@@ -23,6 +23,15 @@ export default async function EquipoPage() {
 
   // En modo "ver como" se muestra pero no se gestiona (las actions ya lo bloquean)
   const puedeGestionar = rol === "dueno" && !viendoA
+  const esGestor = rol === "dueno" || rol === "regente"
+
+  // Auditoría de accesos: cuándo inició y cerró sesión cada miembro
+  const { data: accesos } = esGestor && negocio
+    ? await supabase.rpc("accesos_equipo", { p_negocio: negocio.id })
+    : { data: [] }
+
+  const fmtAcceso = (ts: string) =>
+    new Intl.DateTimeFormat("es-CO", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(ts))
 
   return (
     <div className="min-h-screen bg-[#fafafa]">
@@ -44,11 +53,50 @@ export default async function EquipoPage() {
         {!negocio ? (
           <p className="py-20 text-center text-sm text-slate-500">No perteneces a ninguna farmacia.</p>
         ) : (
-          <EquipoManager
-            miembros={miembros}
-            puedeGestionar={puedeGestionar}
-            miUserId={agenteId}
-          />
+          <>
+            <EquipoManager
+              miembros={miembros}
+              puedeGestionar={puedeGestionar}
+              miUserId={agenteId}
+            />
+
+            {esGestor && (
+              <div className="mt-6 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
+                <div className="border-b border-slate-50 px-5 py-4">
+                  <p className="text-sm font-bold text-slate-900">Auditoría de accesos</p>
+                  <p className="mt-0.5 text-xs text-slate-400">
+                    Inicios y cierres de sesión del equipo (últimos 100 eventos) — junto con el
+                    historial de cierres de caja, permite saber cuándo entró y salió cada quien
+                  </p>
+                </div>
+                {(accesos ?? []).length === 0 ? (
+                  <p className="py-10 text-center text-sm text-slate-400">Sin eventos registrados todavía</p>
+                ) : (
+                  <div className="max-h-80 overflow-y-auto">
+                    <table className="w-full text-sm">
+                      <tbody className="divide-y divide-slate-50">
+                        {(accesos ?? []).map((a: any, i: number) => (
+                          <tr key={i} className="hover:bg-slate-50/50">
+                            <td className="whitespace-nowrap px-5 py-2.5 text-xs text-slate-400">{fmtAcceso(a.fecha)}</td>
+                            <td className="px-3 py-2.5">
+                              <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                                a.accion === "login"
+                                  ? "bg-emerald-50 text-emerald-700"
+                                  : "bg-slate-100 text-slate-500"
+                              }`}>
+                                {a.accion === "login" ? "Inició sesión" : "Cerró sesión"}
+                              </span>
+                            </td>
+                            <td className="px-5 py-2.5 text-xs font-medium text-slate-700">{a.email}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+          </>
         )}
       </main>
     </div>
