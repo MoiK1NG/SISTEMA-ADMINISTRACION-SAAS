@@ -1,3 +1,4 @@
+import { COP, FECHA_HORA } from "@/lib/farmacia/formato"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { ArrowLeft, Pill, Repeat2 } from "lucide-react"
@@ -9,10 +10,10 @@ import { estadoCaducidad, CADUCIDAD_META } from "@/lib/farmacia/caducidad"
 import { LotesManager, type FilaLote } from "./_components/lotes-manager"
 
 const fmt = (n: number) =>
-  new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(n)
+  COP.format(n)
 
 const fmtFechaHora = (ts: string) =>
-  new Intl.DateTimeFormat("es-CO", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(ts))
+  FECHA_HORA.format(new Date(ts))
 
 const TIPO_MOV_LABEL: Record<string, string> = {
   entrada_venta:     "Entrada a venta",

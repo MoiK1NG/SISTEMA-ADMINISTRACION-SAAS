@@ -1,5 +1,6 @@
 "use client"
 
+import { COP } from "@/lib/farmacia/formato"
 import { useMemo, useRef, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import {
@@ -30,7 +31,7 @@ export interface ClientePos { id: string; nombre: string; cedula: string | null;
 interface ItemCarrito { producto: ProductoPos; cantidad: number }
 
 const fmt = (n: number) =>
-  new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(n)
+  COP.format(n)
 
 interface Props {
   productos:   ProductoPos[]

@@ -1,5 +1,6 @@
 "use client"
 
+import { DIA_MES } from "@/lib/farmacia/formato"
 import { useMemo, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { Plus, Loader2, MessageCircle, RotateCcw, Power } from "lucide-react"
@@ -26,7 +27,7 @@ export interface FilaTratamiento {
 }
 
 const fmtFecha = (iso: string) =>
-  new Intl.DateTimeFormat("es-CO", { day: "2-digit", month: "short" }).format(new Date(iso + "T00:00:00"))
+  DIA_MES.format(new Date(iso + "T00:00:00"))
 
 function estadoTratamiento(t: FilaTratamiento) {
   if (!t.activo) return { label: "Pausado", clases: "bg-slate-100 text-slate-500 border-slate-200", urgente: false }

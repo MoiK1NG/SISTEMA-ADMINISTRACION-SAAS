@@ -1,5 +1,6 @@
 "use client"
 
+import { FECHA } from "@/lib/farmacia/formato"
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { Plus, Loader2, MoreHorizontal, PackagePlus, PackageMinus, ArrowLeftRight } from "lucide-react"
@@ -25,7 +26,7 @@ export interface FilaLote {
 }
 
 const fmtFecha = (iso: string) =>
-  new Intl.DateTimeFormat("es-CO", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(iso + "T00:00:00"))
+  FECHA.format(new Date(iso + "T00:00:00"))
 
 const MOVIMIENTOS: { tipo: string; label: string; icon: any; pide: "venta" | "bodega" | "ambos" }[] = [
   { tipo: "traslado_a_venta",  label: "Pasar de bodega a venta", icon: ArrowLeftRight, pide: "bodega" },

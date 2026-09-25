@@ -1,5 +1,6 @@
 "use client"
 
+import { COP, FECHA_HORA } from "@/lib/farmacia/formato"
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { Ban, Loader2 } from "lucide-react"
@@ -23,10 +24,10 @@ export interface FilaVenta {
 }
 
 const fmt = (n: number) =>
-  new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(n)
+  COP.format(n)
 
 const fmtHora = (ts: string) =>
-  new Intl.DateTimeFormat("es-CO", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(ts))
+  FECHA_HORA.format(new Date(ts))
 
 export interface FilaEncargo {
   id:          string

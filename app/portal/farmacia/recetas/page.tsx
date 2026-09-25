@@ -1,3 +1,4 @@
+import { FECHA_HORA_ANIO } from "@/lib/farmacia/formato"
 import { FileText, ShieldCheck } from "lucide-react"
 import { PortalNav } from "@/components/portal/portal-nav"
 import { BannerVerComo } from "@/components/portal/banner-ver-como"
@@ -5,7 +6,7 @@ import { contextoFarmacia } from "@/lib/farmacia/contexto"
 import { ExportarCsv } from "@/components/farmacia/exportar-csv"
 
 const fmtFechaHora = (ts: string) =>
-  new Intl.DateTimeFormat("es-CO", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(ts))
+  FECHA_HORA_ANIO.format(new Date(ts))
 
 export default async function RecetasFarmaciaPage() {
   const { supabase, viendoA, negocio } = await contextoFarmacia()

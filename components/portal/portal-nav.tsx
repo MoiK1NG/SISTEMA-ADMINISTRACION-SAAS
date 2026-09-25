@@ -1,4 +1,4 @@
-import { requireClient } from "@/lib/supabase/require-client"
+import { sesionActual } from "@/lib/admin-context"
 import { PORTALES } from "./portal-config"
 import { PortalNavItems, type OtroPortal } from "./portal-nav-items"
 
@@ -20,14 +20,10 @@ interface Props {
 export async function PortalNav({ portal, top = 16, sticky = true }: Props) {
   if (!PORTALES[portal]) return null
 
-  const supabase = await requireClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  // Misma sesión que ya resolvió la página (memoizada por request)
+  const { supabase, user, rol } = await sesionActual()
   if (!user) return null
 
-  const { data: profile } = await supabase
-    .from("profiles").select("role").eq("id", user.id).maybeSingle()
-
-  const rol     = profile?.role
   const esAdmin = rol === "admin" || rol === "superadmin"
 
   // El superadmin puede entrar a cualquier portal activo; el resto, solo a
