@@ -1,6 +1,10 @@
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Tabla de auditoría para acciones administrativas
 -- Ejecutar en: Supabase → SQL Editor
+--
+-- ⚠ REEMPLAZADO por audit_logs_fix.sql (2026-10-01): este archivo nunca se
+--   aplicó en producción y su política no deja registrar a dueños ni regentes.
+--   Correr audit_logs_fix.sql en su lugar.
 -- ─────────────────────────────────────────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS public.audit_logs (
