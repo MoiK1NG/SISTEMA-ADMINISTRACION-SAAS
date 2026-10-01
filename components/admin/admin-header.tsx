@@ -1,8 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
+import { salirDeLaCuenta } from "@/components/boton-cerrar-sesion"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
@@ -22,16 +21,8 @@ interface AdminHeaderProps {
 }
 
 export function AdminHeader({ profile }: AdminHeaderProps) {
-  const router = useRouter()
-  const supabase = createClient()
-
-  const handleLogout = async () => {
-    if (supabase) {
-      await supabase.auth.signOut()
-    }
-    router.push("/login")
-    router.refresh()
-  }
+  // Cierra en el servidor y borra el modo "ver como" (ver app/auth/actions.ts)
+  const handleLogout = salirDeLaCuenta
 
   const initials = profile.full_name
     ? profile.full_name

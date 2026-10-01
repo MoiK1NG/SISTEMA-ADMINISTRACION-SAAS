@@ -3,8 +3,10 @@ import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { requireClient } from "@/lib/supabase/require-client"
 
+import { COOKIE_VER_COMO } from "@/lib/ver-como"
+
 /** Cookie que guarda el cliente que un admin está inspeccionando. */
-export const COOKIE_VER_COMO = "ver_como_agente"
+export { COOKIE_VER_COMO }
 
 export interface ClienteVisto {
   id:        string
