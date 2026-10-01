@@ -1,5 +1,6 @@
 "use client"
 
+import { COP, FECHA } from "@/lib/farmacia/formato"
 import { useMemo, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { Plus, Loader2, HandCoins, Ban } from "lucide-react"
@@ -26,10 +27,10 @@ export interface FilaCuenta {
 }
 
 const fmt = (n: number) =>
-  new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(n)
+  COP.format(n)
 
 const fmtFecha = (iso: string) =>
-  new Intl.DateTimeFormat("es-CO", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(iso.includes("T") ? iso : iso + "T00:00:00"))
+  FECHA.format(new Date(iso.includes("T") ? iso : iso + "T00:00:00"))
 
 const ESTADO_META: Record<string, { label: string; clases: string }> = {
   pendiente: { label: "Pendiente", clases: "bg-amber-50 text-amber-700 border-amber-200"     },

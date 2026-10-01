@@ -1,5 +1,6 @@
 "use client"
 
+import { FECHA } from "@/lib/farmacia/formato"
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { UserPlus, MoreHorizontal, Trash2, ShieldCheck, Loader2 } from "lucide-react"
@@ -32,7 +33,7 @@ const ROL_META: Record<FilaMiembro["rol"], { label: string; desc: string; clases
 }
 
 const fmtFecha = (iso: string) =>
-  new Intl.DateTimeFormat("es-CO", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(iso))
+  FECHA.format(new Date(iso))
 
 interface Props {
   miembros:  FilaMiembro[]

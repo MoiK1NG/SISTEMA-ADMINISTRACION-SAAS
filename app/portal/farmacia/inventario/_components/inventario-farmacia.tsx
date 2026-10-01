@@ -1,5 +1,6 @@
 "use client"
 
+import { COP, FECHA } from "@/lib/farmacia/formato"
 import { useMemo, useState } from "react"
 import Link from "next/link"
 import { Search, Plus, ScanBarcode, AlertTriangle } from "lucide-react"
@@ -32,10 +33,10 @@ export interface FilaProducto {
 }
 
 const fmt = (n: number) =>
-  new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(n)
+  COP.format(n)
 
 const fmtFecha = (iso: string) =>
-  new Intl.DateTimeFormat("es-CO", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(iso + "T00:00:00"))
+  FECHA.format(new Date(iso + "T00:00:00"))
 
 type Filtro = "todos" | "por_vencer" | "sin_stock" | "inactivos"
 

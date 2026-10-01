@@ -18,28 +18,27 @@ export default async function VentasFarmaciaPage() {
 
   const hace7 = new Date(); hace7.setDate(hace7.getDate() - 7); hace7.setHours(0, 0, 0, 0)
 
-  const encargosQuery = supabase
-    .from("pedidos_farmacia")
-    .select(`id, descripcion, cantidad, total, monto_pagado, estado, created_at,
-      clientes_farmacia(nombre),
-      pagos_pedido_farmacia(metodo, monto, created_at)`)
-    .eq("negocio_id", negocio.id)
-    .gte("created_at", hace7.toISOString())
-    .order("created_at", { ascending: false })
-    .limit(100)
-
-  const { data: ventasRaw } = await supabase
-    .from("ventas_farmacia")
-    .select(`id, numero, total, estado, created_at, anulada_motivo,
-      clientes_farmacia(nombre),
-      items_venta_farmacia(nombre, cantidad),
-      pagos_venta_farmacia(metodo, monto)`)
-    .eq("negocio_id", negocio.id)
-    .gte("created_at", hace7.toISOString())
-    .order("created_at", { ascending: false })
-    .limit(100)
-
-  const { data: encargosRaw } = await encargosQuery
+  const [{ data: ventasRaw }, { data: encargosRaw }] = await Promise.all([
+    supabase
+      .from("ventas_farmacia")
+      .select(`id, numero, total, estado, created_at, anulada_motivo,
+        clientes_farmacia(nombre),
+        items_venta_farmacia(nombre, cantidad),
+        pagos_venta_farmacia(metodo, monto)`)
+      .eq("negocio_id", negocio.id)
+      .gte("created_at", hace7.toISOString())
+      .order("created_at", { ascending: false })
+      .limit(100),
+    supabase
+      .from("pedidos_farmacia")
+      .select(`id, descripcion, cantidad, total, monto_pagado, estado, created_at,
+        clientes_farmacia(nombre),
+        pagos_pedido_farmacia(metodo, monto, created_at)`)
+      .eq("negocio_id", negocio.id)
+      .gte("created_at", hace7.toISOString())
+      .order("created_at", { ascending: false })
+      .limit(100),
+  ])
 
   const encargos: FilaEncargo[] = (encargosRaw ?? []).map((p: any) => {
     const cli = Array.isArray(p.clientes_farmacia) ? p.clientes_farmacia[0] : p.clientes_farmacia

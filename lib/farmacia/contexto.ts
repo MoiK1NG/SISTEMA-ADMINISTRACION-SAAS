@@ -1,5 +1,6 @@
+import { cache } from "react"
 import { resolverAgente, type ClienteVisto } from "@/lib/admin-context"
-import { requirePortalAccess } from "@/lib/portal-security"
+import { sesionParaEscritura, verificarAccesoPortal } from "@/lib/portal-security"
 
 export type RolFarmacia = "dueno" | "regente" | "cajero"
 
@@ -34,7 +35,7 @@ export interface ContextoFarmacia {
  * un admin en modo "ver como"). Si no pertenece a ningún negocio devuelve
  * negocio null y la página muestra el estado correspondiente.
  */
-export async function contextoFarmacia(): Promise<ContextoFarmacia> {
+export const contextoFarmacia = cache(async (): Promise<ContextoFarmacia> => {
   const { supabase, agenteId, viendoA } = await resolverAgente()
 
   const { data: miembro } = await supabase
@@ -55,25 +56,30 @@ export async function contextoFarmacia(): Promise<ContextoFarmacia> {
     negocio: negocioRaw ?? null,
     rol: (miembro?.rol as RolFarmacia) ?? null,
   }
-}
+})
 
 /**
  * Puerta de ESCRITURA para las server actions de farmacia.
  *
- * Encadena requirePortalAccess("farmacia") — sesión, cuenta habilitada,
+ * Hace los mismos chequeos que requirePortalAccess("farmacia") — sesión, cuenta habilitada,
  * portal activo, acceso asignado, membresía vigente (propia o heredada del
  * dueño) y bloqueo del modo "ver como" — y encima verifica el rol dentro
  * del negocio.
  */
 export async function requireNegocioAccion(rolesPermitidos: RolFarmacia[]) {
-  const { supabase, user } = await requirePortalAccess("farmacia")
+  const { supabase, user } = await sesionParaEscritura()
 
-  const { data: miembro } = await supabase
-    .from("miembros_negocio")
-    .select("negocio_id, rol")
-    .eq("user_id", user.id)
-    .limit(1)
-    .maybeSingle()
+  // El miembro solo depende del usuario: va junto con los chequeos del portal.
+  // Si el acceso falla, su error se propaga primero, igual que antes.
+  const [, { data: miembro }] = await Promise.all([
+    verificarAccesoPortal(supabase, user.id, "farmacia"),
+    supabase
+      .from("miembros_negocio")
+      .select("negocio_id, rol")
+      .eq("user_id", user.id)
+      .limit(1)
+      .maybeSingle(),
+  ])
 
   if (!miembro) throw new Error("No perteneces a ningún negocio")
 

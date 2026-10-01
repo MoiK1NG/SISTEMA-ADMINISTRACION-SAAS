@@ -1,5 +1,6 @@
 "use client"
 
+import { COP, FECHA_HORA, HORA } from "@/lib/farmacia/formato"
 import { useEffect, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { Loader2, Lock, CheckCircle2, AlertTriangle, ChevronDown, LogOut } from "lucide-react"
@@ -33,13 +34,13 @@ export interface VentaTurno {
 }
 
 const fmt = (n: number) =>
-  new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(n)
+  COP.format(n)
 
 const fmtFechaHora = (ts: string) =>
-  new Intl.DateTimeFormat("es-CO", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(ts))
+  FECHA_HORA.format(new Date(ts))
 
 const fmtHora = (ts: string) =>
-  new Intl.DateTimeFormat("es-CO", { hour: "2-digit", minute: "2-digit" }).format(new Date(ts))
+  HORA.format(new Date(ts))
 
 type Resultado = Awaited<ReturnType<typeof cerrarCajaFarmacia>>
 

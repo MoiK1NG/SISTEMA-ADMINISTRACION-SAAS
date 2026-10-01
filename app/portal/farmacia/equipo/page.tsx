@@ -1,3 +1,4 @@
+import { FECHA_HORA } from "@/lib/farmacia/formato"
 import { Users } from "lucide-react"
 import { PortalNav } from "@/components/portal/portal-nav"
 import { BannerVerComo } from "@/components/portal/banner-ver-como"
@@ -7,9 +8,19 @@ import { EquipoManager, type FilaMiembro } from "./_components/equipo-manager"
 export default async function EquipoPage() {
   const { supabase, agenteId, viendoA, negocio, rol } = await contextoFarmacia()
 
-  const { data: equipoRaw } = negocio
-    ? await supabase.rpc("equipo_negocio", { p_negocio: negocio.id })
-    : { data: [] }
+  // En modo "ver como" se muestra pero no se gestiona (las actions ya lo bloquean)
+  const puedeGestionar = rol === "dueno" && !viendoA
+  const esGestor = rol === "dueno" || rol === "regente"
+
+  // Equipo + auditoría de accesos (cuándo inició y cerró sesión cada miembro)
+  const [{ data: equipoRaw }, { data: accesos }] = await Promise.all([
+    negocio
+      ? supabase.rpc("equipo_negocio", { p_negocio: negocio.id })
+      : Promise.resolve({ data: [] as any[] }),
+    esGestor && negocio
+      ? supabase.rpc("accesos_equipo", { p_negocio: negocio.id })
+      : Promise.resolve({ data: [] as any[] }),
+  ])
 
   const miembros: FilaMiembro[] = (equipoRaw ?? []).map((m: any) => ({
     id:       m.miembro_id,
@@ -21,17 +32,8 @@ export default async function EquipoPage() {
     desde:    m.desde,
   }))
 
-  // En modo "ver como" se muestra pero no se gestiona (las actions ya lo bloquean)
-  const puedeGestionar = rol === "dueno" && !viendoA
-  const esGestor = rol === "dueno" || rol === "regente"
-
-  // Auditoría de accesos: cuándo inició y cerró sesión cada miembro
-  const { data: accesos } = esGestor && negocio
-    ? await supabase.rpc("accesos_equipo", { p_negocio: negocio.id })
-    : { data: [] }
-
   const fmtAcceso = (ts: string) =>
-    new Intl.DateTimeFormat("es-CO", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(ts))
+    FECHA_HORA.format(new Date(ts))
 
   return (
     <div className="min-h-screen bg-[#fafafa]">

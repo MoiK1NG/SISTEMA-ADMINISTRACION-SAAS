@@ -27,6 +27,12 @@ export default async function CajaFarmaciaPage() {
     .limit(30)
   if (!esGestor) query = query.eq("user_id", agenteId)
 
+  // Historial y equipo no dependen del turno: arrancan ya, en paralelo
+  const historial = Promise.all([
+    query,
+    supabase.rpc("equipo_negocio", { p_negocio: negocio.id }),
+  ])
+
   // El turno actual arranca donde terminó el último cierre del negocio
   const { data: ultimoCierre } = await supabase
     .from("cierres_caja_farmacia")
@@ -36,9 +42,8 @@ export default async function CajaFarmaciaPage() {
     .limit(1).maybeSingle()
   const desde = ultimoCierre?.periodo_hasta ?? "1970-01-01T00:00:00Z"
 
-  const [{ data: cierresRaw }, { data: equipo }, { data: ventasRaw }, { data: pagosPedidoRaw }] = await Promise.all([
-    query,
-    supabase.rpc("equipo_negocio", { p_negocio: negocio.id }),
+  const [[{ data: cierresRaw }, { data: equipo }], { data: ventasRaw }, { data: pagosPedidoRaw }] = await Promise.all([
+    historial,
     supabase.from("ventas_farmacia")
       .select("id, numero, total, created_at, items_venta_farmacia(nombre, cantidad), pagos_venta_farmacia(metodo, monto)")
       .eq("negocio_id", negocio.id).eq("estado", "completada")

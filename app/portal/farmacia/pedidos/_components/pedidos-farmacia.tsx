@@ -1,5 +1,6 @@
 "use client"
 
+import { COP, DIA_MES } from "@/lib/farmacia/formato"
 import { useMemo, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { Plus, Loader2, ArrowRight, Ban, MessageCircle, PackageCheck } from "lucide-react"
@@ -30,10 +31,10 @@ export interface FilaPedido {
 }
 
 const fmt = (n: number) =>
-  new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(n)
+  COP.format(n)
 
 const fmtFecha = (ts: string) =>
-  new Intl.DateTimeFormat("es-CO", { day: "2-digit", month: "short" }).format(new Date(ts))
+  DIA_MES.format(new Date(ts))
 
 const ESTADOS: Record<string, { label: string; clases: string; siguiente: string | null }> = {
   pagado:     { label: "Pagado",     clases: "bg-blue-50 text-blue-700 border-blue-200",          siguiente: "Marcar pedido al proveedor" },

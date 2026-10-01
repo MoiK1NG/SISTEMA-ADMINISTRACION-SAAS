@@ -12,6 +12,15 @@ import { COOKIE_VER_COMO } from "@/lib/admin-context"
  * middleware).
  */
 export async function requirePortalAccess(slug: string) {
+  const sesion = await sesionParaEscritura()
+  await verificarAccesoPortal(sesion.supabase, sesion.user.id, slug)
+  return sesion
+}
+
+type Supabase = Awaited<ReturnType<typeof requireClient>>
+
+/** Sesión autenticada y fuera del modo "ver como". Primer paso de toda escritura. */
+export async function sesionParaEscritura() {
   const supabase = await requireClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error("No autenticado")
@@ -26,39 +35,46 @@ export async function requirePortalAccess(slug: string) {
     )
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role, is_approved, is_active")
-    .eq("id", user.id)
-    .single()
+  return { supabase, user }
+}
+
+/**
+ * Cuenta habilitada → portal activo → acceso asignado → membresía vigente.
+ *
+ * Las cuatro consultas solo dependen del usuario, así que van en paralelo;
+ * los resultados se evalúan en el orden de siempre para que el mensaje de
+ * error sea el mismo que cuando iban en serie.
+ */
+export async function verificarAccesoPortal(supabase: Supabase, userId: string, slug: string) {
+  const [{ data: profile }, { data: portal }, { data: access }, { data: vigente }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("role, is_approved, is_active")
+      .eq("id", userId)
+      .single(),
+    supabase
+      .from("portals")
+      .select("id, is_active")
+      .eq("slug", slug)
+      .maybeSingle(),
+    supabase
+      .from("user_portal_access")
+      .select("id, portals!inner(slug)")
+      .eq("user_id", userId)
+      .eq("portals.slug", slug)
+      .maybeSingle(),
+    // Vigente si tiene membresía propia O si es empleado de un negocio cuyo
+    // dueño la tiene (regente y cajeros de una farmacia no pagan aparte).
+    supabase.rpc("tiene_membresia_vigente", { p_user: userId }),
+  ])
 
   if (!profile) throw new Error("Perfil no encontrado")
-  if (profile.role === "superadmin") return { supabase, user }
+  if (profile.role === "superadmin") return
   if (!profile.is_approved) throw new Error("Cuenta pendiente de aprobación")
   if (!profile.is_active) throw new Error("Cuenta suspendida")
-
-  const { data: portal } = await supabase
-    .from("portals")
-    .select("id, is_active")
-    .eq("slug", slug)
-    .maybeSingle()
   if (!portal || !portal.is_active) throw new Error("Portal no disponible")
-
-  const { data: access } = await supabase
-    .from("user_portal_access")
-    .select("id")
-    .eq("user_id", user.id)
-    .eq("portal_id", portal.id)
-    .maybeSingle()
   if (!access) throw new Error("No tienes acceso a este portal")
-
-  // Vigente si tiene membresía propia O si es empleado de un negocio cuyo
-  // dueño la tiene (regente y cajeros de una farmacia no pagan aparte).
-  const { data: vigente } = await supabase
-    .rpc("tiene_membresia_vigente", { p_user: user.id })
   if (!vigente) throw new Error("Membresía expirada o inactiva")
-
-  return { supabase, user }
 }
 
 // ── Validadores de entrada ────────────────────────────────────────────────────

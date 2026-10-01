@@ -13,13 +13,13 @@ function getInitials(name: string) {
 export default async function FarmaciaPage() {
   const { supabase, agenteId, viendoA, negocio, rol } = await contextoFarmacia()
 
-  const { data: profile } = await supabase
-    .from("profiles").select("full_name, email").eq("id", agenteId).single()
-
-  // Equipo (via función: la RLS de profiles no deja ver perfiles ajenos)
-  const { data: equipo } = negocio
-    ? await supabase.rpc("equipo_negocio", { p_negocio: negocio.id })
-    : { data: [] }
+  const [{ data: profile }, { data: equipo }] = await Promise.all([
+    supabase.from("profiles").select("full_name, email").eq("id", agenteId).single(),
+    // Equipo (via función: la RLS de profiles no deja ver perfiles ajenos)
+    negocio
+      ? supabase.rpc("equipo_negocio", { p_negocio: negocio.id })
+      : Promise.resolve({ data: [] as any[] }),
+  ])
 
   const hora   = new Date().getHours()
   const saludo = hora < 12 ? "Buenos días" : hora < 18 ? "Buenas tardes" : "Buenas noches"

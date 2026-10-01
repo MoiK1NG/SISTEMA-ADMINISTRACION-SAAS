@@ -1,3 +1,4 @@
+import { COP, DIA_SEMANA, FECHA_HORA, MES_ANIO } from "@/lib/farmacia/formato"
 import Link from "next/link"
 import { Wallet, TrendingUp, Landmark, PackageOpen, Lock } from "lucide-react"
 import { PortalNav } from "@/components/portal/portal-nav"
@@ -7,10 +8,10 @@ import { METODO_PAGO_LABEL, type MetodoPagoFarmacia } from "@/lib/farmacia/pos-c
 import { ExportarCsv } from "@/components/farmacia/exportar-csv"
 
 const fmt = (n: number) =>
-  new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(n)
+  COP.format(n)
 
 const fmtDia = (iso: string) =>
-  new Intl.DateTimeFormat("es-CO", { weekday: "short", day: "2-digit" }).format(new Date(iso + "T12:00:00"))
+  DIA_SEMANA.format(new Date(iso + "T12:00:00"))
 
 export default async function FinanzasFarmaciaPage() {
   const { supabase, viendoA, negocio, rol } = await contextoFarmacia()
@@ -121,7 +122,7 @@ export default async function FinanzasFarmaciaPage() {
     { label: "Debes / te deben", valor: `${fmt(deudaCxp)}`, sub: `por pagar · te deben ${fmt(porCobrar)}` },
   ]
 
-  const nombreMes = new Intl.DateTimeFormat("es-CO", { month: "long", year: "numeric" }).format(new Date())
+  const nombreMes = MES_ANIO.format(new Date())
 
   return (
     <div className="min-h-screen bg-[#fafafa]">
@@ -199,7 +200,7 @@ export default async function FinanzasFarmaciaPage() {
                   return (
                     <div key={i} className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-2.5 text-sm">
                       <span className="text-xs text-slate-500">
-                        {new Intl.DateTimeFormat("es-CO", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(c.periodo_hasta))}
+                        {FECHA_HORA.format(new Date(c.periodo_hasta))}
                         <span className="ml-2 text-slate-400">· {c.num_ventas} ventas</span>
                       </span>
                       <span className={`font-bold tabular-nums ${Math.abs(dif) < 0.01 ? "text-emerald-600" : dif > 0 ? "text-amber-600" : "text-rose-600"}`}>
