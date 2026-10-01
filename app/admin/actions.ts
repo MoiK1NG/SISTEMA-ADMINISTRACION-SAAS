@@ -26,6 +26,19 @@ async function verifyAdmin() {
 }
 
 // Helper para verificar superadmin
+/**
+ * Corre el mantenimiento diario a mano (botón del panel). Es lo mismo que hace
+ * la tarea programada de Vercel; sirve para verificar que funciona sin esperar
+ * a la madrugada. La función SQL vuelve a verificar que sea admin.
+ */
+export async function ejecutarMantenimientoAhora() {
+  const { supabase } = await verifyAdmin()
+  const { data, error } = await supabase.rpc("ejecutar_mantenimiento_diario")
+  if (error) throw new Error(error.message)
+  revalidatePath("/admin")
+  return data as Record<string, unknown>
+}
+
 async function verifySuperAdmin() {
   const { supabase, user, adminProfile } = await verifyAdmin()
 

@@ -10,9 +10,10 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 // ---------------------------------------------------------------------------
 // /reset-password es pública a propósito: el usuario llega con una sesión de
 // recuperación recién creada y no debe rebotar al login antes de cambiarla.
+// /api/cron la llama Vercel sin sesión; se protege sola con CRON_SECRET.
 const PUBLIC_ROUTES = [
   '/', '/login', '/signup', '/forgot-password', '/reset-password',
-  '/auth/callback', '/auth/error',
+  '/auth/callback', '/auth/error', '/api/cron',
 ]
 
 // Regex que captura /portal/<slug>  →  grupo 1 = slug
