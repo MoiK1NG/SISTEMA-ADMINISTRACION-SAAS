@@ -269,7 +269,7 @@ export default async function FinanzasFarmaciaPage() {
         </div>
 
         <p className="text-xs text-slate-400">
-          El margen usa el costo registrado al momento de cada venta (no el costo actual del
+          El margen usa el costo con IVA registrado al momento de cada venta (no el costo actual del
           catálogo). Productos cargados sin costo aparecen con margen del 100%: completa el
           costo en el inventario para que el número sea real. La declaración de impuestos
           sigue siendo de tu contador — este reporte es su insumo, exportable arriba.

@@ -9,7 +9,8 @@
 --   1. LOMS 360 es colombiana pero la primera farmacia es chilena: la moneda
 --      (COP / CLP) y el IVA por defecto pasan a ser DEL NEGOCIO, no globales.
 --   2. El costo de cada producto se guarda NETO y el IVA aparte (iva_pct), para
---      mostrar costo con IVA, margen y utilidad reales.
+--      mostrar costo con IVA, margen y utilidad reales. Cada venta guarda el
+--      costo CON IVA del momento, así Finanzas e Inventario dan el mismo margen.
 --   3. La carga inicial de inventario viene sin fecha de vencimiento: los lotes
 --      pueden quedar "sin fecha registrada" y el POS igual los vende (al final
 --      del FEFO). La vista de stock cuenta cuántos lotes faltan completar.
@@ -69,11 +70,18 @@ GROUP BY p.id, p.negocio_id;
 
 -- El POS vende lotes sin fecha, pero después de los que sí tienen (FEFO:
 -- primero lo que vence antes; lo que no se sabe cuándo vence, al final).
--- Mismo cuerpo que en la fase 2, salvo las dos condiciones marcadas con ★.
+--
+-- Base: la versión VIGENTE de la RPC, la de farmacia_fase4_recetas_crm.sql
+-- (4 parámetros: receta + snapshot de costo de la fase 3). Mismo cuerpo, salvo
+-- las condiciones marcadas con ★. Misma firma → CREATE OR REPLACE la pisa en
+-- lugar de crear una sobrecarga.
+DROP FUNCTION IF EXISTS public.registrar_venta_farmacia(JSONB, JSONB, UUID);   -- por si quedó la de fase 2/3
+
 CREATE OR REPLACE FUNCTION public.registrar_venta_farmacia(
-  p_items   JSONB,              -- [{"producto_id": uuid, "cantidad": num}, ...]
-  p_pagos   JSONB,              -- [{"metodo": text, "monto": num}, ...]
-  p_cliente UUID DEFAULT NULL
+  p_items   JSONB,
+  p_pagos   JSONB,
+  p_cliente UUID  DEFAULT NULL,
+  p_receta  JSONB DEFAULT NULL    -- {paciente_nombre, paciente_documento, medico_nombre, medico_registro, numero_receta, notas}
 ) RETURNS JSONB
 LANGUAGE plpgsql SECURITY INVOKER
 SET search_path = public
@@ -93,8 +101,8 @@ DECLARE
   v_pendiente   NUMERIC;
   v_disponible  NUMERIC;
   v_tomar       NUMERIC;
+  v_hay_rx      BOOLEAN := FALSE;
 BEGIN
-  -- Negocio del vendedor (cualquier miembro puede vender)
   SELECT negocio_id INTO v_negocio FROM public.miembros_negocio
   WHERE user_id = auth.uid() LIMIT 1;
   IF v_negocio IS NULL THEN RAISE EXCEPTION 'No perteneces a ningún negocio'; END IF;
@@ -112,23 +120,24 @@ BEGIN
     RAISE EXCEPTION 'Cliente no encontrado';
   END IF;
 
-  -- 1) Validar productos, calcular total y verificar stock vendible (FEFO,
-  --    solo área de venta y solo lotes NO vencidos; los sin fecha cuentan)
+  -- 1) Validar productos, total, stock vendible y si hay controlados
   FOR v_item IN SELECT * FROM jsonb_to_recordset(p_items) AS x(producto_id UUID, cantidad NUMERIC)
   LOOP
     IF v_item.producto_id IS NULL OR v_item.cantidad IS NULL OR v_item.cantidad <= 0 THEN
       RAISE EXCEPTION 'Item inválido en la venta';
     END IF;
 
-    SELECT id, nombre, concentracion, precio_venta INTO v_prod
+    SELECT id, nombre, concentracion, precio_venta, requiere_receta INTO v_prod
     FROM public.productos_farmacia
     WHERE id = v_item.producto_id AND negocio_id = v_negocio AND activo;
     IF NOT FOUND THEN RAISE EXCEPTION 'Producto no encontrado o inactivo'; END IF;
 
+    IF v_prod.requiere_receta THEN v_hay_rx := TRUE; END IF;
+
     SELECT COALESCE(SUM(cantidad_venta), 0) INTO v_disponible
     FROM public.lotes_farmacia
     WHERE producto_id = v_item.producto_id
-      AND (fecha_vencimiento IS NULL OR fecha_vencimiento >= CURRENT_DATE);   -- ★
+      AND (fecha_vencimiento IS NULL OR fecha_vencimiento >= CURRENT_DATE);   -- ★ lotes sin fecha
 
     IF v_disponible < v_item.cantidad THEN
       RAISE EXCEPTION 'Stock insuficiente de "%" (hay % en venta sin vencer)', v_prod.nombre, v_disponible;
@@ -139,8 +148,19 @@ BEGIN
 
   IF v_total <= 0 THEN RAISE EXCEPTION 'El total debe ser mayor a cero'; END IF;
 
-  -- 2) Validar pagos: lo no-efectivo no puede exceder el total; el vuelto
-  --    solo puede salir del efectivo
+  -- Medicamento de control especial: sin receta completa NO hay venta
+  IF v_hay_rx THEN
+    IF p_receta IS NULL
+       OR trim(COALESCE(p_receta->>'paciente_nombre', ''))    = ''
+       OR trim(COALESCE(p_receta->>'paciente_documento', '')) = ''
+       OR trim(COALESCE(p_receta->>'medico_nombre', ''))      = ''
+       OR trim(COALESCE(p_receta->>'numero_receta', ''))      = ''
+    THEN
+      RAISE EXCEPTION 'La venta incluye medicamentos de control especial: registra paciente, documento, médico y número de receta';
+    END IF;
+  END IF;
+
+  -- 2) Validar pagos (mixto)
   FOR v_pago IN SELECT * FROM jsonb_to_recordset(p_pagos) AS x(metodo TEXT, monto NUMERIC)
   LOOP
     IF v_pago.metodo NOT IN ('efectivo', 'tarjeta_debito', 'tarjeta_credito', 'transferencia') THEN
@@ -163,7 +183,7 @@ BEGIN
   END IF;
   v_vuelto := v_pagado - v_total;
 
-  -- 3) Número de venta consecutivo por negocio (lock por negocio)
+  -- 3) Venta con número consecutivo
   PERFORM pg_advisory_xact_lock(hashtext('venta_farmacia:' || v_negocio::text));
   SELECT COALESCE(MAX(numero), 0) + 1 INTO v_numero
   FROM public.ventas_farmacia WHERE negocio_id = v_negocio;
@@ -172,26 +192,48 @@ BEGIN
   VALUES (v_negocio, v_numero, p_cliente, auth.uid(), v_total)
   RETURNING id INTO v_venta_id;
 
-  -- 4) Items (snapshot) + descuento de stock FEFO + movimientos enlazados
+  -- 4) Items + FEFO + movimientos + libro de control
   FOR v_item IN SELECT * FROM jsonb_to_recordset(p_items) AS x(producto_id UUID, cantidad NUMERIC)
   LOOP
-    SELECT nombre, concentracion, precio_venta INTO v_prod
+    SELECT nombre, concentracion, precio_venta, costo, iva_pct, requiere_receta INTO v_prod   -- ★ iva_pct
     FROM public.productos_farmacia WHERE id = v_item.producto_id;
 
-    INSERT INTO public.items_venta_farmacia (venta_id, producto_id, nombre, cantidad, precio_unitario)
+    INSERT INTO public.items_venta_farmacia
+      (venta_id, producto_id, nombre, cantidad, precio_unitario, costo_unitario)
     VALUES (
       v_venta_id, v_item.producto_id,
       v_prod.nombre || COALESCE(' ' || v_prod.concentracion, ''),
-      v_item.cantidad, v_prod.precio_venta
+      -- ★ El snapshot guarda el costo CON IVA, igual que el precio de venta, para
+      --   que el margen de Finanzas coincida con el de Inventario (Colombia: IVA 0 → sin cambio)
+      v_item.cantidad, v_prod.precio_venta, ROUND(COALESCE(v_prod.costo, 0) * (1 + COALESCE(v_prod.iva_pct, 0) / 100), 2)
     );
+
+    -- Registro en el libro de control (dentro de la MISMA transacción:
+    -- no puede existir venta de controlado sin su asiento en el libro)
+    IF v_prod.requiere_receta THEN
+      INSERT INTO public.recetas_farmacia
+        (negocio_id, venta_id, venta_numero, producto_id, producto_nombre, cantidad,
+         paciente_nombre, paciente_documento, medico_nombre, medico_registro,
+         numero_receta, notas, user_id)
+      VALUES
+        (v_negocio, v_venta_id, v_numero, v_item.producto_id,
+         v_prod.nombre || COALESCE(' ' || v_prod.concentracion, ''), v_item.cantidad,
+         trim(p_receta->>'paciente_nombre'),
+         trim(p_receta->>'paciente_documento'),
+         trim(p_receta->>'medico_nombre'),
+         NULLIF(trim(COALESCE(p_receta->>'medico_registro', '')), ''),
+         trim(p_receta->>'numero_receta'),
+         NULLIF(trim(COALESCE(p_receta->>'notas', '')), ''),
+         auth.uid());
+    END IF;
 
     v_pendiente := v_item.cantidad;
     FOR v_lote IN
       SELECT id, cantidad_venta FROM public.lotes_farmacia
       WHERE producto_id = v_item.producto_id
         AND cantidad_venta > 0
-        AND (fecha_vencimiento IS NULL OR fecha_vencimiento >= CURRENT_DATE)   -- ★
-      ORDER BY fecha_vencimiento ASC NULLS LAST, created_at ASC                 -- ★
+        AND (fecha_vencimiento IS NULL OR fecha_vencimiento >= CURRENT_DATE)   -- ★ lotes sin fecha
+      ORDER BY fecha_vencimiento ASC NULLS LAST, created_at ASC                 -- ★ al final del FEFO
       FOR UPDATE
     LOOP
       EXIT WHEN v_pendiente <= 0;
@@ -211,7 +253,6 @@ BEGIN
     END LOOP;
 
     IF v_pendiente > 0 THEN
-      -- Otro cajero vendió lo mismo en paralelo y ganó los lotes
       RAISE EXCEPTION 'El stock de "%" cambió durante la venta. Intenta de nuevo.', v_prod.nombre;
     END IF;
   END LOOP;
@@ -224,13 +265,13 @@ BEGIN
   END LOOP;
 
   RETURN jsonb_build_object(
-    'venta_id', v_venta_id,
-    'numero',   v_numero,
-    'total',    v_total,
-    'vuelto',   v_vuelto
+    'venta_id', v_venta_id, 'numero', v_numero, 'total', v_total, 'vuelto', v_vuelto
   );
 END;
 $$;
+
+REVOKE ALL ON FUNCTION public.registrar_venta_farmacia(JSONB, JSONB, UUID, JSONB) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.registrar_venta_farmacia(JSONB, JSONB, UUID, JSONB) TO authenticated;
 
 -- ── 4. Historial de cambios de productos ──────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.historial_productos_farmacia (
