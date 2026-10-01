@@ -1,6 +1,6 @@
 "use client"
 
-import { COP, FECHA } from "@/lib/farmacia/formato"
+import { useFormato } from "@/components/farmacia/negocio-provider"
 import { useMemo, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { Plus, Loader2, HandCoins, Ban } from "lucide-react"
@@ -26,12 +26,6 @@ export interface FilaCuenta {
   creada:    string
 }
 
-const fmt = (n: number) =>
-  COP.format(n)
-
-const fmtFecha = (iso: string) =>
-  FECHA.format(new Date(iso.includes("T") ? iso : iso + "T00:00:00"))
-
 const ESTADO_META: Record<string, { label: string; clases: string }> = {
   pendiente: { label: "Pendiente", clases: "bg-amber-50 text-amber-700 border-amber-200"     },
   parcial:   { label: "Parcial",   clases: "bg-blue-50 text-blue-700 border-blue-200"         },
@@ -49,6 +43,7 @@ interface Props {
 }
 
 export function ComprasFarmacia({ cuentas, proveedores, esDueno, soloLectura }: Props) {
+  const f = useFormato()
   const router = useRouter()
   const [filtro, setFiltro] = useState<"abiertas" | "todas">("abiertas")
   const [nuevaAbierta, setNuevaAbierta] = useState(false)
@@ -94,7 +89,7 @@ export function ComprasFarmacia({ cuentas, proveedores, esDueno, soloLectura }: 
       <div className="grid grid-cols-2 gap-4 sm:max-w-md">
         <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Deuda abierta</p>
-          <p className="mt-1 text-xl font-black tabular-nums text-slate-900">{fmt(deudaTotal)}</p>
+          <p className="mt-1 text-xl font-black tabular-nums text-slate-900">{f.dinero(deudaTotal)}</p>
         </div>
         <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Vencidas</p>
@@ -107,7 +102,7 @@ export function ComprasFarmacia({ cuentas, proveedores, esDueno, soloLectura }: 
           {(["abiertas", "todas"] as const).map(f => (
             <button key={f} onClick={() => setFiltro(f)}
                     className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
-                      filtro === f ? "bg-teal-600 text-white" : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                      filtro === f ? "bg-brand-600 text-white" : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
                     }`}>
               {f === "abiertas" ? "Abiertas" : "Todas"}
             </button>
@@ -115,7 +110,7 @@ export function ComprasFarmacia({ cuentas, proveedores, esDueno, soloLectura }: 
         </div>
         {!soloLectura && (
           <Button size="sm" onClick={() => { setError(null); setNuevaAbierta(true) }}
-                  className="gap-1.5 bg-teal-600 hover:bg-teal-700">
+                  className="gap-1.5 bg-brand-600 hover:bg-brand-700">
             <Plus className="h-3.5 w-3.5" />Nueva cuenta
           </Button>
         )}
@@ -151,25 +146,25 @@ export function ComprasFarmacia({ cuentas, proveedores, esDueno, soloLectura }: 
                     <tr key={c.id} className={c.estado === "anulada" ? "opacity-50" : "hover:bg-slate-50/50"}>
                       <td className="px-4 py-3">
                         <p className="font-semibold text-slate-900">{c.concepto}</p>
-                        <p className="text-xs text-slate-400">{c.proveedor ?? "Sin proveedor"} · {fmtFecha(c.creada)}</p>
+                        <p className="text-xs text-slate-400">{c.proveedor ?? "Sin proveedor"} · {f.fecha(c.creada)}</p>
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-xs">
                         {c.vence
-                          ? <span className={vencida ? "font-bold text-rose-600" : "text-slate-500"}>{fmtFecha(c.vence)}{vencida ? " ⚠" : ""}</span>
+                          ? <span className={vencida ? "font-bold text-rose-600" : "text-slate-500"}>{f.fecha(c.vence)}{vencida ? " ⚠" : ""}</span>
                           : <span className="text-slate-300">—</span>}
                       </td>
                       <td className="px-4 py-3">
                         <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-bold ${est.clases}`}>{est.label}</span>
                       </td>
-                      <td className="px-4 py-3 text-right text-xs tabular-nums text-emerald-600">{fmt(c.pagado)}</td>
+                      <td className="px-4 py-3 text-right text-xs tabular-nums text-emerald-600">{f.dinero(c.pagado)}</td>
                       <td className="px-4 py-3 text-right font-bold tabular-nums text-slate-900">
-                        {["pendiente", "parcial"].includes(c.estado) ? fmt(saldo) : "—"}
+                        {["pendiente", "parcial"].includes(c.estado) ? f.dinero(saldo) : "—"}
                       </td>
                       <td className="px-4 py-3 text-right">
                         {!soloLectura && ["pendiente", "parcial"].includes(c.estado) && (
                           <div className="flex items-center justify-end gap-1">
                             <button onClick={() => { setError(null); setAbono(""); setMetodoAbono(""); setAbonando(c) }}
-                                    className="flex items-center gap-1 rounded-lg border border-teal-200 bg-teal-50 px-2.5 py-1.5 text-xs font-bold text-teal-700 hover:bg-teal-100">
+                                    className="flex items-center gap-1 rounded-lg border border-brand-200 bg-brand-50 px-2.5 py-1.5 text-xs font-bold text-brand-700 hover:bg-brand-100">
                               <HandCoins className="h-3.5 w-3.5" />Abonar
                             </button>
                             {esDueno && (
@@ -204,11 +199,11 @@ export function ComprasFarmacia({ cuentas, proveedores, esDueno, soloLectura }: 
             <div className="space-y-1.5">
               <Label>Proveedor</Label>
               {form.proveedor_id ? (
-                <div className="flex items-center justify-between rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-sm">
-                  <span className="font-medium text-teal-800">
+                <div className="flex items-center justify-between rounded-md border border-brand-200 bg-brand-50 px-3 py-2 text-sm">
+                  <span className="font-medium text-brand-800">
                     {proveedores.find(p => p.id === form.proveedor_id)?.nombre ?? buscaProv}
                   </span>
-                  <button type="button" className="text-xs text-teal-600 hover:underline"
+                  <button type="button" className="text-xs text-brand-600 hover:underline"
                           onClick={() => { setForm(f => ({ ...f, proveedor_id: "" })); setBuscaProv("") }}>
                     cambiar
                   </button>
@@ -228,13 +223,13 @@ export function ComprasFarmacia({ cuentas, proveedores, esDueno, soloLectura }: 
                         .slice(0, 6)
                         .map(p => (
                           <button key={p.id} type="button"
-                                  className="block w-full px-3 py-2 text-left text-sm hover:bg-teal-50"
+                                  className="block w-full px-3 py-2 text-left text-sm hover:bg-brand-50"
                                   onClick={() => { setForm(f => ({ ...f, proveedor_id: p.id })); setProvAbierto(false) }}>
                             {p.nombre}
                           </button>
                         ))}
                       <button type="button"
-                              className="block w-full border-t border-slate-100 px-3 py-2 text-left text-sm font-semibold text-teal-700 hover:bg-teal-50"
+                              className="block w-full border-t border-slate-100 px-3 py-2 text-left text-sm font-semibold text-brand-700 hover:bg-brand-50"
                               disabled={isPending}
                               onClick={() => correr(
                                 async () => {
@@ -269,7 +264,7 @@ export function ComprasFarmacia({ cuentas, proveedores, esDueno, soloLectura }: 
             </div>
             <div className="flex gap-3">
               <Button variant="outline" className="flex-1" onClick={() => setNuevaAbierta(false)}>Cancelar</Button>
-              <Button className="flex-1 bg-teal-600 hover:bg-teal-700"
+              <Button className="flex-1 bg-brand-600 hover:bg-brand-700"
                       disabled={isPending || !form.concepto.trim() || form.monto_total <= 0}
                       onClick={() => correr(
                         () => crearCuentaPagarFarmacia({
@@ -294,7 +289,7 @@ export function ComprasFarmacia({ cuentas, proveedores, esDueno, soloLectura }: 
             <div className="mt-2 space-y-4">
               {error && <p className="rounded bg-rose-50 px-3 py-2 text-xs text-rose-600">{error}</p>}
               <p className="rounded-xl bg-slate-50 px-4 py-2.5 text-xs text-slate-600">
-                {abonando.concepto} · debe <strong>{fmt(abonando.total - abonando.pagado)}</strong>
+                {abonando.concepto} · debe <strong>{f.dinero(abonando.total - abonando.pagado)}</strong>
               </p>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
@@ -312,7 +307,7 @@ export function ComprasFarmacia({ cuentas, proveedores, esDueno, soloLectura }: 
               </div>
               <div className="flex gap-3">
                 <Button variant="outline" className="flex-1" onClick={() => setAbonando(null)}>Cancelar</Button>
-                <Button className="flex-1 bg-teal-600 hover:bg-teal-700"
+                <Button className="flex-1 bg-brand-600 hover:bg-brand-700"
                         disabled={isPending || !(Number(abono) > 0)}
                         onClick={() => correr(
                           () => abonarCuentaPagarFarmacia(abonando.id, Number(abono), metodoAbono || undefined),

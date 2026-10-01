@@ -1,4 +1,4 @@
-import { FECHA_HORA } from "@/lib/farmacia/formato"
+import { formato } from "@/lib/farmacia/formato"
 import { Users } from "lucide-react"
 import { PortalNav } from "@/components/portal/portal-nav"
 import { BannerVerComo } from "@/components/portal/banner-ver-como"
@@ -7,6 +7,7 @@ import { EquipoManager, type FilaMiembro } from "./_components/equipo-manager"
 
 export default async function EquipoPage() {
   const { supabase, agenteId, viendoA, negocio, rol } = await contextoFarmacia()
+  const f = formato(negocio?.moneda)
 
   // En modo "ver como" se muestra pero no se gestiona (las actions ya lo bloquean)
   const puedeGestionar = rol === "dueno" && !viendoA
@@ -32,14 +33,11 @@ export default async function EquipoPage() {
     desde:    m.desde,
   }))
 
-  const fmtAcceso = (ts: string) =>
-    FECHA_HORA.format(new Date(ts))
-
   return (
-    <div className="min-h-screen bg-[#fafafa]">
+    <div className="min-h-screen bg-[#F7F9FC]">
       <header className="sticky top-0 z-30 border-b border-slate-100 bg-white/80 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 shadow-sm shadow-teal-500/30">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-600 to-brand-900 shadow-sm shadow-brand-500/30">
             <Users className="h-4 w-4 text-white" />
           </div>
           <div>
@@ -79,7 +77,7 @@ export default async function EquipoPage() {
                       <tbody className="divide-y divide-slate-50">
                         {(accesos ?? []).map((a: any, i: number) => (
                           <tr key={i} className="hover:bg-slate-50/50">
-                            <td className="whitespace-nowrap px-5 py-2.5 text-xs text-slate-400">{fmtAcceso(a.fecha)}</td>
+                            <td className="whitespace-nowrap px-5 py-2.5 text-xs text-slate-400">{f.fechaHora(a.fecha)}</td>
                             <td className="px-3 py-2.5">
                               <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
                                 a.accion === "login"

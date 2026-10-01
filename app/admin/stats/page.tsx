@@ -81,7 +81,7 @@ export default async function StatsPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: "MRR total",       value: fmt(totalMRR),          icon: TrendingUp, color: "text-emerald-600", bg: "bg-emerald-50" },
-          { label: "Usuarios totales",value: String(totalUsers ?? 0), icon: Users,      color: "text-blue-600",   bg: "bg-blue-50"    },
+          { label: "Usuarios totales",value: String(totalUsers ?? 0), icon: Users,      color: "text-brand-600",   bg: "bg-brand-50"    },
           { label: "Tasa aprobación", value: `${approvalRate}%`,      icon: Activity,   color: "text-purple-600", bg: "bg-purple-50"  },
           { label: "Portales activos",value: String((portals || []).filter((p: any) => p.is_active).length), icon: Grid3X3, color: "text-amber-600", bg: "bg-amber-50" },
         ].map(k => (
@@ -147,7 +147,7 @@ export default async function StatsPage() {
                     <span className="text-muted-foreground">{p.count} usuarios</span>
                   </div>
                   <div className="h-2 rounded-full bg-muted overflow-hidden">
-                    <div className="h-full rounded-full bg-blue-500 transition-all" style={{ width: `${pct}%` }} />
+                    <div className="h-full rounded-full bg-brand-500 transition-all" style={{ width: `${pct}%` }} />
                   </div>
                 </div>
               )
@@ -170,9 +170,9 @@ export default async function StatsPage() {
               return (
                 <div key={`${m.year}-${m.month}`} className="flex-1 flex flex-col items-center gap-1">
                   <span className="text-xs font-semibold text-muted-foreground">{m.count > 0 ? m.count : ""}</span>
-                  <div className="w-full rounded-t-md bg-blue-500/20 relative overflow-hidden" style={{ height: "80px" }}>
+                  <div className="w-full rounded-t-md bg-brand-500/20 relative overflow-hidden" style={{ height: "80px" }}>
                     <div
-                      className="absolute bottom-0 w-full rounded-t-md bg-blue-500 transition-all"
+                      className="absolute bottom-0 w-full rounded-t-md bg-brand-500 transition-all"
                       style={{ height: `${heightPct}%` }}
                     />
                   </div>

@@ -26,14 +26,14 @@ export function MembershipCard({ membership, daysRemaining }: Props) {
   return (
     <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
       {/* Decoración suave */}
-      <div className="absolute -top-16 -right-16 h-48 w-48 rounded-full bg-blue-50 blur-2xl" />
+      <div className="absolute -top-16 -right-16 h-48 w-48 rounded-full bg-brand-50 blur-2xl" />
 
       <div className="relative z-10 space-y-5">
         {/* Cabecera */}
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 border border-blue-100">
-              <CreditCard className="h-5 w-5 text-blue-600" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 border border-brand-100">
+              <CreditCard className="h-5 w-5 text-brand-600" />
             </div>
             <div>
               <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">Membresía activa</p>

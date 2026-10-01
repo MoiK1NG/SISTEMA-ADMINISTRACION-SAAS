@@ -9,7 +9,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Building2, LogOut, Settings, LayoutDashboard, ChevronDown } from "lucide-react"
+import { LogOut, Settings, LayoutDashboard, ChevronDown } from "lucide-react"
 import type { Profile } from "@/lib/types"
 
 interface DashboardHeaderProps { profile: Profile }
@@ -39,14 +39,8 @@ export function DashboardHeader({ profile }: DashboardHeaderProps) {
       <div className="container mx-auto flex h-[60px] items-center justify-between px-4 sm:px-6">
 
         {/* ── Marca ──────────────────────────────────────────────────────── */}
-        <Link href="/dashboard" className="flex items-center gap-2.5 group">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 shadow-sm shadow-blue-600/25 group-hover:shadow-blue-600/40 transition-shadow">
-            <Building2 className="h-4 w-4 text-white" />
-          </div>
-          <div className="hidden sm:block">
-            <span className="text-sm font-bold text-slate-900 tracking-tight">SaaS Admin</span>
-            <span className="ml-1.5 text-[10px] font-medium text-slate-400 uppercase tracking-widest hidden md:inline">Sistema</span>
-          </div>
+        <Link href="/dashboard" className="flex items-center" aria-label="LOMS 360, mis portales">
+          <img src="/brand/loms360-logo.svg" alt="LOMS 360" className="h-7 w-auto" />
         </Link>
 
         {/* ── Acciones ────────────────────────────────────────────────────── */}
@@ -68,7 +62,7 @@ export function DashboardHeader({ profile }: DashboardHeaderProps) {
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 rounded-xl border border-slate-100 bg-slate-50 px-2.5 py-1.5 hover:bg-slate-100 transition-colors focus:outline-none">
                 <Avatar className="h-6 w-6">
-                  <AvatarFallback className="bg-blue-600 text-white text-[10px] font-bold">
+                  <AvatarFallback className="bg-brand-600 text-white text-[10px] font-bold">
                     {initials}
                   </AvatarFallback>
                 </Avatar>

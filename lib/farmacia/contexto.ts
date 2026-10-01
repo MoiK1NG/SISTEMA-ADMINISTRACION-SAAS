@@ -1,6 +1,7 @@
 import { cache } from "react"
 import { resolverAgente, type ClienteVisto } from "@/lib/admin-context"
 import { sesionParaEscritura, verificarAccesoPortal } from "@/lib/portal-security"
+import type { Moneda } from "@/lib/farmacia/formato"
 
 export type RolFarmacia = "dueno" | "regente" | "cajero"
 
@@ -16,6 +17,10 @@ export interface Negocio {
   nit:       string | null
   direccion: string | null
   telefono:  string | null
+  /** COP (Colombia) o CLP (Chile): define formato de dinero y fechas. */
+  moneda:    Moneda
+  /** IVA propuesto al crear productos (Chile 19, Colombia 0). */
+  iva_pct_default: number
 }
 
 export interface ContextoFarmacia {
@@ -40,7 +45,7 @@ export const contextoFarmacia = cache(async (): Promise<ContextoFarmacia> => {
 
   const { data: miembro } = await supabase
     .from("miembros_negocio")
-    .select("rol, negocios(id, nombre, nit, direccion, telefono)")
+    .select("rol, negocios(id, nombre, nit, direccion, telefono, moneda, iva_pct_default)")
     .eq("user_id", agenteId)
     .limit(1)
     .maybeSingle()
@@ -49,11 +54,15 @@ export const contextoFarmacia = cache(async (): Promise<ContextoFarmacia> => {
     ? (Array.isArray((miembro as any).negocios) ? (miembro as any).negocios[0] : (miembro as any).negocios)
     : null
 
+  const negocio: Negocio | null = negocioRaw
+    ? { ...negocioRaw, moneda: (negocioRaw.moneda as Moneda) ?? "COP", iva_pct_default: Number(negocioRaw.iva_pct_default ?? 0) }
+    : null
+
   return {
     supabase,
     agenteId,
     viendoA,
-    negocio: negocioRaw ?? null,
+    negocio,
     rol: (miembro?.rol as RolFarmacia) ?? null,
   }
 })

@@ -1,6 +1,6 @@
 "use client"
 
-import { COP, DIA_MES } from "@/lib/farmacia/formato"
+import { useFormato } from "@/components/farmacia/negocio-provider"
 import { useMemo, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { Plus, Loader2, ArrowRight, Ban, MessageCircle, PackageCheck } from "lucide-react"
@@ -30,17 +30,11 @@ export interface FilaPedido {
   telefono:    string | null
 }
 
-const fmt = (n: number) =>
-  COP.format(n)
-
-const fmtFecha = (ts: string) =>
-  DIA_MES.format(new Date(ts))
-
 const ESTADOS: Record<string, { label: string; clases: string; siguiente: string | null }> = {
   pagado:     { label: "Pagado",     clases: "bg-blue-50 text-blue-700 border-blue-200",          siguiente: "Marcar pedido al proveedor" },
   pedido:     { label: "Pedido",     clases: "bg-amber-50 text-amber-700 border-amber-200",       siguiente: "Marcar recibido" },
   recibido:   { label: "Recibido",   clases: "bg-violet-50 text-violet-700 border-violet-200",    siguiente: "Marcar avisado" },
-  notificado: { label: "Avisado",    clases: "bg-teal-50 text-teal-700 border-teal-200",          siguiente: null },
+  notificado: { label: "Avisado",    clases: "bg-brand-50 text-brand-700 border-brand-200",          siguiente: null },
   entregado:  { label: "Entregado",  clases: "bg-emerald-50 text-emerald-700 border-emerald-200", siguiente: null },
   cancelado:  { label: "Cancelado",  clases: "bg-slate-100 text-slate-500 border-slate-200",      siguiente: null },
 }
@@ -59,6 +53,7 @@ interface Props {
 }
 
 export function PedidosFarmacia({ pedidos, clientes, esGestor, soloLectura, nombreNegocio }: Props) {
+  const f = useFormato()
   const router = useRouter()
   const [filtro, setFiltro] = useState<"abiertos" | "todos">("abiertos")
   const [nuevoAbierto, setNuevoAbierto] = useState(false)
@@ -148,7 +143,7 @@ export function PedidosFarmacia({ pedidos, clientes, esGestor, soloLectura, nomb
           {(["abiertos", "todos"] as const).map(f => (
             <button key={f} onClick={() => setFiltro(f)}
                     className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
-                      filtro === f ? "bg-teal-600 text-white" : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                      filtro === f ? "bg-brand-600 text-white" : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
                     }`}>
               {f === "abiertos" ? `Abiertos (${abiertos})` : "Todos"}
             </button>
@@ -156,7 +151,7 @@ export function PedidosFarmacia({ pedidos, clientes, esGestor, soloLectura, nomb
         </div>
         {!soloLectura && (
           <Button size="sm" onClick={() => { setError(null); setNuevoAbierto(true) }}
-                  className="gap-1.5 bg-teal-600 hover:bg-teal-700">
+                  className="gap-1.5 bg-brand-600 hover:bg-brand-700">
             <Plus className="h-3.5 w-3.5" />Nuevo encargo
           </Button>
         )}
@@ -185,7 +180,7 @@ export function PedidosFarmacia({ pedidos, clientes, esGestor, soloLectura, nomb
                   <div className="min-w-0">
                     <p className="text-sm font-bold text-slate-900">{p.descripcion}</p>
                     <p className="mt-0.5 text-xs text-slate-400">
-                      {p.cantidad > 1 ? `${p.cantidad} unidades · ` : ""}{p.cliente} · {fmtFecha(p.creada)}
+                      {p.cantidad > 1 ? `${p.cantidad} unidades · ` : ""}{p.cliente} · {f.diaMes(p.creada)}
                     </p>
                   </div>
                   <span className={`shrink-0 rounded-full border px-2.5 py-0.5 text-[10px] font-bold ${est.clases}`}>
@@ -196,18 +191,18 @@ export function PedidosFarmacia({ pedidos, clientes, esGestor, soloLectura, nomb
                 <div className="mt-3 space-y-1 text-xs">
                   <div className="flex justify-between">
                     <span className="text-slate-400">Total</span>
-                    <span className="font-bold tabular-nums text-slate-900">{fmt(p.total)}</span>
+                    <span className="font-bold tabular-nums text-slate-900">{f.dinero(p.total)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-400">
                       Pagado{p.metodo ? ` (${METODO_PAGO_LABEL[p.metodo as keyof typeof METODO_PAGO_LABEL] ?? p.metodo})` : ""}
                     </span>
-                    <span className="tabular-nums text-emerald-600">{fmt(p.pagado)}</span>
+                    <span className="tabular-nums text-emerald-600">{f.dinero(p.pagado)}</span>
                   </div>
                   {saldo > 0 && p.estado !== "cancelado" && (
                     <div className="flex justify-between font-semibold">
                       <span className="text-slate-400">Debe al retirar</span>
-                      <span className="tabular-nums text-rose-600">{fmt(saldo)}</span>
+                      <span className="tabular-nums text-rose-600">{f.dinero(saldo)}</span>
                     </div>
                   )}
                   {p.notas && <p className="pt-1 text-[11px] italic text-slate-400">{p.notas}</p>}
@@ -225,11 +220,11 @@ export function PedidosFarmacia({ pedidos, clientes, esGestor, soloLectura, nomb
                     )}
                     {entregable && (
                       <Button size="sm"
-                              className="h-8 flex-1 gap-1 bg-teal-600 text-xs hover:bg-teal-700"
+                              className="h-8 flex-1 gap-1 bg-brand-600 text-xs hover:bg-brand-700"
                               disabled={isPending}
                               onClick={() => abrirEntrega(p)}>
                         <PackageCheck className="h-3.5 w-3.5" />
-                        {saldo > 0 ? `Entregar y cobrar ${fmt(saldo)}` : "Entregar"}
+                        {saldo > 0 ? `Entregar y cobrar ${f.dinero(saldo)}` : "Entregar"}
                       </Button>
                     )}
                     {p.estado === "recibido" && p.telefono && (
@@ -283,12 +278,12 @@ export function PedidosFarmacia({ pedidos, clientes, esGestor, soloLectura, nomb
                     ))}
                   </select>
                   <button type="button" onClick={() => setNuevoCliente(CLIENTE_VACIO)}
-                          className="flex items-center gap-1 text-xs font-semibold text-teal-700 hover:underline">
+                          className="flex items-center gap-1 text-xs font-semibold text-brand-700 hover:underline">
                     <Plus className="h-3 w-3" />Crear cliente nuevo
                   </button>
                 </>
               ) : (
-                <div className="space-y-2 rounded-xl border border-teal-100 bg-teal-50/50 p-3">
+                <div className="space-y-2 rounded-xl border border-brand-100 bg-brand-50/50 p-3">
                   <Input autoFocus placeholder="Nombre *" value={nuevoCliente.nombre}
                          onChange={e => setNuevoCliente(c => c && ({ ...c, nombre: e.target.value }))} className="bg-white" />
                   <div className="grid grid-cols-2 gap-2">
@@ -300,7 +295,7 @@ export function PedidosFarmacia({ pedidos, clientes, esGestor, soloLectura, nomb
                   <div className="flex gap-2">
                     <Button type="button" size="sm" variant="outline" className="flex-1 text-xs"
                             onClick={() => setNuevoCliente(null)}>Cancelar</Button>
-                    <Button type="button" size="sm" className="flex-1 bg-teal-600 text-xs hover:bg-teal-700"
+                    <Button type="button" size="sm" className="flex-1 bg-brand-600 text-xs hover:bg-brand-700"
                             disabled={isPending || !nuevoCliente.nombre.trim()}
                             onClick={crearClienteInline}>
                       {isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "Crear y usar"}
@@ -365,7 +360,7 @@ export function PedidosFarmacia({ pedidos, clientes, esGestor, soloLectura, nomb
 
             <div className="flex gap-3">
               <Button variant="outline" className="flex-1" onClick={() => setNuevoAbierto(false)}>Cancelar</Button>
-              <Button className="flex-1 bg-teal-600 hover:bg-teal-700" onClick={crear}
+              <Button className="flex-1 bg-brand-600 hover:bg-brand-700" onClick={crear}
                       disabled={isPending || !form.cliente_id || !form.descripcion.trim() || form.total <= 0
                                 || (form.monto_pagado > 0 && !form.metodo_pago)}>
                 {isPending ? <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />Guardando…</> : "Registrar encargo"}
@@ -384,9 +379,9 @@ export function PedidosFarmacia({ pedidos, clientes, esGestor, soloLectura, nomb
               {error && <p className="rounded bg-rose-50 px-3 py-2 text-xs text-rose-600">{error}</p>}
               <div className="rounded-2xl bg-slate-50 p-4 text-center">
                 <p className="text-xs text-slate-500">{entregando.descripcion} · {entregando.cliente}</p>
-                <p className="mt-1 text-2xl font-black text-slate-900">{fmt(entregando.total - entregando.pagado)}</p>
+                <p className="mt-1 text-2xl font-black text-slate-900">{f.dinero(entregando.total - entregando.pagado)}</p>
                 <p className="text-[11px] text-slate-400">
-                  saldo pendiente (pagó {fmt(entregando.pagado)} de {fmt(entregando.total)})
+                  saldo pendiente (pagó {f.dinero(entregando.pagado)} de {f.dinero(entregando.total)})
                 </p>
               </div>
               <div className="space-y-1.5">
@@ -396,7 +391,7 @@ export function PedidosFarmacia({ pedidos, clientes, esGestor, soloLectura, nomb
                     <button key={m} type="button" onClick={() => setMetodoSaldo(m)}
                             className={`rounded-lg border px-3 py-2 text-xs font-semibold transition-colors ${
                               metodoSaldo === m
-                                ? "border-teal-600 bg-teal-50 text-teal-700"
+                                ? "border-brand-600 bg-brand-50 text-brand-700"
                                 : "border-slate-200 text-slate-600 hover:bg-slate-50"
                             }`}>
                       {METODO_PAGO_LABEL[m]}
@@ -406,7 +401,7 @@ export function PedidosFarmacia({ pedidos, clientes, esGestor, soloLectura, nomb
               </div>
               <div className="flex gap-3">
                 <Button variant="outline" className="flex-1" onClick={() => setEntregando(null)}>Cancelar</Button>
-                <Button className="flex-1 bg-teal-600 hover:bg-teal-700"
+                <Button className="flex-1 bg-brand-600 hover:bg-brand-700"
                         disabled={isPending || !metodoSaldo}
                         onClick={confirmarEntrega}>
                   {isPending ? <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />Registrando…</> : "Cobrar y entregar"}
@@ -427,7 +422,7 @@ export function PedidosFarmacia({ pedidos, clientes, esGestor, soloLectura, nomb
               {cancelando?.descripcion} · {cancelando?.cliente}
               {cancelando && cancelando.pagado > 0 && (
                 <span className="mt-1 block font-semibold text-amber-700">
-                  ⚠ El cliente pagó {fmt(cancelando.pagado)} — recuerda devolvérselo.
+                  ⚠ El cliente pagó {f.dinero(cancelando.pagado)} — recuerda devolvérselo.
                 </span>
               )}
             </p>

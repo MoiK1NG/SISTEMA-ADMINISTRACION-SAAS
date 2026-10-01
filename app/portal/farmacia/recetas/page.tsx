@@ -1,19 +1,17 @@
-import { FECHA_HORA_ANIO } from "@/lib/farmacia/formato"
+import { formato } from "@/lib/farmacia/formato"
 import { FileText, ShieldCheck } from "lucide-react"
 import { PortalNav } from "@/components/portal/portal-nav"
 import { BannerVerComo } from "@/components/portal/banner-ver-como"
 import { contextoFarmacia } from "@/lib/farmacia/contexto"
 import { ExportarCsv } from "@/components/farmacia/exportar-csv"
 
-const fmtFechaHora = (ts: string) =>
-  FECHA_HORA_ANIO.format(new Date(ts))
-
 export default async function RecetasFarmaciaPage() {
   const { supabase, viendoA, negocio } = await contextoFarmacia()
+  const f = formato(negocio?.moneda)
 
   if (!negocio) {
     return (
-      <div className="min-h-screen bg-[#fafafa]">
+      <div className="min-h-screen bg-[#F7F9FC]">
         <PortalNav portal="farmacia" />
         <p className="py-24 text-center text-sm text-slate-500">No perteneces a ninguna farmacia.</p>
       </div>
@@ -34,10 +32,10 @@ export default async function RecetasFarmaciaPage() {
   const hoyStr = new Date().toISOString().split("T")[0]
 
   return (
-    <div className="min-h-screen bg-[#fafafa]">
+    <div className="min-h-screen bg-[#F7F9FC]">
       <header className="sticky top-0 z-30 border-b border-slate-100 bg-white/80 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 shadow-sm shadow-teal-500/30">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-600 to-brand-900 shadow-sm shadow-brand-500/30">
             <FileText className="h-4 w-4 text-white" />
           </div>
           <div>
@@ -52,9 +50,9 @@ export default async function RecetasFarmaciaPage() {
       <main className="mx-auto max-w-7xl space-y-4 px-4 py-8 sm:px-6 lg:px-8">
 
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2 rounded-xl border border-teal-100 bg-teal-50/60 px-4 py-2.5">
-            <ShieldCheck className="h-4 w-4 shrink-0 text-teal-600" />
-            <p className="text-xs leading-relaxed text-teal-800">
+          <div className="flex items-center gap-2 rounded-xl border border-brand-100 bg-brand-50/60 px-4 py-2.5">
+            <ShieldCheck className="h-4 w-4 shrink-0 text-brand-600" />
+            <p className="text-xs leading-relaxed text-brand-800">
               Cada venta de un producto marcado &quot;requiere receta&quot; queda registrada acá
               automáticamente. El libro es <strong>inmutable</strong>: no se edita ni se borra.
             </p>
@@ -63,7 +61,7 @@ export default async function RecetasFarmaciaPage() {
             nombreArchivo={`libro-control-${negocio.nombre.toLowerCase().replace(/\s+/g, "-")}-${hoyStr}.csv`}
             encabezados={["Fecha", "Venta", "Medicamento", "Cantidad", "Paciente", "Documento", "Médico", "Registro médico", "Nº Receta"]}
             filas={filas.map((r: any) => [
-              fmtFechaHora(r.created_at), r.venta_numero ? `#${r.venta_numero}` : "",
+              f.fechaHoraAnio(r.created_at), r.venta_numero ? `#${r.venta_numero}` : "",
               r.producto_nombre, Number(r.cantidad), r.paciente_nombre, r.paciente_documento,
               r.medico_nombre, r.medico_registro ?? "", r.numero_receta,
             ])}
@@ -97,7 +95,7 @@ export default async function RecetasFarmaciaPage() {
                 <tbody className="divide-y divide-slate-50">
                   {filas.map((r: any) => (
                     <tr key={r.id} className="hover:bg-slate-50/50">
-                      <td className="whitespace-nowrap px-4 py-3 text-xs text-slate-500">{fmtFechaHora(r.created_at)}</td>
+                      <td className="whitespace-nowrap px-4 py-3 text-xs text-slate-500">{f.fechaHoraAnio(r.created_at)}</td>
                       <td className="px-4 py-3 text-sm font-semibold text-slate-900">{r.producto_nombre}</td>
                       <td className="px-4 py-3 text-right tabular-nums text-slate-700">{Number(r.cantidad)}</td>
                       <td className="px-4 py-3">

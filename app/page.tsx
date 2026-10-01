@@ -1,171 +1,131 @@
 import Link from "next/link"
 import {
-  ArrowRight,
-  Building2,
-  UtensilsCrossed,
-  Dumbbell,
-  Banknote,
-  Shield,
-  Zap,
-  BarChart3,
-  Users,
-  CheckCircle2,
-  ChevronRight,
-  Lock,
-  TrendingUp,
-  Layers,
+  ArrowRight, ChevronRight, CheckCircle2,
+  Layers, Building2, Eye, Sparkles,
+  Pill, ShoppingCart, Boxes, Calculator, FileText, HeartPulse,
+  Crown, FlaskConical, UserRound,
 } from "lucide-react"
 
-// ─── Data ────────────────────────────────────────────────────────────────────
-const STATS = [
-  { value: "3+",    label: "Portales especializados" },
-  { value: "100%",  label: "Datos en tiempo real" },
-  { value: "RLS",   label: "Seguridad por fila" },
-  { value: "0 min", label: "Tiempo de configuración" },
+// ─── Contenido (voz de marca: resultados de negocio, frases cortas) ──────────
+const DIFERENCIADORES = [
+  { icon: Layers,    title: "Todo en una plataforma",  desc: "Clientes, ventas, inventario y finanzas conectados. Sin sistemas sueltos ni planillas paralelas." },
+  { icon: Building2, title: "Para tu industria",       desc: "Cada portal está armado para la operación real de ese negocio, no es una plantilla genérica." },
+  { icon: Eye,       title: "Visión 360° real",        desc: "Una sola fuente de verdad para ventas, finanzas y operación. Lo que ves es lo que pasa." },
+  { icon: Sparkles,  title: "Simple de usar",          desc: "Tu equipo empieza a trabajar el primer día, sin capacitaciones largas." },
 ]
 
-const PORTALES = [
-  {
-    icon: UtensilsCrossed,
-    color: "#F59E0B",
-    name: "Punto de Venta",
-    desc: "POS táctil optimizado para tablets. Catálogo por categorías, carrito inteligente, múltiples métodos de pago e IVA automático.",
-    tags: ["Restaurantes", "Panaderías", "Cafeterías"],
-  },
-  {
-    icon: Dumbbell,
-    color: "#3B82F6",
-    name: "Canchas Sintéticas",
-    desc: "Calendario de reservas con vista por hora. Validación de solapamiento en base de datos, estadísticas de ocupación por cancha.",
-    tags: ["Deportes", "Reservas", "Horarios"],
-  },
-  {
-    icon: Banknote,
-    color: "#10B981",
-    name: "Portal de Préstamos",
-    desc: "Gestión de cartera completa con interés sobre saldo, generación automática de cuotas y cobro en campo con historial de pagos.",
-    tags: ["Microcrédito", "Cuotas", "Cartera"],
-  },
+const FARMACIA = [
+  { icon: ShoppingCart, text: "Ventas con lector de código de barras y pago mixto" },
+  { icon: Boxes,        text: "Inventario por lotes, con semáforo de vencimientos" },
+  { icon: Calculator,   text: "Cierre de caja ciego y finanzas del dueño" },
+  { icon: FileText,     text: "Libro de recetas controladas" },
+  { icon: HeartPulse,   text: "Seguimiento de pacientes crónicos" },
 ]
 
-const FEATURES = [
-  { icon: Shield,    title: "Seguridad RLS",         desc: "Row Level Security en Supabase. Cada usuario ve únicamente sus propios datos." },
-  { icon: Zap,       title: "Server Components",     desc: "Las páginas renderizan en el servidor. Carga instantánea, sin parpadeos." },
-  { icon: BarChart3, title: "KPIs en tiempo real",   desc: "Métricas calculadas en PostgreSQL. Sin procesos batch, sin retrasos." },
-  { icon: Lock,      title: "Control de acceso",     desc: "Asigna portales por membresía. El middleware verifica cada ruta automáticamente." },
-  { icon: TrendingUp,title: "Reportes integrados",   desc: "Vistas precalculadas por agente, fecha y producto. Listas para exportar." },
-  { icon: Layers,    title: "Multi-negocio",         desc: "Un panel para todos tus negocios. Cambia entre portales sin cerrar sesión." },
+const ROLES = [
+  { icon: Crown,        rol: "Dueño",   desc: "Ve todo el negocio: finanzas, márgenes, equipo." },
+  { icon: FlaskConical, rol: "Regente", desc: "Gestiona inventario, compras y controla la operación." },
+  { icon: UserRound,    rol: "Cajero",  desc: "Vende, atiende pedidos y cierra su caja." },
 ]
 
-// ─── Small UI mockup components (pure HTML/CSS via dangerouslySetInnerHTML won't work in RSC)
-// We'll build them inline with Tailwind + inline styles
+const PROXIMOS = ["Panadería", "Restaurante", "Punto de venta", "Préstamos", "Canchas deportivas"]
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-white text-slate-900 antialiased overflow-x-hidden">
+    <div className="min-h-screen overflow-x-hidden bg-white text-slate-900 antialiased">
 
       {/* ── NAV ──────────────────────────────────────────────────────────────── */}
       <nav className="sticky top-0 z-50 border-b border-slate-100 bg-white/90 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl" style={{ background: "linear-gradient(135deg,#1d4ed8,#3b82f6)" }}>
-              <Building2 className="h-4 w-4 text-white" />
-            </div>
-            <span className="font-bold text-slate-900 tracking-tight text-base">SaaS Admin</span>
-          </div>
+          <Link href="/" aria-label="LOMS 360, inicio" className="flex items-center">
+            <img src="/brand/loms360-logo.svg" alt="LOMS 360" className="h-8 w-auto" />
+          </Link>
           <div className="flex items-center gap-2">
-            <Link href="/login" className="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">
+            <Link href="/login" className="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50">
               Iniciar sesión
             </Link>
-            <Link href="/signup" className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold text-white transition-all active:scale-[0.98]" style={{ background: "#1d4ed8" }}>
-              Comenzar gratis <ArrowRight className="h-3.5 w-3.5" />
+            <Link href="/signup" className="inline-flex items-center gap-1.5 rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-brand-700 active:scale-[0.98]">
+              Crear cuenta <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
         </div>
       </nav>
 
       {/* ── HERO ─────────────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden py-24 sm:py-32">
-        {/* Blobs */}
-        <div className="pointer-events-none absolute inset-0 -z-10">
-          <div className="absolute -top-32 -right-32 h-96 w-96 rounded-full opacity-10 blur-3xl" style={{ background: "#3b82f6" }} />
-          <div className="absolute top-20 -left-20 h-72 w-72 rounded-full opacity-8 blur-3xl" style={{ background: "#1d4ed8" }} />
+      <section className="relative overflow-hidden py-20 sm:py-28">
+        {/* Órbitas: el sistema gráfico de la marca, como recurso secundario */}
+        <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden>
+          <div className="absolute -right-40 -top-40 h-[520px] w-[520px] rounded-full border border-brand-100" />
+          <div className="absolute -right-24 -top-24 h-[360px] w-[360px] rounded-full border border-brand-100" />
+          <div className="absolute right-[150px] top-[88px] h-3 w-3 rounded-full bg-brand-400" />
+          <div className="absolute -left-32 bottom-0 h-80 w-80 rounded-full bg-brand-50 blur-3xl" />
         </div>
 
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <div className="flex flex-col lg:flex-row items-center gap-16">
+          <div className="flex flex-col items-center gap-16 lg:flex-row">
 
-            {/* Text */}
             <div className="flex-1 text-center lg:text-left">
-              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
-                <span className="text-xs font-semibold text-blue-700">Multi-portal · Un solo panel de control</span>
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-brand-100 bg-brand-50 px-3 py-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-brand-600" />
+                <span className="text-xs font-semibold text-brand-700">CRM y ERP en una sola plataforma</span>
               </div>
 
-              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-[1.05]">
-                Administra<br />
-                <span style={{ color: "#1d4ed8" }}>todos tus</span><br />
-                negocios
+              <h1 className="text-5xl font-bold leading-[1.05] tracking-tight text-brand-900 sm:text-6xl lg:text-7xl">
+                Todo tu negocio.<br />
+                <span className="text-brand-600">Una visión 360°.</span>
               </h1>
 
-              <p className="mt-6 text-lg text-slate-500 leading-relaxed max-w-md mx-auto lg:mx-0">
-                POS, canchas, préstamos y más. Cada portal adaptado a su industria,
-                con seguridad empresarial real y datos en tiempo real.
+              <p className="mx-auto mt-6 max-w-md text-lg leading-relaxed text-slate-500 lg:mx-0">
+                LOMS 360 conecta clientes, ventas, inventario y finanzas en un solo lugar,
+                para que dirijas tu negocio con información real y al día.
               </p>
 
-              <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
+              <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
                 <Link
                   href="/signup"
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl px-7 py-3.5 text-base font-bold text-white shadow-lg transition-all active:scale-[0.98]"
-                  style={{ background: "#1d4ed8", boxShadow: "0 4px 24px rgba(29,78,216,0.35)" }}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-600 px-7 py-3.5 text-base font-bold text-white shadow-lg shadow-brand-600/25 transition-all hover:bg-brand-700 active:scale-[0.98]"
                 >
-                  Empieza gratis <ArrowRight className="h-4 w-4" />
+                  Crear cuenta <ArrowRight className="h-4 w-4" />
                 </Link>
-                <Link href="/login" className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-7 py-3.5 text-base font-medium text-slate-700 hover:bg-slate-50 transition-all">
-                  Tengo cuenta <ChevronRight className="h-4 w-4 text-slate-400" />
+                <Link href="/login" className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-7 py-3.5 text-base font-medium text-slate-700 transition-all hover:bg-slate-50">
+                  Ya tengo cuenta <ChevronRight className="h-4 w-4 text-slate-400" />
                 </Link>
               </div>
 
-              <p className="mt-5 text-sm text-slate-400">Sin tarjeta de crédito · Acceso inmediato</p>
+              <p className="mt-5 text-sm text-slate-400">La solución 360 para tu negocio</p>
             </div>
 
-            {/* Hero UI mockup */}
-            <div className="flex-1 w-full max-w-lg">
-              <div className="rounded-3xl border border-slate-200 bg-white shadow-2xl overflow-hidden" style={{ boxShadow: "0 32px 80px rgba(29,78,216,0.12)" }}>
-                {/* Top bar */}
+            {/* Vista ilustrativa del panel (datos de ejemplo) */}
+            <div className="w-full max-w-lg flex-1">
+              <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl shadow-brand-900/10">
                 <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3">
-                  <div className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-red-400" />
-                    <div className="h-2 w-2 rounded-full bg-yellow-400" />
-                    <div className="h-2 w-2 rounded-full bg-green-400" />
-                  </div>
-                  <div className="flex-1 mx-4 h-6 rounded-lg bg-slate-100" />
+                  <img src="/brand/loms360-icono.svg" alt="" className="h-6 w-6" />
+                  <span className="text-xs font-medium text-slate-400">Farmacia · hoy</span>
                 </div>
-                {/* Dashboard preview */}
-                <div className="p-5 bg-slate-50">
-                  <div className="grid grid-cols-3 gap-3 mb-4">
+                <div className="bg-[#F7F9FC] p-5">
+                  <div className="mb-4 grid grid-cols-3 gap-3">
                     {[
-                      { label: "Portales", val: "3", color: "#1d4ed8" },
-                      { label: "Días restantes", val: "28", color: "#10b981" },
-                      { label: "Plan", val: "Pro", color: "#f59e0b" },
+                      { label: "Ventas de hoy", val: "48", color: "text-brand-600" },
+                      { label: "Por vencer",    val: "6",  color: "text-amber-600" },
+                      { label: "Caja",          val: "Cuadró", color: "text-emerald-600" },
                     ].map(c => (
-                      <div key={c.label} className="rounded-2xl bg-white border border-slate-100 p-3 shadow-sm">
-                        <p className="text-[10px] text-slate-400 mb-1">{c.label}</p>
-                        <p className="text-xl font-black" style={{ color: c.color }}>{c.val}</p>
+                      <div key={c.label} className="rounded-2xl border border-slate-100 bg-white p-3 shadow-sm">
+                        <p className="mb-1 text-[10px] text-slate-400">{c.label}</p>
+                        <p className={`text-xl font-bold ${c.color}`}>{c.val}</p>
                       </div>
                     ))}
                   </div>
-                  <p className="text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wide">Tus portales</p>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Actividad reciente</p>
                   <div className="space-y-2">
                     {[
-                      { name: "Punto de Venta", emoji: "🍽️", color: "#fef3c7", tc: "#92400e" },
-                      { name: "Canchas Sintéticas", emoji: "⚽", color: "#dbeafe", tc: "#1e40af" },
-                      { name: "Portal de Préstamos", emoji: "💰", color: "#d1fae5", tc: "#065f46" },
-                    ].map(p => (
-                      <div key={p.name} className="flex items-center gap-3 rounded-xl bg-white border border-slate-100 px-3 py-2.5 shadow-sm">
-                        <span className="text-base">{p.emoji}</span>
-                        <span className="flex-1 text-xs font-semibold text-slate-800">{p.name}</span>
-                        <span className="text-[10px] font-bold rounded-full px-2 py-0.5" style={{ background: p.color, color: p.tc }}>Activo</span>
+                      { t: "Venta #1042 · pago mixto",            s: "Cajero",  c: "bg-brand-50 text-brand-700" },
+                      { t: "Lote L-2409A pasa a venta",            s: "Regente", c: "bg-slate-100 text-slate-600" },
+                      { t: "Paciente crónico: renovar tratamiento", s: "Aviso",   c: "bg-amber-50 text-amber-700" },
+                    ].map(a => (
+                      <div key={a.t} className="flex items-center gap-3 rounded-xl border border-slate-100 bg-white px-3 py-2.5 shadow-sm">
+                        <span className="h-2 w-2 shrink-0 rounded-full bg-brand-600" />
+                        <span className="flex-1 text-xs font-semibold text-slate-800">{a.t}</span>
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${a.c}`}>{a.s}</span>
                       </div>
                     ))}
                   </div>
@@ -176,50 +136,26 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── STATS — dark blue ────────────────────────────────────────────────── */}
-      <section style={{ background: "#0f172a" }} className="py-16">
+      {/* ── DIFERENCIADORES ──────────────────────────────────────────────────── */}
+      <section className="bg-white py-24">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-            {STATS.map(s => (
-              <div key={s.label} className="text-center">
-                <p className="text-4xl sm:text-5xl font-black text-white mb-2">{s.value}</p>
-                <p className="text-sm font-medium" style={{ color: "#94a3b8" }}>{s.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── PORTALES ─────────────────────────────────────────────────────────── */}
-      <section className="py-24 bg-white">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <div className="text-center mb-14">
-            <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "#1d4ed8" }}>Portales disponibles</span>
-            <h2 className="mt-2 text-4xl sm:text-5xl font-black text-slate-900 leading-tight">
-              Herramientas hechas<br />para cada industria
+          <div className="mb-14 text-center">
+            <span className="text-xs font-bold uppercase tracking-widest text-brand-600">Por qué LOMS 360</span>
+            <h2 className="mt-2 text-4xl font-bold leading-tight text-brand-900 sm:text-5xl">
+              Control total,<br />en un solo lugar
             </h2>
-            <p className="mt-4 text-slate-500 max-w-xl mx-auto">
-              Cada portal está construido de cero para su industria. Sin adaptaciones genéricas.
-            </p>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-3">
-            {PORTALES.map((p) => {
-              const Icon = p.icon
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {DIFERENCIADORES.map(d => {
+              const Icon = d.icon
               return (
-                <div key={p.name} className="group rounded-3xl border border-slate-100 bg-white p-7 shadow-sm transition-all duration-200 hover:shadow-xl hover:-translate-y-1" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-                  <div className="mb-5 inline-flex h-14 w-14 items-center justify-center rounded-2xl" style={{ background: p.color + "20" }}>
-                    <Icon className="h-7 w-7" style={{ color: p.color }} />
+                <div key={d.title} className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
+                  <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50">
+                    <Icon className="h-5 w-5 text-brand-600" />
                   </div>
-                  <h3 className="mb-3 text-xl font-bold text-slate-900">{p.name}</h3>
-                  <p className="mb-5 text-sm text-slate-500 leading-relaxed">{p.desc}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {p.tags.map(tag => (
-                      <span key={tag} className="rounded-full px-3 py-1 text-xs font-semibold" style={{ background: p.color + "15", color: p.color }}>
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
+                  <h3 className="mb-1.5 font-bold text-brand-900">{d.title}</h3>
+                  <p className="text-sm leading-relaxed text-slate-500">{d.desc}</p>
                 </div>
               )
             })}
@@ -227,163 +163,104 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── POS MOCKUP SECTION ─────────────────────────────────────────────── */}
-      <section className="py-24" style={{ background: "#f8fafc" }}>
+      {/* ── PORTAL FARMACIA ──────────────────────────────────────────────────── */}
+      <section className="bg-[#F7F9FC] py-24">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <div className="flex flex-col lg:flex-row items-center gap-16">
-            {/* Text */}
-            <div className="flex-1 order-2 lg:order-1">
-              <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "#f59e0b" }}>Portal POS</span>
-              <h2 className="mt-2 text-4xl font-black text-slate-900 leading-tight">
-                Cobra más rápido<br />desde cualquier tablet
+          <div className="flex flex-col items-center gap-16 lg:flex-row">
+            <div className="flex-1">
+              <span className="text-xs font-bold uppercase tracking-widest text-brand-600">Disponible hoy</span>
+              <h2 className="mt-2 text-4xl font-bold leading-tight text-brand-900">
+                Portal de farmacia
               </h2>
-              <p className="mt-4 text-slate-500 leading-relaxed">
-                Interfaz táctil optimizada para restaurantes y panaderías. Catálogo con búsqueda,
-                categorías, carrito con IVA automático y 3 métodos de cobro.
+              <p className="mt-4 leading-relaxed text-slate-500">
+                Pensado con farmacias reales: lo que se vende, lo que vence, lo que entra
+                y lo que queda en caja, con cada persona del equipo en su rol.
               </p>
               <ul className="mt-6 space-y-3">
-                {["Catálogo visual con emojis y badges de cantidad", "IVA 19% calculado automáticamente", "Efectivo con cálculo de vuelto instantáneo", "Tarjeta y transferencia integrados"].map(item => (
-                  <li key={item} className="flex items-start gap-2.5 text-sm text-slate-600">
-                    <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" style={{ color: "#f59e0b" }} />
-                    {item}
+                {FARMACIA.map(({ icon: Icon, text }) => (
+                  <li key={text} className="flex items-center gap-3 text-sm text-slate-700">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white shadow-sm">
+                      <Icon className="h-4 w-4 text-brand-600" />
+                    </span>
+                    {text}
                   </li>
                 ))}
               </ul>
+
+              <div className="mt-8">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">Próximos portales</p>
+                <div className="flex flex-wrap gap-2">
+                  {PROXIMOS.map(p => (
+                    <span key={p} className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-500">{p}</span>
+                  ))}
+                </div>
+              </div>
             </div>
 
-            {/* POS mini mockup */}
-            <div className="flex-1 order-1 lg:order-2 w-full max-w-md">
-              <div className="rounded-3xl border border-slate-200 bg-white overflow-hidden shadow-xl">
-                <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3" style={{ background: "#fffbeb" }}>
-                  <div className="flex items-center gap-2">
-                    <div className="h-7 w-7 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg,#f59e0b,#f97316)" }}>
-                      <UtensilsCrossed className="h-3.5 w-3.5 text-white" />
-                    </div>
-                    <span className="text-sm font-bold text-slate-800">Punto de Venta</span>
+            {/* Roles */}
+            <div className="w-full max-w-md flex-1">
+              <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-brand-900/5">
+                <div className="mb-5 flex items-center gap-2">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-600 to-brand-900">
+                    <Pill className="h-4 w-4 text-white" />
+                  </span>
+                  <div>
+                    <p className="text-sm font-bold text-brand-900">Un equipo, tres roles</p>
+                    <p className="text-xs text-slate-400">Cada uno ve y hace lo que le corresponde</p>
                   </div>
-                  <span className="text-[10px] font-semibold rounded-full bg-emerald-100 text-emerald-700 px-2 py-0.5">● En línea</span>
                 </div>
-                <div className="grid grid-cols-3 gap-2 p-4">
-                  {[
-                    { e: "🍞", n: "Almojábana", p: "$2.500" },
-                    { e: "☕", n: "Café", p: "$3.000" },
-                    { e: "🥐", n: "Croissant", p: "$4.500" },
-                    { e: "🍩", n: "Buñuelo", p: "$1.800" },
-                    { e: "🥪", n: "Sandwich", p: "$8.500" },
-                    { e: "🍕", n: "Pizza", p: "$12.000" },
-                  ].map(pr => (
-                    <div key={pr.n} className="rounded-xl border border-slate-100 p-2.5 text-center">
-                      <div className="text-2xl mb-1">{pr.e}</div>
-                      <p className="text-[10px] font-semibold text-slate-700 leading-tight">{pr.n}</p>
-                      <p className="text-[10px] font-bold mt-0.5" style={{ color: "#f59e0b" }}>{pr.p}</p>
+                <div className="space-y-3">
+                  {ROLES.map(({ icon: Icon, rol, desc }) => (
+                    <div key={rol} className="flex items-start gap-3 rounded-2xl border border-slate-100 bg-[#F7F9FC] px-4 py-3">
+                      <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-brand-600 shadow-sm">
+                        <Icon className="h-4 w-4" />
+                      </span>
+                      <div>
+                        <p className="text-sm font-bold text-slate-900">{rol}</p>
+                        <p className="text-xs text-slate-500">{desc}</p>
+                      </div>
                     </div>
                   ))}
                 </div>
-                <div className="border-t border-slate-100 px-4 py-3 flex items-center justify-between" style={{ background: "#f8fafc" }}>
-                  <div>
-                    <p className="text-[10px] text-slate-400">Total</p>
-                    <p className="text-lg font-black text-slate-900">$24.800</p>
-                  </div>
-                  <div className="rounded-xl px-4 py-2 text-sm font-bold text-white" style={{ background: "#10b981" }}>
-                    💳 Cobrar
-                  </div>
-                </div>
+                <p className="mt-5 flex items-center gap-2 text-xs text-slate-500">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                  El dueño agrega a su equipo con el correo de cada persona.
+                </p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── FEATURES GRID ────────────────────────────────────────────────────── */}
-      <section className="py-24 bg-white">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <div className="text-center mb-14">
-            <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "#1d4ed8" }}>Tecnología</span>
-            <h2 className="mt-2 text-4xl sm:text-5xl font-black text-slate-900">
-              Infraestructura<br />de nivel empresarial
-            </h2>
-          </div>
-
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {FEATURES.map((f) => {
-              const Icon = f.icon
-              return (
-                <div key={f.title} className="rounded-2xl border border-slate-100 bg-white p-6 transition-all hover:border-blue-100 hover:shadow-md" style={{ boxShadow: "0 1px 6px rgba(0,0,0,0.05)" }}>
-                  <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: "#eff6ff" }}>
-                    <Icon className="h-5 w-5" style={{ color: "#1d4ed8" }} />
-                  </div>
-                  <h3 className="mb-1.5 font-bold text-slate-900">{f.title}</h3>
-                  <p className="text-sm text-slate-500 leading-relaxed">{f.desc}</p>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ── CTA DARK ─────────────────────────────────────────────────────────── */}
-      <section className="py-24" style={{ background: "#0f172a" }}>
-        <div className="mx-auto max-w-5xl px-4 sm:px-6">
-          <div className="flex flex-col lg:flex-row items-center gap-12">
-            <div className="flex-1 text-center lg:text-left">
-              <h2 className="text-4xl sm:text-5xl font-black text-white leading-tight">
-                Un plan.<br />
-                <span style={{ color: "#60a5fa" }}>Todos los portales.</span>
-              </h2>
-              <p className="mt-4 leading-relaxed" style={{ color: "#94a3b8" }}>
-                Sin sorpresas ni costos ocultos. Un precio mensual que te da acceso
-                a todo lo que tu negocio necesita para operar.
-              </p>
-              <ul className="mt-6 space-y-3">
-                {[
-                  "Acceso a todos los portales del plan",
-                  "Sin límite de transacciones",
-                  "Actualizaciones automáticas incluidas",
-                  "Soporte técnico prioritario",
-                  "Backup automático diario",
-                ].map(item => (
-                  <li key={item} className="flex items-center gap-2.5 text-sm" style={{ color: "#cbd5e1" }}>
-                    <CheckCircle2 className="h-4 w-4 shrink-0" style={{ color: "#34d399" }} />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="w-full lg:w-80 shrink-0 rounded-3xl p-8" style={{ background: "#1e293b", border: "1px solid #334155" }}>
-              <p className="text-sm mb-1" style={{ color: "#94a3b8" }}>Empieza desde</p>
-              <p className="text-6xl font-black text-white">$0
-                <span className="text-xl font-normal" style={{ color: "#64748b" }}>/mes</span>
-              </p>
-              <p className="text-xs mt-1 mb-7" style={{ color: "#475569" }}>
-                Escala cuando tu negocio crezca
-              </p>
-
-              <Link href="/signup" className="flex items-center justify-center gap-2 w-full rounded-2xl py-3.5 text-sm font-bold text-slate-900 bg-white hover:bg-slate-100 transition-all mb-3">
-                Crear cuenta gratis <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link href="/login" className="flex items-center justify-center w-full rounded-2xl py-3 text-sm font-medium transition-colors" style={{ color: "#64748b" }}>
-                Ya tengo cuenta →
-              </Link>
-            </div>
+      {/* ── CTA NAVY ─────────────────────────────────────────────────────────── */}
+      <section className="bg-brand-900 py-24">
+        <div className="mx-auto max-w-5xl px-4 text-center sm:px-6">
+          <img src="/brand/loms360-logo-oscuro.svg" alt="LOMS 360" className="mx-auto mb-8 h-10 w-auto" />
+          <h2 className="text-4xl font-bold leading-tight text-white sm:text-5xl">
+            Tu negocio, siempre bajo control.
+          </h2>
+          <p className="mx-auto mt-4 max-w-xl leading-relaxed text-brand-200">
+            Crea tu cuenta y, si tu negocio ya usa LOMS 360, pídele al dueño que te agregue a su equipo.
+          </p>
+          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+            <Link href="/signup" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-7 py-3.5 text-sm font-bold text-brand-900 transition-all hover:bg-brand-50">
+              Crear cuenta <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link href="/login" className="inline-flex items-center justify-center rounded-2xl border border-brand-700 px-7 py-3.5 text-sm font-medium text-brand-100 transition-colors hover:bg-brand-800">
+              Iniciar sesión
+            </Link>
           </div>
         </div>
       </section>
 
       {/* ── FOOTER ───────────────────────────────────────────────────────────── */}
       <footer className="border-t border-slate-100 bg-white py-10">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded-lg" style={{ background: "#1d4ed8" }}>
-              <Building2 className="h-3.5 w-3.5 text-white" />
-            </div>
-            <span className="text-sm font-bold text-slate-700">SaaS Admin</span>
-          </div>
-          <p className="text-sm text-slate-400">© {new Date().getFullYear()} · Todos los derechos reservados</p>
-
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 sm:flex-row sm:px-6">
+          <img src="/brand/loms360-logo.svg" alt="LOMS 360" className="h-7 w-auto" />
+          <p className="text-sm text-slate-400">© {new Date().getFullYear()} LOMS 360 · La solución 360 para tu negocio</p>
           <div className="flex items-center gap-4 text-sm text-slate-400">
-            <Link href="/login" className="hover:text-slate-700 transition-colors">Iniciar sesión</Link>
-            <Link href="/signup" className="hover:text-slate-700 transition-colors">Registrarse</Link>
+            <Link href="/login" className="transition-colors hover:text-slate-700">Iniciar sesión</Link>
+            <Link href="/signup" className="transition-colors hover:text-slate-700">Crear cuenta</Link>
           </div>
         </div>
       </footer>

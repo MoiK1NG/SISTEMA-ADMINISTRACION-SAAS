@@ -31,7 +31,7 @@ export default async function ClientesPage() {
   const activos = clientes.filter((c) => c.prestamos_count > 0).length
 
   return (
-    <div className="min-h-screen bg-[#fafafa]">
+    <div className="min-h-screen bg-[#F7F9FC]">
 
       {/* ── HEADER ────────────────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-30 border-b border-slate-100 bg-white/80 backdrop-blur-md">

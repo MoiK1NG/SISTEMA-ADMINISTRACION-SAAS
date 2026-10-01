@@ -1,6 +1,6 @@
 "use client"
 
-import { FECHA } from "@/lib/farmacia/formato"
+import { useFormato } from "@/components/farmacia/negocio-provider"
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { UserPlus, MoreHorizontal, Trash2, ShieldCheck, Loader2 } from "lucide-react"
@@ -27,13 +27,10 @@ export interface FilaMiembro {
 }
 
 const ROL_META: Record<FilaMiembro["rol"], { label: string; desc: string; clases: string }> = {
-  dueno:   { label: "Dueño",   desc: "Acceso total, finanzas y equipo",              clases: "bg-teal-50 text-teal-700 border-teal-200"     },
+  dueno:   { label: "Dueño",   desc: "Acceso total, finanzas y equipo",              clases: "bg-brand-50 text-brand-700 border-brand-200"     },
   regente: { label: "Regente", desc: "Compras, inventario y pedidos — sin finanzas", clases: "bg-blue-50 text-blue-700 border-blue-200"     },
   cajero:  { label: "Cajero",  desc: "Solo POS: facturar, cobrar y clientes",        clases: "bg-slate-100 text-slate-600 border-slate-200" },
 }
-
-const fmtFecha = (iso: string) =>
-  FECHA.format(new Date(iso))
 
 interface Props {
   miembros:  FilaMiembro[]
@@ -42,6 +39,7 @@ interface Props {
 }
 
 export function EquipoManager({ miembros, puedeGestionar, miUserId }: Props) {
+  const f = useFormato()
   const router = useRouter()
   const [open, setOpen]       = useState(false)
   const [email, setEmail]     = useState("")
@@ -88,7 +86,7 @@ export function EquipoManager({ miembros, puedeGestionar, miUserId }: Props) {
           {miembros.length} {miembros.length === 1 ? "persona" : "personas"} en el equipo
         </p>
         {puedeGestionar && (
-          <Button size="sm" onClick={() => { setError(null); setOpen(true) }} className="gap-1.5 bg-teal-600 hover:bg-teal-700">
+          <Button size="sm" onClick={() => { setError(null); setOpen(true) }} className="gap-1.5 bg-brand-600 hover:bg-brand-700">
             <UserPlus className="h-3.5 w-3.5" />Agregar persona
           </Button>
         )}
@@ -99,7 +97,7 @@ export function EquipoManager({ miembros, puedeGestionar, miUserId }: Props) {
           const meta = ROL_META[m.rol]
           return (
             <div key={m.id} className="flex items-start gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-teal-600/10 text-sm font-bold text-teal-700">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-600/10 text-sm font-bold text-brand-700">
                 {(m.nombre || m.email)[0].toUpperCase()}
               </div>
               <div className="min-w-0 flex-1">
@@ -117,7 +115,7 @@ export function EquipoManager({ miembros, puedeGestionar, miUserId }: Props) {
                       Cuenta sin aprobar
                     </span>
                   )}
-                  <span className="text-[10px] text-slate-300">desde {fmtFecha(m.desde)}</span>
+                  <span className="text-[10px] text-slate-300">desde {f.fecha(m.desde)}</span>
                 </div>
                 <p className="mt-1.5 text-[11px] text-slate-400">{meta.desc}</p>
               </div>
@@ -185,7 +183,7 @@ export function EquipoManager({ miembros, puedeGestionar, miUserId }: Props) {
                   <button
                     key={r} type="button" onClick={() => setRol(r)}
                     className={`rounded-xl border-2 px-3.5 py-2.5 text-left transition-colors ${
-                      rol === r ? "border-teal-600 bg-teal-50" : "border-slate-200 hover:border-slate-300"
+                      rol === r ? "border-brand-600 bg-brand-50" : "border-slate-200 hover:border-slate-300"
                     }`}
                   >
                     <p className="text-sm font-bold text-slate-900">{ROL_META[r].label}</p>
@@ -200,7 +198,7 @@ export function EquipoManager({ miembros, puedeGestionar, miUserId }: Props) {
                 Cancelar
               </Button>
               <Button
-                className="flex-1 bg-teal-600 hover:bg-teal-700"
+                className="flex-1 bg-brand-600 hover:bg-brand-700"
                 onClick={handleAgregar}
                 disabled={isPending || !email.trim()}
               >

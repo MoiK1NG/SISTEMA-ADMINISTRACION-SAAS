@@ -104,16 +104,30 @@ export interface ProductoFarmaciaInput {
   categoria?:        string
   registro_invima?:  string
   precio_venta:      number
+  /** Costo NETO (sin IVA); el IVA va aparte en iva_pct */
   costo:             number
+  iva_pct?:          number
   requiere_receta?:  boolean
   activo?:           boolean
+}
+
+/** Varios principios activos se escriben con "+": "Amlodipino + Valsartán". */
+function normalizarPrincipioActivo(s?: string): string | null {
+  const partes = (s ?? "").split("+").map(x => x.replace(/\s+/g, " ").trim()).filter(Boolean)
+  return partes.length ? partes.join(" + ") : null
+}
+
+function porcentajeValido(n: unknown, label = "IVA"): number {
+  const v = Number(n ?? 0)
+  if (!Number.isFinite(v) || v < 0 || v > 100) throw new Error(`El ${label} debe estar entre 0 y 100`)
+  return Math.round(v * 100) / 100
 }
 
 function limpiarProducto(data: ProductoFarmaciaInput) {
   return {
     codigo_barras:    data.codigo_barras?.trim() || null,
     nombre:           textoRequerido(data.nombre, "nombre del producto"),
-    principio_activo: data.principio_activo?.trim() || null,
+    principio_activo: normalizarPrincipioActivo(data.principio_activo),
     concentracion:    data.concentracion?.trim() || null,
     presentacion:     data.presentacion?.trim() || null,
     laboratorio_id:   data.laboratorio_id || null,
@@ -122,6 +136,7 @@ function limpiarProducto(data: ProductoFarmaciaInput) {
     registro_invima:  data.registro_invima?.trim() || null,
     precio_venta:     montoNoNegativo(data.precio_venta, "precio de venta"),
     costo:            montoNoNegativo(data.costo, "costo"),
+    iva_pct:          porcentajeValido(data.iva_pct),
     requiere_receta:  Boolean(data.requiere_receta),
   }
 }
@@ -210,12 +225,15 @@ export async function crearLaboratorioFarmacia(nombre: string) {
 
 // ── Lotes y movimientos (las RPC validan rol y stock en la base) ─────────────
 export async function crearLoteFarmacia(input: {
-  producto_id: string; lote: string; fecha_vencimiento: string
+  producto_id: string; lote: string; fecha_vencimiento?: string | null
   cantidad_venta: number; cantidad_bodega: number; estanteria?: string
 }) {
   const { supabase } = await requireNegocioAccion(["dueno", "regente"])
 
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(input.fecha_vencimiento)) {
+  // Sin fecha = "sin fecha registrada": se vende al final del FEFO y queda
+  // marcado para completarlo después
+  const vencimiento = input.fecha_vencimiento?.trim() || null
+  if (vencimiento && !/^\d{4}-\d{2}-\d{2}$/.test(vencimiento)) {
     throw new Error("Fecha de vencimiento inválida")
   }
   const venta  = montoNoNegativo(input.cantidad_venta, "cantidad en venta")
@@ -225,7 +243,7 @@ export async function crearLoteFarmacia(input: {
   const { data, error } = await supabase.rpc("crear_lote_farmacia", {
     p_producto:    input.producto_id,
     p_lote:        textoRequerido(input.lote, "número de lote"),
-    p_vencimiento: input.fecha_vencimiento,
+    p_vencimiento: vencimiento,
     p_cant_venta:  venta,
     p_cant_bodega: bodega,
     p_estanteria:  input.estanteria?.trim() || null,

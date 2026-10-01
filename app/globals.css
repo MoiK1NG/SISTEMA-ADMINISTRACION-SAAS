@@ -5,13 +5,33 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  /* ── LOMS 360 · paleta oficial (manual de identidad v1.0) ──────────────────
+     Navy #042C53 = encabezados, nav, textos importantes. Blue #185FA5 =
+     acciones, botones, enlaces. La escala intermedia se interpoló para poder
+     usar las utilidades brand-50…brand-950 como cualquier color de Tailwind. */
+  --color-brand-50:  #EAF2FB;
+  --color-brand-100: #D6E6F7;
+  --color-brand-200: #AFC7E3;
+  --color-brand-300: #7FB0DE;
+  --color-brand-400: #4E9DE0;
+  --color-brand-500: #2B7BC4;
+  --color-brand-600: #185FA5;
+  --color-brand-700: #12497F;
+  --color-brand-800: #0A3A66;
+  --color-brand-900: #042C53;
+  --color-brand-950: #021A33;
+  /* Estados del sistema (lámina 17) */
+  --color-exito:       #1E9E6B;
+  --color-advertencia: #E8A33D;
+  --color-peligro:     #D64545;
+
   --color-background: hsl(0 0% 100%);
-  --color-foreground: hsl(222.2 84% 4.9%);
+  --color-foreground: #2D3339;
   --color-card: hsl(0 0% 100%);
   --color-card-foreground: hsl(222.2 84% 4.9%);
   --color-popover: hsl(0 0% 100%);
   --color-popover-foreground: hsl(222.2 84% 4.9%);
-  --color-primary: hsl(221.2 83.2% 53.3%);
+  --color-primary: #185FA5;
   --color-primary-foreground: hsl(210 40% 98%);
   --color-secondary: hsl(210 40% 96.1%);
   --color-secondary-foreground: hsl(222.2 47.4% 11.2%);
@@ -23,9 +43,9 @@
   --color-destructive-foreground: hsl(210 40% 98%);
   --color-border: hsl(214.3 31.8% 91.4%);
   --color-input: hsl(214.3 31.8% 91.4%);
-  --color-ring: hsl(221.2 83.2% 53.3%);
+  --color-ring: #185FA5;
   --radius: 0.5rem;
-  --font-sans: var(--font-sans);
+  --font-sans: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);

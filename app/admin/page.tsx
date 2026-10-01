@@ -46,7 +46,7 @@ export default async function AdminDashboardPage() {
   const mrr = (mrrData || []).reduce((sum: number, m: any) => sum + (m.membership_plans?.price ?? 0), 0)
 
   const kpis = [
-    { title: "Usuarios totales",      value: totalUsers ?? 0,  sub: "cuentas registradas",       icon: Users,     color: "text-blue-600",   bg: "bg-blue-50"    },
+    { title: "Usuarios totales",      value: totalUsers ?? 0,  sub: "cuentas registradas",       icon: Users,     color: "text-brand-600",   bg: "bg-brand-50"    },
     { title: "Pendientes aprobación", value: pendingUsers ?? 0, sub: "esperando revisión",        icon: Clock,     color: "text-amber-600",  bg: "bg-amber-50"   },
     { title: "Miembros activos",      value: activeMembers ?? 0, sub: "con membresía válida",     icon: UserCheck, color: "text-emerald-600", bg: "bg-emerald-50" },
     { title: "Portales activos",      value: totalPortals ?? 0,  sub: "módulos en producción",    icon: Activity,  color: "text-purple-600",  bg: "bg-purple-50"  },
@@ -124,7 +124,7 @@ export default async function AdminDashboardPage() {
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Alertas activas</h2>
           {alerts.map((a, i) => (
             <Link key={i} href={a.href} className="flex items-center gap-3 rounded-xl border px-4 py-3 hover:bg-muted/50 transition-colors group">
-              <AlertTriangle className={`h-4 w-4 shrink-0 ${a.type === "danger" ? "text-red-500" : a.type === "warning" ? "text-amber-500" : "text-blue-500"}`} />
+              <AlertTriangle className={`h-4 w-4 shrink-0 ${a.type === "danger" ? "text-red-500" : a.type === "warning" ? "text-amber-500" : "text-brand-500"}`} />
               <p className="flex-1 text-sm">{a.msg}</p>
               <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
             </Link>

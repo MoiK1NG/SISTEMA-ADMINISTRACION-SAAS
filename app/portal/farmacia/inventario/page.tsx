@@ -10,7 +10,7 @@ export default async function InventarioFarmaciaPage() {
 
   if (!negocio) {
     return (
-      <div className="min-h-screen bg-[#fafafa]">
+      <div className="min-h-screen bg-[#F7F9FC]">
         <PortalNav portal="farmacia" />
         <p className="py-24 text-center text-sm text-slate-500">No perteneces a ninguna farmacia.</p>
       </div>
@@ -24,11 +24,11 @@ export default async function InventarioFarmaciaPage() {
     { data: laboratorios },
   ] = await Promise.all([
     supabase.from("productos_farmacia")
-      .select("id, codigo_barras, nombre, principio_activo, concentracion, presentacion, categoria, registro_invima, precio_venta, costo, requiere_receta, activo, laboratorio_id, proveedor_id")
+      .select("id, codigo_barras, nombre, principio_activo, concentracion, presentacion, categoria, registro_invima, precio_venta, costo, iva_pct, requiere_receta, activo, laboratorio_id, proveedor_id")
       .eq("negocio_id", negocio.id)
       .order("nombre"),
     supabase.from("stock_farmacia")
-      .select("producto_id, stock_venta, stock_bodega, proximo_vencimiento")
+      .select("producto_id, stock_venta, stock_bodega, proximo_vencimiento, lotes_sin_fecha")
       .eq("negocio_id", negocio.id),
     supabase.from("proveedores_farmacia")
       .select("id, nombre").eq("negocio_id", negocio.id).eq("activo", true).order("nombre"),
@@ -45,6 +45,7 @@ export default async function InventarioFarmaciaPage() {
   const filas: FilaProducto[] = (productosRaw ?? []).map((p: any) => {
     const s = stockPorProducto.get(p.id)
     const vence = s?.proximo_vencimiento ?? null
+    const sinFecha = Number(s?.lotes_sin_fecha ?? 0)
     return {
       id:               p.id,
       codigo_barras:    p.codigo_barras,
@@ -57,6 +58,7 @@ export default async function InventarioFarmaciaPage() {
       precio_venta:     Number(p.precio_venta),
       // El costo y el margen son información del dueño/regente, no del cajero
       costo:            esGestor ? Number(p.costo) : null,
+      iva_pct:          Number(p.iva_pct ?? 0),
       requiere_receta:  p.requiere_receta,
       activo:           p.activo,
       laboratorio_id:   p.laboratorio_id,
@@ -64,15 +66,16 @@ export default async function InventarioFarmaciaPage() {
       stock_venta:      Number(s?.stock_venta ?? 0),
       stock_bodega:     Number(s?.stock_bodega ?? 0),
       vence,
-      semaforo:         estadoCaducidad(vence),
+      lotes_sin_fecha:  sinFecha,
+      semaforo:         estadoCaducidad(vence, sinFecha > 0),
     }
   })
 
   return (
-    <div className="min-h-screen bg-[#fafafa]">
+    <div className="min-h-screen bg-[#F7F9FC]">
       <header className="sticky top-0 z-30 border-b border-slate-100 bg-white/80 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 shadow-sm shadow-teal-500/30">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-600 to-brand-900 shadow-sm shadow-brand-500/30">
             <Boxes className="h-4 w-4 text-white" />
           </div>
           <div>

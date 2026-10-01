@@ -59,8 +59,8 @@ export default function ForgotPasswordPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
         <div className="rounded-2xl border border-slate-100 bg-white p-10 max-w-sm w-full text-center space-y-5 shadow-sm">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 mx-auto">
-            <MailCheck className="h-8 w-8 text-blue-600" />
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-50 mx-auto">
+            <MailCheck className="h-8 w-8 text-brand-600" />
           </div>
           <div>
             <h2 className="text-xl font-bold text-slate-900">Revisa tu correo</h2>
@@ -83,8 +83,8 @@ export default function ForgotPasswordPage() {
       <div className="rounded-2xl border border-slate-100 bg-white p-8 sm:p-10 max-w-sm w-full space-y-6 shadow-sm">
 
         <div className="text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 border border-blue-100 mx-auto mb-4">
-            <KeyRound className="h-5 w-5 text-blue-600" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 border border-brand-100 mx-auto mb-4">
+            <KeyRound className="h-5 w-5 text-brand-600" />
           </div>
           <h1 className="text-xl font-bold text-slate-900 tracking-tight">¿Olvidaste tu contraseña?</h1>
           <p className="mt-1.5 text-sm text-slate-500">
@@ -115,7 +115,7 @@ export default function ForgotPasswordPage() {
 
           <Button
             type="submit" disabled={loading}
-            className="w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-700 font-semibold text-sm shadow-sm shadow-blue-600/20"
+            className="w-full h-11 rounded-xl bg-brand-600 hover:bg-brand-700 font-semibold text-sm shadow-sm shadow-brand-600/20"
           >
             {loading
               ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Enviando…</>

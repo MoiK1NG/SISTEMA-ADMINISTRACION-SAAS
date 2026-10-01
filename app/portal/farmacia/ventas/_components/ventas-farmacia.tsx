@@ -1,6 +1,6 @@
 "use client"
 
-import { COP, FECHA_HORA } from "@/lib/farmacia/formato"
+import { useFormato } from "@/components/farmacia/negocio-provider"
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { Ban, Loader2 } from "lucide-react"
@@ -23,12 +23,6 @@ export interface FilaVenta {
   pagos:   { metodo: string; monto: number }[]
 }
 
-const fmt = (n: number) =>
-  COP.format(n)
-
-const fmtHora = (ts: string) =>
-  FECHA_HORA.format(new Date(ts))
-
 export interface FilaEncargo {
   id:          string
   descripcion: string
@@ -49,6 +43,7 @@ const ESTADO_ENCARGO: Record<string, string> = {
 export function VentasFarmacia({ ventas, encargos, esGestor }: {
   ventas: FilaVenta[]; encargos: FilaEncargo[]; esGestor: boolean
 }) {
+  const f = useFormato()
   const router = useRouter()
   const [anulando, setAnulando] = useState<FilaVenta | null>(null)
   const [motivo, setMotivo] = useState("")
@@ -78,12 +73,12 @@ export function VentasFarmacia({ ventas, encargos, esGestor }: {
       <div className="grid grid-cols-2 gap-4 sm:max-w-md">
         <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Hoy</p>
-          <p className="mt-1 text-xl font-black tabular-nums text-slate-900">{fmt(totalHoy)}</p>
+          <p className="mt-1 text-xl font-black tabular-nums text-slate-900">{f.dinero(totalHoy)}</p>
           <p className="text-xs text-slate-400">{ventasHoy.length} ventas</p>
         </div>
         <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">7 días</p>
-          <p className="mt-1 text-xl font-black tabular-nums text-slate-900">{fmt(total7)}</p>
+          <p className="mt-1 text-xl font-black tabular-nums text-slate-900">{f.dinero(total7)}</p>
         </div>
       </div>
 
@@ -113,14 +108,14 @@ export function VentasFarmacia({ ventas, encargos, esGestor }: {
                 {ventas.map(v => (
                   <tr key={v.id} className={v.estado === "anulada" ? "bg-slate-50 opacity-60" : "hover:bg-slate-50/50"}>
                     <td className="px-4 py-3 font-mono text-xs font-bold text-slate-500">#{v.numero}</td>
-                    <td className="whitespace-nowrap px-4 py-3 text-xs text-slate-500">{fmtHora(v.creada)}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-xs text-slate-500">{f.fechaHora(v.creada)}</td>
                     <td className="max-w-xs truncate px-4 py-3 text-xs text-slate-700">{v.items.join(", ")}</td>
                     <td className="px-4 py-3 text-xs text-slate-500">{v.cliente ?? "—"}</td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1">
                         {v.pagos.map((p, i) => (
                           <span key={i} className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-medium text-slate-600">
-                            {METODO_PAGO_LABEL[p.metodo as MetodoPagoFarmacia] ?? p.metodo} {fmt(p.monto)}
+                            {METODO_PAGO_LABEL[p.metodo as MetodoPagoFarmacia] ?? p.metodo} {f.dinero(p.monto)}
                           </span>
                         ))}
                       </div>
@@ -131,7 +126,7 @@ export function VentasFarmacia({ ventas, encargos, esGestor }: {
                       )}
                     </td>
                     <td className={`px-4 py-3 text-right font-bold tabular-nums ${v.estado === "anulada" ? "line-through" : "text-slate-900"}`}>
-                      {fmt(v.total)}
+                      {f.dinero(v.total)}
                     </td>
                     {esGestor && (
                       <td className="px-4 py-3 text-right">
@@ -187,7 +182,7 @@ export function VentasFarmacia({ ventas, encargos, esGestor }: {
                   const saldo = p.total - p.pagado
                   return (
                     <tr key={p.id} className={p.estado === "cancelado" ? "opacity-50" : "hover:bg-slate-50/50"}>
-                      <td className="whitespace-nowrap px-4 py-3 text-xs text-slate-500">{fmtHora(p.creada)}</td>
+                      <td className="whitespace-nowrap px-4 py-3 text-xs text-slate-500">{f.fechaHora(p.creada)}</td>
                       <td className="px-4 py-3 text-xs font-semibold text-slate-800">
                         {p.cantidad > 1 ? `${p.cantidad}× ` : ""}{p.descripcion}
                       </td>
@@ -205,17 +200,17 @@ export function VentasFarmacia({ ventas, encargos, esGestor }: {
                         <div className="flex flex-wrap gap-1">
                           {p.pagos.map((pg, i) => (
                             <span key={i} className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-medium text-slate-600">
-                              {METODO_PAGO_LABEL[pg.metodo as MetodoPagoFarmacia] ?? pg.metodo} {fmt(pg.monto)}
+                              {METODO_PAGO_LABEL[pg.metodo as MetodoPagoFarmacia] ?? pg.metodo} {f.dinero(pg.monto)}
                             </span>
                           ))}
                           {saldo > 0.009 && p.estado !== "cancelado" && (
                             <span className="rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-600">
-                              debe {fmt(saldo)}
+                              debe {f.dinero(saldo)}
                             </span>
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-right font-bold tabular-nums text-slate-900">{fmt(p.total)}</td>
+                      <td className="px-4 py-3 text-right font-bold tabular-nums text-slate-900">{f.dinero(p.total)}</td>
                     </tr>
                   )
                 })}
@@ -232,7 +227,7 @@ export function VentasFarmacia({ ventas, encargos, esGestor }: {
           <div className="mt-2 space-y-4">
             {error && <p className="rounded bg-rose-50 px-3 py-2 text-xs text-rose-600">{error}</p>}
             <div className="rounded-xl bg-slate-50 px-4 py-2.5 text-xs text-slate-600">
-              {anulando?.items.join(", ")} · <strong>{anulando ? fmt(anulando.total) : ""}</strong>
+              {anulando?.items.join(", ")} · <strong>{anulando ? f.dinero(anulando.total) : ""}</strong>
               <p className="mt-1 text-slate-400">El stock vuelve a los mismos lotes de donde salió.</p>
             </div>
             <div className="space-y-1.5">

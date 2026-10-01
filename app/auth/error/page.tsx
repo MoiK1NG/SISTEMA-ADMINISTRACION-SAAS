@@ -16,7 +16,7 @@ export default function AuthErrorPage() {
           </p>
         </div>
         <div className="space-y-2.5">
-          <Button asChild className="w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-700">
+          <Button asChild className="w-full h-11 rounded-xl bg-brand-600 hover:bg-brand-700">
             <Link href="/forgot-password">Solicitar enlace nuevo</Link>
           </Button>
           <Button asChild variant="outline" className="w-full h-11 rounded-xl border-slate-200 font-medium text-sm text-slate-700 hover:bg-slate-50">

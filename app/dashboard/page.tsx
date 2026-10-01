@@ -65,7 +65,7 @@ export default async function DashboardPage() {
           </h1>
         </div>
         {isSuperAdmin && (
-          <div className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-2 text-sm font-semibold text-blue-700">
+          <div className="inline-flex items-center gap-2 rounded-xl border border-brand-200 bg-brand-50 px-3.5 py-2 text-sm font-semibold text-brand-700">
             <Shield className="h-4 w-4" />
             Super Admin
           </div>
@@ -81,8 +81,8 @@ export default async function DashboardPage() {
             <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Portales</p>
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50">
-                  <Layers className="h-4 w-4 text-blue-600" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50">
+                  <Layers className="h-4 w-4 text-brand-600" />
                 </div>
               </div>
               <p className="text-3xl font-black text-slate-900">{accessiblePortals.length}</p>

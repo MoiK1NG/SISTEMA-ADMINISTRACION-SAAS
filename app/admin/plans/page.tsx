@@ -55,8 +55,8 @@ export default async function PlansPage() {
         </Card>
         <Card>
           <CardContent className="pt-5 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50">
-              <Users className="h-5 w-5 text-blue-600" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50">
+              <Users className="h-5 w-5 text-brand-600" />
             </div>
             <div>
               <p className="text-2xl font-bold">{Object.values(subsByPlan).reduce((a, b) => a + b, 0)}</p>

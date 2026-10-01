@@ -1,6 +1,6 @@
 "use client"
 
-import { DIA_MES } from "@/lib/farmacia/formato"
+import { useFormato } from "@/components/farmacia/negocio-provider"
 import { useMemo, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { Plus, Loader2, MessageCircle, RotateCcw, Power } from "lucide-react"
@@ -26,9 +26,6 @@ export interface FilaTratamiento {
   telefono:       string | null
 }
 
-const fmtFecha = (iso: string) =>
-  DIA_MES.format(new Date(iso + "T00:00:00"))
-
 function estadoTratamiento(t: FilaTratamiento) {
   if (!t.activo) return { label: "Pausado", clases: "bg-slate-100 text-slate-500 border-slate-200", urgente: false }
   if (t.dias_restantes < 0)  return { label: `Se acabó hace ${-t.dias_restantes} días`, clases: "bg-rose-50 text-rose-700 border-rose-200", urgente: true }
@@ -47,6 +44,7 @@ interface Props {
 }
 
 export function PacientesFarmacia({ tratamientos, clientes, productos, soloLectura, nombreNegocio }: Props) {
+  const f = useFormato()
   const router = useRouter()
   const [filtro, setFiltro] = useState<"avisar" | "todos">("avisar")
   const [nuevoAbierto, setNuevoAbierto] = useState(false)
@@ -89,20 +87,20 @@ export function PacientesFarmacia({ tratamientos, clientes, productos, soloLectu
         <div className="flex gap-2">
           <button onClick={() => setFiltro("avisar")}
                   className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
-                    filtro === "avisar" ? "bg-teal-600 text-white" : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                    filtro === "avisar" ? "bg-brand-600 text-white" : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
                   }`}>
             🔔 Para avisar ({urgentes.length})
           </button>
           <button onClick={() => setFiltro("todos")}
                   className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
-                    filtro === "todos" ? "bg-teal-600 text-white" : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                    filtro === "todos" ? "bg-brand-600 text-white" : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
                   }`}>
             Todos ({tratamientos.length})
           </button>
         </div>
         {!soloLectura && (
           <Button size="sm" onClick={() => { setError(null); setNuevoAbierto(true) }}
-                  className="gap-1.5 bg-teal-600 hover:bg-teal-700">
+                  className="gap-1.5 bg-brand-600 hover:bg-brand-700">
             <Plus className="h-3.5 w-3.5" />Nuevo tratamiento
           </Button>
         )}
@@ -139,8 +137,8 @@ export function PacientesFarmacia({ tratamientos, clientes, productos, soloLectu
                 </span>
 
                 <div className="mt-3 space-y-0.5 text-[11px] text-slate-400">
-                  <p>Última compra: {fmtFecha(t.ultima_compra)} · dura {t.dias_duracion} días</p>
-                  <p>Se le acaba: <strong className="text-slate-600">{fmtFecha(t.se_acaba)}</strong></p>
+                  <p>Última compra: {f.diaMes(t.ultima_compra)} · dura {t.dias_duracion} días</p>
+                  <p>Se le acaba: <strong className="text-slate-600">{f.diaMes(t.se_acaba)}</strong></p>
                   {t.notas && <p className="italic">{t.notas}</p>}
                 </div>
 
@@ -153,7 +151,7 @@ export function PacientesFarmacia({ tratamientos, clientes, productos, soloLectu
                       </a>
                     )}
                     <button onClick={() => correr(() => renovarTratamiento(t.id))}
-                            className="flex h-8 items-center gap-1 rounded-lg border border-teal-200 bg-teal-50 px-2.5 text-xs font-bold text-teal-700 hover:bg-teal-100"
+                            className="flex h-8 items-center gap-1 rounded-lg border border-brand-200 bg-brand-50 px-2.5 text-xs font-bold text-brand-700 hover:bg-brand-100"
                             title="Volvió a comprar: reiniciar el ciclo desde hoy">
                       <RotateCcw className="h-3 w-3" />Compró
                     </button>
@@ -226,7 +224,7 @@ export function PacientesFarmacia({ tratamientos, clientes, productos, soloLectu
                   {[15, 30, 60, 90].map(d => (
                     <button key={d} type="button" onClick={() => setForm(f => ({ ...f, dias_duracion: d }))}
                             className={`rounded-lg border px-2.5 py-1.5 text-xs font-semibold ${
-                              form.dias_duracion === d ? "border-teal-600 bg-teal-50 text-teal-700" : "border-slate-200 text-slate-500 hover:bg-slate-50"
+                              form.dias_duracion === d ? "border-brand-600 bg-brand-50 text-brand-700" : "border-slate-200 text-slate-500 hover:bg-slate-50"
                             }`}>
                       {d}d
                     </button>
@@ -243,7 +241,7 @@ export function PacientesFarmacia({ tratamientos, clientes, productos, soloLectu
 
             <div className="flex gap-3">
               <Button variant="outline" className="flex-1" onClick={() => setNuevoAbierto(false)}>Cancelar</Button>
-              <Button className="flex-1 bg-teal-600 hover:bg-teal-700"
+              <Button className="flex-1 bg-brand-600 hover:bg-brand-700"
                       disabled={isPending || !form.cliente_id || !form.producto_nombre.trim() || !(form.dias_duracion >= 1)}
                       onClick={() => correr(
                         () => crearTratamiento({ ...form, producto_id: form.producto_id || null }),

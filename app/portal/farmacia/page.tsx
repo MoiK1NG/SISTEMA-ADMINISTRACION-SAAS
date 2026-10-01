@@ -34,11 +34,11 @@ export default async function FarmaciaPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-[#fafafa]">
+    <div className="min-h-screen bg-[#F7F9FC]">
       <header className="sticky top-0 z-30 border-b border-slate-100 bg-white/80 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 shadow-sm shadow-teal-500/30">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-600 to-brand-900 shadow-sm shadow-brand-500/30">
               <Pill className="h-4 w-4 text-white" />
             </div>
             <div className="hidden sm:block">
@@ -50,13 +50,13 @@ export default async function FarmaciaPage() {
           </div>
           <div className="flex items-center gap-2">
             {rol && (
-              <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-700">
+              <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700">
                 <ShieldCheck className="h-3 w-3" />
                 {ROL_LABEL[rol]}
               </span>
             )}
             <Avatar className="ml-1 h-8 w-8 ring-2 ring-slate-100">
-              <AvatarFallback className="bg-teal-500/10 text-xs font-semibold text-teal-700">{initials}</AvatarFallback>
+              <AvatarFallback className="bg-brand-500/10 text-xs font-semibold text-brand-700">{initials}</AvatarFallback>
             </Avatar>
           </div>
         </div>
@@ -90,13 +90,13 @@ export default async function FarmaciaPage() {
             <section className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-teal-600" />
+                  <Users className="h-4 w-4 text-brand-600" />
                   <h2 className="text-sm font-bold text-slate-900">Equipo</h2>
                   <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-500">
                     {(equipo ?? []).length}
                   </span>
                 </div>
-                <Button asChild variant="ghost" size="sm" className="gap-1 text-xs text-teal-700 hover:text-teal-800">
+                <Button asChild variant="ghost" size="sm" className="gap-1 text-xs text-brand-700 hover:text-brand-800">
                   <Link href="/portal/farmacia/equipo">
                     {rol === "dueno" ? "Gestionar" : "Ver equipo"} <ArrowRight className="h-3 w-3" />
                   </Link>
@@ -105,7 +105,7 @@ export default async function FarmaciaPage() {
               <div className="flex flex-wrap gap-2">
                 {(equipo ?? []).map((m: any) => (
                   <div key={m.miembro_id} className="flex items-center gap-2 rounded-full border border-slate-100 bg-slate-50 py-1 pl-1 pr-3">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-teal-600/10 text-[10px] font-bold text-teal-700">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-600/10 text-[10px] font-bold text-brand-700">
                       {(m.nombre || "?")[0].toUpperCase()}
                     </span>
                     <span className="text-xs font-medium text-slate-700">{m.nombre}</span>
@@ -124,13 +124,13 @@ export default async function FarmaciaPage() {
                 {modulos.map(m => {
                   const contenido = (
                     <>
-                      <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-teal-50">
-                        <m.icon className="h-4 w-4 text-teal-600" />
+                      <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50">
+                        <m.icon className="h-4 w-4 text-brand-600" />
                       </div>
                       <p className="text-sm font-bold text-slate-900">{m.label}</p>
                       <p className="mt-1 text-xs leading-relaxed text-slate-500">{m.desc}</p>
                       <span className={`mt-3 inline-block rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                        m.href ? "bg-teal-50 text-teal-700" : "bg-slate-100 text-slate-400"
+                        m.href ? "bg-brand-50 text-brand-700" : "bg-slate-100 text-slate-400"
                       }`}>
                         {m.fase}
                       </span>
