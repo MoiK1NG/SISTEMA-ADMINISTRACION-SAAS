@@ -31,7 +31,7 @@ LEFT JOIN LATERAL (
   SELECT status, end_date
     FROM public.memberships
    WHERE user_id = u.id
-   ORDER BY end_date DESC
+   ORDER BY (status = 'active') DESC, end_date DESC   -- la activa primero si empatan
    LIMIT 1
 ) m ON TRUE
 LEFT JOIN public.miembros_negocio mn ON mn.user_id = u.id

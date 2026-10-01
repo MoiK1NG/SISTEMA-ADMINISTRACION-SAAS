@@ -21,3 +21,4 @@ out/
 # Datos del cliente y material de marca sin procesar (no se versionan)
 cargar-inventario/
 logo/
+qa/
