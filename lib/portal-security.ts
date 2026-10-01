@@ -27,12 +27,18 @@ export async function sesionParaEscritura() {
 
   // Modo "ver como cliente": es de sola lectura. Si se permitieran las
   // escrituras, los datos se crearían con el agente_id del admin y no del
-  // cliente que está inspeccionando.
+  // cliente que está inspeccionando. La cookie solo cuenta para admins: si un
+  // usuario común hereda una vieja en un equipo compartido, se ignora (igual
+  // que en resolverAgente). La consulta extra solo ocurre si hay cookie.
   if ((await cookies()).get(COOKIE_VER_COMO)?.value) {
-    throw new Error(
-      "Estás viendo los datos de un cliente en modo lectura. " +
-      "Volvé a tu cuenta para hacer cambios."
-    )
+    const { data: perfil } = await supabase
+      .from("profiles").select("role").eq("id", user.id).maybeSingle()
+    if (perfil?.role === "admin" || perfil?.role === "superadmin") {
+      throw new Error(
+        "Estás viendo los datos de un cliente en modo lectura. " +
+        "Vuelve a tu cuenta para hacer cambios."
+      )
+    }
   }
 
   return { supabase, user }

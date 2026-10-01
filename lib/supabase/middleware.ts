@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { COOKIE_VER_COMO } from '@/lib/ver-como'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -140,11 +141,19 @@ export async function updateSession(request: NextRequest) {
 
     // =======================================================================
     // CAPA 3 – Acceso a portales  /portal/<slug>
-    // Superadmin salta esta verificación — accede a todos los portales
+    // Superadmin salta esta verificación — accede a todos los portales.
+    // Un admin también la salta, pero SOLO en modo "ver como cliente": está
+    // inspeccionando el portal del cliente, no usando uno propio, así que no
+    // necesita acceso ni membresía. Es seguro porque el rol sale de la base
+    // (no de la cookie), el modo es de solo lectura (requirePortalAccess
+    // rechaza toda escritura mientras la cookie existe) y resolverAgente
+    // vuelve a verificar el rol en cada página.
     // =======================================================================
     const portalMatch = pathname.match(PORTAL_ROUTE_RE)
+    const adminInspeccionando =
+      profile?.role === 'admin' && Boolean(request.cookies.get(COOKIE_VER_COMO)?.value)
 
-    if (portalMatch && !isSuperAdmin) {
+    if (portalMatch && !isSuperAdmin && !adminInspeccionando) {
       const slug = portalMatch[1]
 
       // 3a. Obtener el portal por slug y verificar que esté activo

@@ -7,7 +7,7 @@ import { Loader2, Lock, CheckCircle2, AlertTriangle, ChevronDown, LogOut } from 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { createClient } from "@/lib/supabase/client"
+import { salirDeLaCuenta } from "@/components/boton-cerrar-sesion"
 import { cerrarCajaFarmacia } from "../../actions"
 import { METODOS_PAGO_FARMACIA, METODO_PAGO_LABEL, type MetodoPagoFarmacia } from "@/lib/farmacia/pos-constants"
 
@@ -63,12 +63,8 @@ export function CierreCaja({ cierres, ventasTurno, esGestor, soloLectura }: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [segundosSalida])
 
-  async function salir() {
-    const supabase = createClient()
-    if (supabase) await supabase.auth.signOut()
-    router.push("/login")
-    router.refresh()
-  }
+  // Mismo cierre que el botón "Cerrar sesión" de la barra del portal
+  const salir = salirDeLaCuenta
 
   function cerrar() {
     setError(null)
