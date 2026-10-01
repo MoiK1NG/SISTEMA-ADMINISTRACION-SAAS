@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import { MantenimientoCard, type UltimoMantenimiento } from "@/components/admin/mantenimiento-card"
 import {
   Users, CreditCard, UserCheck, Clock,
   TrendingUp, AlertTriangle, ArrowRight, Activity,
@@ -32,6 +33,7 @@ export default async function AdminDashboardPage() {
     { count: expiring7 },
     { count: expiring30 },
     { count: totalPortals },
+    mantenimiento,
   ] = await Promise.all([
     supabase.from("profiles").select("*", { count: "exact", head: true }),
     supabase.from("profiles").select("*", { count: "exact", head: true }).eq("is_approved", false),
@@ -41,7 +43,14 @@ export default async function AdminDashboardPage() {
     supabase.from("memberships").select("*", { count: "exact", head: true }).eq("is_active", true).gte("end_date", today).lte("end_date", in7days),
     supabase.from("memberships").select("*", { count: "exact", head: true }).eq("is_active", true).gte("end_date", today).lte("end_date", in30days),
     supabase.from("portals").select("*", { count: "exact", head: true }).eq("is_active", true),
+    // Última corrida del mantenimiento diario (mantiene despierta la base gratuita)
+    supabase.from("mantenimiento_diario")
+      .select("ejecutado_at, origen, membresias_vencidas, alertas")
+      .order("ejecutado_at", { ascending: false }).limit(1).maybeSingle(),
   ])
+
+  const faltaMigracion = mantenimiento.error?.code === "42P01" || Boolean(mantenimiento.error?.message?.includes("does not exist"))
+  const ultimoMantenimiento = (mantenimiento.data ?? null) as UltimoMantenimiento | null
 
   const mrr = (mrrData || []).reduce((sum: number, m: any) => sum + (m.membership_plans?.price ?? 0), 0)
 
@@ -117,6 +126,9 @@ export default async function AdminDashboardPage() {
           </Card>
         ))}
       </div>
+
+      {/* Mantenimiento diario */}
+      <MantenimientoCard ultimo={ultimoMantenimiento} faltaMigracion={faltaMigracion} />
 
       {/* Alerts */}
       {alerts.length > 0 && (
