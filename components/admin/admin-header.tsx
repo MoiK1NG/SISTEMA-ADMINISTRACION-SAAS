@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Building2, LogOut, User, Menu } from "lucide-react"
+import { LogOut, User, Menu } from "lucide-react"
 import type { Profile } from "@/lib/types"
 import { Badge } from "@/components/ui/badge"
 
@@ -46,11 +46,9 @@ export function AdminHeader({ profile }: AdminHeaderProps) {
     <header className="sticky top-0 z-50 w-full border-b bg-card">
       <div className="flex h-16 items-center justify-between px-4 lg:px-6">
         <div className="flex items-center gap-4">
-          <Link href="/admin" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary">
-              <Building2 className="h-4 w-4 text-primary-foreground" />
-            </div>
-            <span className="font-semibold hidden sm:inline-block">Panel de Administración</span>
+          <Link href="/admin" className="flex items-center gap-3">
+            <img src="/brand/loms360-logo.svg" alt="LOMS 360" className="h-7 w-auto" />
+            <span className="hidden text-sm font-semibold text-brand-900 sm:inline-block">Administración</span>
           </Link>
           <Badge variant="secondary" className="hidden sm:inline-flex">
             {profile.role === "superadmin" ? "Super Admin" : "Admin"}

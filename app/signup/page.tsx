@@ -7,14 +7,15 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import {
-  Building2, Loader2, AlertTriangle, CheckCircle2, ChevronRight,
-  Sparkles, Users, Globe,
+  Loader2, AlertTriangle, CheckCircle2, ChevronRight,
+  Layers, Users, MonitorSmartphone,
 } from "lucide-react"
 
+// Hablamos en resultados de negocio, no en funciones técnicas (manual de marca)
 const PERKS = [
-  { icon: Sparkles, text: "Acceso a múltiples portales de negocio" },
-  { icon: Users,    text: "Gestión de clientes y cartera integrada" },
-  { icon: Globe,    text: "Disponible desde cualquier dispositivo"   },
+  { icon: Layers,            text: "Ventas, inventario y finanzas en un solo lugar" },
+  { icon: Users,             text: "Tu equipo con roles y permisos claros" },
+  { icon: MonitorSmartphone, text: "Funciona en computador, tablet y celular" },
 ]
 
 export default function SignupPage() {
@@ -57,7 +58,7 @@ export default function SignupPage() {
               Activa tu cuenta y luego inicia sesión.
             </p>
           </div>
-          <Button asChild className="w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-700">
+          <Button asChild className="w-full h-11 rounded-xl bg-brand-600 hover:bg-brand-700">
             <Link href="/login">Ir a iniciar sesión</Link>
           </Button>
         </div>
@@ -69,33 +70,26 @@ export default function SignupPage() {
     <div className="min-h-screen flex">
       {/* ── Panel izquierdo ──────────────────────────────────────────────── */}
       <div className="hidden lg:flex lg:w-[52%] flex-col justify-between relative overflow-hidden bg-slate-50 border-r border-slate-100 p-12">
-        <div className="absolute -top-32 -right-32 h-96 w-96 rounded-full bg-blue-100/60 blur-3xl" />
-        <div className="absolute -bottom-40 -left-20 h-80 w-80 rounded-full bg-sky-100/50 blur-3xl" />
+        <div className="absolute -top-32 -right-32 h-96 w-96 rounded-full bg-brand-100/60 blur-3xl" />
+        <div className="absolute -bottom-40 -left-20 h-80 w-80 rounded-full bg-brand-100/50 blur-3xl" />
 
         {/* Logo */}
-        <div className="relative z-10 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 shadow-sm shadow-blue-600/25">
-            <Building2 className="h-5 w-5 text-white" />
-          </div>
-          <div>
-            <p className="text-base font-bold tracking-tight text-slate-900">SaaS Admin</p>
-            <p className="text-[11px] text-slate-400 uppercase tracking-widest">Sistema Empresarial</p>
-          </div>
-        </div>
+        <Link href="/" className="relative z-10 inline-flex" aria-label="LOMS 360, ir al inicio">
+          <img src="/brand/loms360-logo.svg" alt="LOMS 360" className="h-10 w-auto" />
+        </Link>
 
         {/* Contenido central */}
         <div className="relative z-10 space-y-8">
           <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700">
-              <Sparkles className="h-3 w-3" />
-              Empieza gratis hoy
+            <div className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-700">
+              La solución 360 para tu negocio
             </div>
-            <h1 className="text-4xl font-black leading-tight tracking-tight text-slate-900">
+            <h1 className="text-4xl font-bold leading-tight tracking-tight text-brand-900">
               Tu negocio en orden,<br />
-              <span className="text-blue-600">desde el primer día</span>
+              <span className="text-brand-600">desde el primer día</span>
             </h1>
             <p className="text-base text-slate-500 leading-relaxed max-w-sm">
-              Crea tu cuenta y accede a herramientas diseñadas para pequeños emprendedores.
+              Crea tu cuenta. Si trabajas en un negocio que ya usa LOMS 360, el dueño te agrega a su equipo con este correo.
             </p>
           </div>
 
@@ -103,7 +97,7 @@ export default function SignupPage() {
             {PERKS.map(({ icon: Icon, text }) => (
               <li key={text} className="flex items-center gap-3">
                 <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white border border-slate-200 shadow-sm">
-                  <Icon className="h-3.5 w-3.5 text-blue-600" />
+                  <Icon className="h-3.5 w-3.5 text-brand-600" />
                 </div>
                 <span className="text-sm text-slate-600">{text}</span>
               </li>
@@ -112,19 +106,16 @@ export default function SignupPage() {
         </div>
 
         <p className="relative z-10 text-xs text-slate-400">
-          © {new Date().getFullYear()} SaaS Admin · Todos los derechos reservados
+          © {new Date().getFullYear()} LOMS 360 · Todos los derechos reservados
         </p>
       </div>
 
       {/* ── Panel derecho — formulario ────────────────────────────────────── */}
       <div className="flex flex-1 flex-col items-center justify-center bg-white px-6 py-12 sm:px-12">
         {/* Logo móvil */}
-        <div className="lg:hidden mb-10 flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600">
-            <Building2 className="h-4 w-4 text-white" />
-          </div>
-          <span className="text-lg font-bold text-slate-900">SaaS Admin</span>
-        </div>
+        <Link href="/" className="lg:hidden mb-10 inline-flex" aria-label="LOMS 360, ir al inicio">
+          <img src="/brand/loms360-logo.svg" alt="LOMS 360" className="h-9 w-auto" />
+        </Link>
 
         <div className="w-full max-w-sm space-y-8">
           <div>
@@ -175,7 +166,7 @@ export default function SignupPage() {
 
             <Button
               type="submit" disabled={loading}
-              className="w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-700 font-semibold text-sm shadow-sm shadow-blue-600/20"
+              className="w-full h-11 rounded-xl bg-brand-600 hover:bg-brand-700 font-semibold text-sm shadow-sm shadow-brand-600/20"
             >
               {loading ? (
                 <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Creando cuenta…</>

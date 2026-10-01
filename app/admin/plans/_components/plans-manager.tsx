@@ -93,7 +93,7 @@ export function PlansManager({ plans }: { plans: Plan[] }) {
                   <p className="text-[10px] text-muted-foreground">Precio</p>
                 </div>
                 <div className="rounded-lg bg-muted/50 p-2">
-                  <Clock className="h-3.5 w-3.5 mx-auto text-blue-500 mb-0.5" />
+                  <Clock className="h-3.5 w-3.5 mx-auto text-brand-500 mb-0.5" />
                   <p className="text-xs font-bold">{p.duration_days}d</p>
                   <p className="text-[10px] text-muted-foreground">Duración</p>
                 </div>

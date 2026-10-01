@@ -3,6 +3,8 @@
 import { useEffect, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { Loader2, Plus } from "lucide-react"
+import { useFormato, useNegocioUI } from "@/components/farmacia/negocio-provider"
+import { costoConIva, margen } from "@/lib/farmacia/formato"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -22,7 +24,7 @@ const CATEGORIAS = [
 const FORM_VACIO = {
   codigo_barras: "", nombre: "", principio_activo: "", concentracion: "",
   presentacion: "", laboratorio_id: "", proveedor_id: "", categoria: "otros",
-  registro_invima: "", precio_venta: 0, costo: 0, requiere_receta: false, activo: true,
+  registro_invima: "", precio_venta: 0, costo: 0, iva_pct: 0, requiere_receta: false, activo: true,
 }
 
 interface Props {
@@ -35,6 +37,8 @@ interface Props {
 
 export function ProductoFormDialog({ open, onOpenChange, producto, proveedores, laboratorios }: Props) {
   const router = useRouter()
+  const fx = useFormato()
+  const { ivaDefault } = useNegocioUI()
   const [form, setForm]   = useState(FORM_VACIO)
   const [error, setError] = useState<string | null>(null)
   const [isPending, start] = useTransition()
@@ -58,11 +62,15 @@ export function ProductoFormDialog({ open, onOpenChange, producto, proveedores, 
         registro_invima:  producto.registro_invima ?? "",
         precio_venta:     producto.precio_venta,
         costo:            producto.costo ?? 0,
+        iva_pct:          producto.iva_pct,
         requiere_receta:  producto.requiere_receta,
         activo:           producto.activo,
-      } : FORM_VACIO)
+      } : { ...FORM_VACIO, iva_pct: ivaDefault })   // el IVA del negocio como propuesta
     }
-  }, [open, producto])
+  }, [open, producto, ivaDefault])
+
+  const costoIva = costoConIva(form.costo, form.iva_pct)
+  const mg       = margen(form.precio_venta, form.costo, form.iva_pct)
 
   function handleGuardar() {
     setError(null)
@@ -147,9 +155,9 @@ export function ProductoFormDialog({ open, onOpenChange, producto, proveedores, 
           </div>
 
           <div className="space-y-1.5">
-            <Label>Principio activo</Label>
+            <Label>Principio(s) activo(s)</Label>
             <Input
-              placeholder="Ej: Acetaminofén — habilita las sugerencias de equivalentes"
+              placeholder="Ej: Amlodipino + Valsartán (varios, separados con +) — habilita los equivalentes"
               value={form.principio_activo}
               onChange={e => setForm(f => ({ ...f, principio_activo: e.target.value }))}
             />
@@ -202,7 +210,7 @@ export function ProductoFormDialog({ open, onOpenChange, producto, proveedores, 
                   <Input autoFocus placeholder="Nombre del laboratorio" value={nuevoLab}
                          onChange={e => setNuevoLab(e.target.value)}
                          onKeyDown={e => e.key === "Enter" && altaRapida("lab", nuevoLab)} />
-                  <Button type="button" size="sm" className="h-10 shrink-0 bg-teal-600 px-3 hover:bg-teal-700"
+                  <Button type="button" size="sm" className="h-10 shrink-0 bg-brand-600 px-3 hover:bg-brand-700"
                           disabled={isPending} onClick={() => altaRapida("lab", nuevoLab)}>OK</Button>
                 </div>
               )}
@@ -230,39 +238,60 @@ export function ProductoFormDialog({ open, onOpenChange, producto, proveedores, 
                   <Input autoFocus placeholder="Nombre del proveedor" value={nuevoProv}
                          onChange={e => setNuevoProv(e.target.value)}
                          onKeyDown={e => e.key === "Enter" && altaRapida("prov", nuevoProv)} />
-                  <Button type="button" size="sm" className="h-10 shrink-0 bg-teal-600 px-3 hover:bg-teal-700"
+                  <Button type="button" size="sm" className="h-10 shrink-0 bg-brand-600 px-3 hover:bg-brand-700"
                           disabled={isPending} onClick={() => altaRapida("prov", nuevoProv)}>OK</Button>
                 </div>
               )}
             </div>
           </div>
 
+          <div className="space-y-1.5">
+            <Label>Registro sanitario (ISP / INVIMA / SEREMI)</Label>
+            <Input
+              placeholder="Ej: ISP F-12345/20"
+              value={form.registro_invima}
+              onChange={e => setForm(f => ({ ...f, registro_invima: e.target.value }))}
+            />
+          </div>
+
+          {/* Precio con IVA incluido; costo neto + IVA aparte → costo real y margen */}
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="space-y-1.5">
-              <Label>Registro sanitario (INVIMA / ISP / SEREMI)</Label>
+              <Label>Precio de venta ({fx.moneda}) *</Label>
               <Input
-                placeholder="Ej: INVIMA 2020M-0012345"
-                value={form.registro_invima}
-                onChange={e => setForm(f => ({ ...f, registro_invima: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Precio de venta (COP) *</Label>
-              <Input
-                type="number" min="0" step="50"
+                type="number" min="0" step="1"
                 value={form.precio_venta || ""}
                 onChange={e => setForm(f => ({ ...f, precio_venta: Number(e.target.value) }))}
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Costo (COP)</Label>
+              <Label>Costo neto ({fx.moneda})</Label>
               <Input
-                type="number" min="0" step="50"
+                type="number" min="0" step="1"
                 value={form.costo || ""}
                 onChange={e => setForm(f => ({ ...f, costo: Number(e.target.value) }))}
               />
             </div>
+            <div className="space-y-1.5">
+              <Label>IVA del costo (%)</Label>
+              <Input
+                type="number" min="0" max="100" step="1"
+                value={form.iva_pct}
+                onChange={e => setForm(f => ({ ...f, iva_pct: Number(e.target.value) }))}
+              />
+            </div>
           </div>
+          {(form.costo > 0 || form.precio_venta > 0) && (
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-1 rounded-xl bg-slate-50 px-4 py-2.5 text-xs text-slate-600">
+              <span>Costo con IVA <strong className="tabular-nums text-slate-900">{fx.dinero(costoIva)}</strong></span>
+              <span>Utilidad por unidad <strong className="tabular-nums text-slate-900">{fx.dinero(form.precio_venta - costoIva)}</strong></span>
+              <span>Margen{" "}
+                <strong className={`tabular-nums ${mg == null ? "text-slate-400" : mg < 0 ? "text-rose-600" : mg < 0.15 ? "text-amber-600" : "text-emerald-600"}`}>
+                  {mg == null ? "—" : fx.porcentaje(mg)}
+                </strong>
+              </span>
+            </div>
+          )}
 
           <div className="flex flex-wrap gap-x-6 gap-y-2">
             <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
@@ -284,7 +313,7 @@ export function ProductoFormDialog({ open, onOpenChange, producto, proveedores, 
               Cancelar
             </Button>
             <Button
-              className="flex-1 bg-teal-600 hover:bg-teal-700"
+              className="flex-1 bg-brand-600 hover:bg-brand-700"
               onClick={handleGuardar}
               disabled={isPending || !form.nombre.trim()}
             >

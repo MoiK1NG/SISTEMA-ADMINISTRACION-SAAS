@@ -14,7 +14,7 @@ export interface Seccion {
 export const PORTALES: Record<string, { nombre: string; color: string; secciones: Seccion[] }> = {
   farmacia: {
     nombre: "Farmacia",
-    color: "#0d9488",
+    color: "#185FA5",
     secciones: [
       { href: "/portal/farmacia",            label: "Panel",      icon: LayoutDashboard },
       { href: "/portal/farmacia/pos",        label: "Vender",     icon: Grid2x2         },

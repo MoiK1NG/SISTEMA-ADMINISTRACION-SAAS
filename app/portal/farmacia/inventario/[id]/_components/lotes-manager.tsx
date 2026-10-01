@@ -1,6 +1,6 @@
 "use client"
 
-import { FECHA } from "@/lib/farmacia/formato"
+import { useFormato } from "@/components/farmacia/negocio-provider"
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { Plus, Loader2, MoreHorizontal, PackagePlus, PackageMinus, ArrowLeftRight } from "lucide-react"
@@ -18,15 +18,12 @@ import { crearLoteFarmacia, registrarMovimientoFarmacia } from "../../../actions
 export interface FilaLote {
   id:                string
   lote:              string
-  fecha_vencimiento: string
+  fecha_vencimiento: string | null
   cantidad_venta:    number
   cantidad_bodega:   number
   estanteria:        string | null
   semaforo:          EstadoCaducidad
 }
-
-const fmtFecha = (iso: string) =>
-  FECHA.format(new Date(iso + "T00:00:00"))
 
 const MOVIMIENTOS: { tipo: string; label: string; icon: any; pide: "venta" | "bodega" | "ambos" }[] = [
   { tipo: "traslado_a_venta",  label: "Pasar de bodega a venta", icon: ArrowLeftRight, pide: "bodega" },
@@ -44,6 +41,7 @@ export function LotesManager({ productoId, lotes, esGestor }: {
   lotes:      FilaLote[]
   esGestor:   boolean
 }) {
+  const f = useFormato()
   const router = useRouter()
   const [isPending, start] = useTransition()
   const [error, setError]  = useState<string | null>(null)
@@ -98,7 +96,7 @@ export function LotesManager({ productoId, lotes, esGestor }: {
         </div>
         {esGestor && (
           <Button size="sm" onClick={() => { setError(null); setLoteAbierto(true) }}
-                  className="gap-1.5 bg-teal-600 hover:bg-teal-700">
+                  className="gap-1.5 bg-brand-600 hover:bg-brand-700">
             <Plus className="h-3.5 w-3.5" />Ingresar lote
           </Button>
         )}
@@ -113,7 +111,7 @@ export function LotesManager({ productoId, lotes, esGestor }: {
           <p className="text-3xl">📦</p>
           <p className="mt-2 text-sm font-medium text-slate-700">Sin lotes ingresados</p>
           <p className="mt-1 text-xs text-slate-400">
-            {esGestor ? "Ingresa el primer lote con su fecha de vencimiento" : "El dueño o regente deben ingresar mercancía"}
+            {esGestor ? "Ingresa el primer lote; la fecha de vencimiento se puede completar después" : "El dueño o regente deben ingresar mercancía"}
           </p>
         </div>
       ) : (
@@ -132,22 +130,22 @@ export function LotesManager({ productoId, lotes, esGestor }: {
             <tbody className="divide-y divide-slate-50">
               {lotes.map((l, idx) => {
                 const sem = CADUCIDAD_META[l.semaforo]
-                const dias = diasParaVencer(l.fecha_vencimiento)
+                const dias = l.fecha_vencimiento ? diasParaVencer(l.fecha_vencimiento) : null
                 return (
                   <tr key={l.id} className={`${l.semaforo === "vencido" ? "bg-slate-50" : ""} hover:bg-slate-50/50`}>
                     <td className="px-5 py-3">
                       <span className="font-mono text-sm font-semibold text-slate-900">{l.lote}</span>
                       {idx === 0 && l.semaforo !== "vencido" && (l.cantidad_venta + l.cantidad_bodega) > 0 && (
-                        <span className="ml-2 rounded-full bg-teal-50 px-2 py-0.5 text-[10px] font-bold text-teal-700">sale primero</span>
+                        <span className="ml-2 rounded-full bg-brand-50 px-2 py-0.5 text-[10px] font-bold text-brand-700">sale primero</span>
                       )}
                     </td>
                     <td className="px-5 py-3">
                       <span className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-bold ${sem.clases}`}>
                         <span className={`h-1.5 w-1.5 rounded-full ${sem.dot}`} />
-                        {fmtFecha(l.fecha_vencimiento)}
+                        {l.fecha_vencimiento ? f.fecha(l.fecha_vencimiento) : "Sin fecha"}
                       </span>
                       <span className="ml-2 text-[10px] text-slate-400">
-                        {dias < 0 ? `venció hace ${-dias} días` : `en ${dias} días`}
+                        {dias === null ? "completar la fecha" : dias < 0 ? `venció hace ${-dias} días` : `en ${dias} días`}
                       </span>
                     </td>
                     <td className="px-5 py-3 text-right font-semibold tabular-nums text-slate-900">{l.cantidad_venta}</td>
@@ -200,7 +198,7 @@ export function LotesManager({ productoId, lotes, esGestor }: {
                        onChange={e => setFormLote(f => ({ ...f, lote: e.target.value }))} className="font-mono" />
               </div>
               <div className="space-y-1.5">
-                <Label>Vence *</Label>
+                <Label>Vence <span className="font-normal text-slate-400">(opcional)</span></Label>
                 <Input type="date" value={formLote.fecha_vencimiento}
                        onChange={e => setFormLote(f => ({ ...f, fecha_vencimiento: e.target.value }))} />
               </div>
@@ -224,8 +222,8 @@ export function LotesManager({ productoId, lotes, esGestor }: {
             </div>
             <div className="flex gap-3">
               <Button type="button" variant="outline" className="flex-1" onClick={() => setLoteAbierto(false)}>Cancelar</Button>
-              <Button className="flex-1 bg-teal-600 hover:bg-teal-700" onClick={crearLote}
-                      disabled={isPending || !formLote.lote.trim() || !formLote.fecha_vencimiento}>
+              <Button className="flex-1 bg-brand-600 hover:bg-brand-700" onClick={crearLote}
+                      disabled={isPending || !formLote.lote.trim()}>
                 {isPending ? <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />Guardando…</> : "Ingresar"}
               </Button>
             </div>
@@ -257,7 +255,7 @@ export function LotesManager({ productoId, lotes, esGestor }: {
               <div className="flex gap-3">
                 <Button type="button" variant="outline" className="flex-1" onClick={() => setMov(null)}>Cancelar</Button>
                 <Button
-                  className="flex-1 bg-teal-600 hover:bg-teal-700"
+                  className="flex-1 bg-brand-600 hover:bg-brand-700"
                   onClick={ejecutarMovimiento}
                   disabled={isPending || !(Number(cantidad) > 0) || (mov.tipo.startsWith("merma") && !motivo.trim())}
                 >

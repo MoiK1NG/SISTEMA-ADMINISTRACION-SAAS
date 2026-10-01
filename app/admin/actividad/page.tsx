@@ -121,7 +121,7 @@ export default async function ActividadPage() {
 
   const kpis = [
     { label: "Facturado hoy",     valor: fmt(totalHoy),  sub: "todos los negocios",              color: "text-emerald-600" },
-    { label: "Facturado 30 días", valor: fmt(total30),   sub: `${fmtNum(transacciones)} transacciones`, color: "text-blue-600" },
+    { label: "Facturado 30 días", valor: fmt(total30),   sub: `${fmtNum(transacciones)} transacciones`, color: "text-brand-600" },
     { label: "Negocios activos",  valor: String(negociosActivos), sub: "con ventas en 30 días",   color: "text-violet-600" },
     { label: "Ticket promedio",   valor: fmt(ticket),    sub: "por transacción",                  color: "text-amber-600" },
   ]
@@ -151,12 +151,12 @@ export default async function ActividadPage() {
       </div>
 
       {movimientos.length === 0 && (
-        <Card className="border-blue-200 bg-blue-50">
+        <Card className="border-brand-200 bg-brand-50">
           <CardContent className="flex items-start gap-3 pt-5">
-            <Info className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
+            <Info className="mt-0.5 h-5 w-5 shrink-0 text-brand-600" />
             <div>
-              <p className="font-semibold text-blue-900">Todavía no hay movimiento</p>
-              <p className="mt-1 text-sm text-blue-700">
+              <p className="font-semibold text-brand-900">Todavía no hay movimiento</p>
+              <p className="mt-1 text-sm text-brand-700">
                 Cuando tus clientes registren ventas en Panadería, Punto de Venta, Restaurante
                 o Canchas, acá vas a ver el consolidado y el ranking.
               </p>
@@ -259,7 +259,7 @@ export default async function ActividadPage() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
-              <Landmark className="h-4 w-4 text-blue-600" /> Préstamos · cartera total
+              <Landmark className="h-4 w-4 text-brand-600" /> Préstamos · cartera total
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
@@ -301,7 +301,7 @@ export default async function ActividadPage() {
 
       <p className="text-xs text-muted-foreground">
         Para revisar un negocio en detalle, entra a{" "}
-        <Link href="/admin/users" className="font-medium text-blue-600 hover:underline">Usuarios</Link>{" "}
+        <Link href="/admin/users" className="font-medium text-brand-600 hover:underline">Usuarios</Link>{" "}
         y usa <em>Ver sus portales</em>. Los montos de Préstamos y Cobros son saldos de
         cartera, no facturación, por eso van aparte.
       </p>

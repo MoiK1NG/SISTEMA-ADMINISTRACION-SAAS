@@ -1,6 +1,6 @@
 "use client"
 
-import { COP, FECHA_HORA, HORA } from "@/lib/farmacia/formato"
+import { useFormato } from "@/components/farmacia/negocio-provider"
 import { useEffect, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { Loader2, Lock, CheckCircle2, AlertTriangle, ChevronDown, LogOut } from "lucide-react"
@@ -33,15 +33,6 @@ export interface VentaTurno {
   tipo:   "venta" | "encargo"
 }
 
-const fmt = (n: number) =>
-  COP.format(n)
-
-const fmtFechaHora = (ts: string) =>
-  FECHA_HORA.format(new Date(ts))
-
-const fmtHora = (ts: string) =>
-  HORA.format(new Date(ts))
-
 type Resultado = Awaited<ReturnType<typeof cerrarCajaFarmacia>>
 
 export function CierreCaja({ cierres, ventasTurno, esGestor, soloLectura }: {
@@ -50,6 +41,7 @@ export function CierreCaja({ cierres, ventasTurno, esGestor, soloLectura }: {
   esGestor:    boolean
   soloLectura: boolean
 }) {
+  const f = useFormato()
   const router = useRouter()
   const [montos, setMontos] = useState<Record<MetodoPagoFarmacia, string>>({
     efectivo: "", tarjeta_debito: "", tarjeta_credito: "", transferencia: "",
@@ -123,8 +115,8 @@ export function CierreCaja({ cierres, ventasTurno, esGestor, soloLectura }: {
         {esGestor && totalesTurno.size > 0 && (
           <div className="flex flex-wrap gap-2 border-b border-slate-50 px-5 py-3">
             {METODOS_PAGO_FARMACIA.filter(m => totalesTurno.has(m)).map(m => (
-              <span key={m} className="rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-xs font-bold text-teal-800">
-                {METODO_PAGO_LABEL[m]}: {fmt(totalesTurno.get(m) ?? 0)}
+              <span key={m} className="rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-bold text-brand-800">
+                {METODO_PAGO_LABEL[m]}: {f.dinero(totalesTurno.get(m) ?? 0)}
               </span>
             ))}
           </div>
@@ -138,7 +130,7 @@ export function CierreCaja({ cierres, ventasTurno, esGestor, soloLectura }: {
               <tbody className="divide-y divide-slate-50">
                 {ventasTurno.map(v => (
                   <tr key={`${v.tipo}-${v.id}`} className="hover:bg-slate-50/50">
-                    <td className="whitespace-nowrap px-5 py-2.5 text-xs text-slate-400">{fmtHora(v.hora)}</td>
+                    <td className="whitespace-nowrap px-5 py-2.5 text-xs text-slate-400">{f.hora(v.hora)}</td>
                     <td className="px-3 py-2.5">
                       <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
                         v.tipo === "encargo" ? "bg-blue-50 text-blue-700" : "bg-slate-100 text-slate-500"
@@ -151,12 +143,12 @@ export function CierreCaja({ cierres, ventasTurno, esGestor, soloLectura }: {
                       <div className="flex flex-wrap gap-1">
                         {v.pagos.map((p, i) => (
                           <span key={i} className="rounded-full border border-slate-200 px-1.5 py-0.5 text-[10px] text-slate-500">
-                            {METODO_PAGO_LABEL[p.metodo as MetodoPagoFarmacia] ?? p.metodo} {fmt(p.monto)}
+                            {METODO_PAGO_LABEL[p.metodo as MetodoPagoFarmacia] ?? p.metodo} {f.dinero(p.monto)}
                           </span>
                         ))}
                       </div>
                     </td>
-                    <td className="px-5 py-2.5 text-right text-xs font-bold tabular-nums text-slate-900">{fmt(v.total)}</td>
+                    <td className="px-5 py-2.5 text-right text-xs font-bold tabular-nums text-slate-900">{f.dinero(v.total)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -169,8 +161,8 @@ export function CierreCaja({ cierres, ventasTurno, esGestor, soloLectura }: {
       {!soloLectura && segundosSalida === null && (
         <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
           <div className="mb-4 flex items-start gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-teal-50">
-              <Lock className="h-4 w-4 text-teal-600" />
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50">
+              <Lock className="h-4 w-4 text-brand-600" />
             </div>
             <div>
               <p className="text-sm font-bold text-slate-900">Cerrar caja (a ciegas)</p>
@@ -204,7 +196,7 @@ export function CierreCaja({ cierres, ventasTurno, esGestor, soloLectura }: {
           </div>
 
           <Button
-            className="mt-4 h-11 w-full rounded-xl bg-teal-600 font-bold hover:bg-teal-700"
+            className="mt-4 h-11 w-full rounded-xl bg-brand-600 font-bold hover:bg-brand-700"
             onClick={cerrar} disabled={isPending}
           >
             {isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Cerrando…</> : "🔒 Cerrar caja"}
@@ -227,7 +219,7 @@ export function CierreCaja({ cierres, ventasTurno, esGestor, soloLectura }: {
           <div className="mb-3 flex items-center gap-2">
             {Math.abs(Number(resultado.diferencia.total)) < 0.01
               ? <><CheckCircle2 className="h-5 w-5 text-emerald-600" /><p className="text-sm font-bold text-emerald-900">Caja cuadrada — {resultado.num_ventas} ventas en el período</p></>
-              : <><AlertTriangle className="h-5 w-5 text-amber-600" /><p className="text-sm font-bold text-amber-900">Diferencia de {fmt(Number(resultado.diferencia.total))} — {resultado.num_ventas} ventas</p></>}
+              : <><AlertTriangle className="h-5 w-5 text-amber-600" /><p className="text-sm font-bold text-amber-900">Diferencia de {f.dinero(Number(resultado.diferencia.total))} — {resultado.num_ventas} ventas</p></>}
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
@@ -243,10 +235,10 @@ export function CierreCaja({ cierres, ventasTurno, esGestor, soloLectura }: {
                   return (
                     <tr key={m} className="border-t border-black/5">
                       <td className="py-1.5 pr-4 font-medium text-slate-700">{METODO_PAGO_LABEL[m]}</td>
-                      <td className="py-1.5 pr-4 text-right tabular-nums">{fmt(Number(resultado.declarado[m] ?? 0))}</td>
-                      <td className="py-1.5 pr-4 text-right tabular-nums">{fmt(Number(resultado.esperado[m] ?? 0))}</td>
+                      <td className="py-1.5 pr-4 text-right tabular-nums">{f.dinero(Number(resultado.declarado[m] ?? 0))}</td>
+                      <td className="py-1.5 pr-4 text-right tabular-nums">{f.dinero(Number(resultado.esperado[m] ?? 0))}</td>
                       <td className={`py-1.5 text-right font-bold tabular-nums ${d === 0 ? "text-slate-400" : d > 0 ? "text-emerald-600" : "text-rose-600"}`}>
-                        {d > 0 ? "+" : ""}{fmt(d)}
+                        {d > 0 ? "+" : ""}{f.dinero(d)}
                       </td>
                     </tr>
                   )
@@ -303,15 +295,15 @@ export function CierreCaja({ cierres, ventasTurno, esGestor, soloLectura }: {
                     <>
                       <tr key={c.id} onClick={() => setExpandido(abierto ? null : c.id)}
                           className="cursor-pointer hover:bg-slate-50/50">
-                        <td className="whitespace-nowrap px-4 py-3 text-xs text-slate-500">{fmtFechaHora(c.hasta)}</td>
+                        <td className="whitespace-nowrap px-4 py-3 text-xs text-slate-500">{f.fechaHora(c.hasta)}</td>
                         {esGestor && <td className="px-4 py-3 text-xs font-medium text-slate-700">{c.cajero}</td>}
                         <td className="px-4 py-3 text-right text-xs tabular-nums text-slate-500">{c.ventas}</td>
-                        <td className="px-4 py-3 text-right tabular-nums text-slate-700">{fmt(dec)}</td>
-                        <td className="px-4 py-3 text-right tabular-nums text-slate-700">{fmt(esp)}</td>
+                        <td className="px-4 py-3 text-right tabular-nums text-slate-700">{f.dinero(dec)}</td>
+                        <td className="px-4 py-3 text-right tabular-nums text-slate-700">{f.dinero(esp)}</td>
                         <td className={`px-4 py-3 text-right font-bold tabular-nums ${
                           Math.abs(dif) < 0.01 ? "text-emerald-600" : dif > 0 ? "text-amber-600" : "text-rose-600"
                         }`}>
-                          {Math.abs(dif) < 0.01 ? "✓ Cuadró" : `${dif > 0 ? "+" : ""}${fmt(dif)}`}
+                          {Math.abs(dif) < 0.01 ? "✓ Cuadró" : `${dif > 0 ? "+" : ""}${f.dinero(dif)}`}
                         </td>
                         <td className="pr-3 text-right">
                           <ChevronDown className={`h-4 w-4 text-slate-300 transition-transform ${abierto ? "rotate-180" : ""}`} />
@@ -327,9 +319,9 @@ export function CierreCaja({ cierres, ventasTurno, esGestor, soloLectura }: {
                                   <div key={m} className="flex items-center justify-between text-xs">
                                     <span className="text-slate-500">{METODO_PAGO_LABEL[m]}</span>
                                     <span className="tabular-nums">
-                                      {fmt(Number(c.declarado?.[m] ?? 0))} / {fmt(Number(c.esperado?.[m] ?? 0))}
+                                      {f.dinero(Number(c.declarado?.[m] ?? 0))} / {f.dinero(Number(c.esperado?.[m] ?? 0))}
                                       <span className={`ml-2 font-bold ${d === 0 ? "text-slate-300" : d > 0 ? "text-emerald-600" : "text-rose-600"}`}>
-                                        {d > 0 ? "+" : ""}{d === 0 ? "—" : fmt(d)}
+                                        {d > 0 ? "+" : ""}{d === 0 ? "—" : f.dinero(d)}
                                       </span>
                                     </span>
                                   </div>

@@ -164,7 +164,7 @@ export default async function PrestamosPage() {
   const greeting  = hour < 12 ? "Buenos días" : hour < 18 ? "Buenas tardes" : "Buenas noches"
 
   return (
-    <div className="min-h-screen bg-[#fafafa]">
+    <div className="min-h-screen bg-[#F7F9FC]">
 
       {/* ── HEADER ────────────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-30 border-b border-slate-100 bg-white/80 backdrop-blur-md">

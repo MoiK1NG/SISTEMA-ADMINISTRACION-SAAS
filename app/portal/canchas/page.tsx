@@ -96,7 +96,7 @@ export default async function CanchasPage({
   const initials     = profile?.full_name ? getInitials(profile.full_name) : "U"
 
   return (
-    <div className="min-h-screen bg-[#fafafa]">
+    <div className="min-h-screen bg-[#F7F9FC]">
 
       {/* ── HEADER ────────────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-30 border-b border-slate-100 bg-white/80 backdrop-blur-md">

@@ -10,7 +10,7 @@ export default async function PacientesFarmaciaPage() {
 
   if (!negocio) {
     return (
-      <div className="min-h-screen bg-[#fafafa]">
+      <div className="min-h-screen bg-[#F7F9FC]">
         <PortalNav portal="farmacia" />
         <p className="py-24 text-center text-sm text-slate-500">No perteneces a ninguna farmacia.</p>
       </div>
@@ -51,10 +51,10 @@ export default async function PacientesFarmaciaPage() {
   })
 
   return (
-    <div className="min-h-screen bg-[#fafafa]">
+    <div className="min-h-screen bg-[#F7F9FC]">
       <header className="sticky top-0 z-30 border-b border-slate-100 bg-white/80 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 shadow-sm shadow-teal-500/30">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-600 to-brand-900 shadow-sm shadow-brand-500/30">
             <HeartPulse className="h-4 w-4 text-white" />
           </div>
           <div>

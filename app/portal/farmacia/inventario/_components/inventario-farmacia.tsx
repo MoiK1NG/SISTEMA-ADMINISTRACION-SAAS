@@ -1,12 +1,13 @@
 "use client"
 
-import { COP, FECHA } from "@/lib/farmacia/formato"
 import { useMemo, useState } from "react"
 import Link from "next/link"
-import { Search, Plus, ScanBarcode, AlertTriangle } from "lucide-react"
+import { Search, Plus, ScanBarcode, AlertTriangle, CalendarOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { CADUCIDAD_META, type EstadoCaducidad } from "@/lib/farmacia/caducidad"
+import { costoConIva, margen } from "@/lib/farmacia/formato"
+import { useFormato } from "@/components/farmacia/negocio-provider"
 import { ProductoFormDialog } from "./producto-form"
 
 export interface CatalogoItem { id: string; nombre: string }
@@ -21,7 +22,8 @@ export interface FilaProducto {
   categoria:        string
   registro_invima:  string | null
   precio_venta:     number
-  costo:            number | null   // null para el cajero
+  costo:            number | null   // neto, null para el cajero
+  iva_pct:          number
   requiere_receta:  boolean
   activo:           boolean
   laboratorio_id:   string | null
@@ -29,20 +31,17 @@ export interface FilaProducto {
   stock_venta:      number
   stock_bodega:     number
   vence:            string | null
+  /** Lotes con unidades que todavía no tienen fecha de vencimiento cargada */
+  lotes_sin_fecha:  number
   semaforo:         EstadoCaducidad | null
 }
 
-const fmt = (n: number) =>
-  COP.format(n)
-
-const fmtFecha = (iso: string) =>
-  FECHA.format(new Date(iso + "T00:00:00"))
-
-type Filtro = "todos" | "por_vencer" | "sin_stock" | "inactivos"
+type Filtro = "todos" | "por_vencer" | "sin_fecha" | "sin_stock" | "inactivos"
 
 const FILTROS: { id: Filtro; label: string }[] = [
   { id: "todos",      label: "Todos"        },
   { id: "por_vencer", label: "🔴 Por vencer" },
+  { id: "sin_fecha",  label: "Sin fecha"    },
   { id: "sin_stock",  label: "Sin stock"    },
   { id: "inactivos",  label: "Inactivos"    },
 ]
@@ -54,7 +53,13 @@ interface Props {
   esGestor:     boolean
 }
 
+/** "Amlodipino + Valsartán 5/160 mg": el principio activo con su concentración al lado. */
+export function principioConConcentracion(p: { principio_activo: string | null; concentracion: string | null }) {
+  return [p.principio_activo, p.concentracion].filter(Boolean).join(" ") || null
+}
+
 export function InventarioFarmacia({ filas, proveedores, laboratorios, esGestor }: Props) {
+  const fx = useFormato()
   const [busqueda, setBusqueda] = useState("")
   const [filtro, setFiltro]     = useState<Filtro>("todos")
   const [formAbierto, setFormAbierto] = useState(false)
@@ -64,6 +69,7 @@ export function InventarioFarmacia({ filas, proveedores, laboratorios, esGestor 
     const q = busqueda.trim().toLowerCase()
     return filas.filter(f => {
       if (filtro === "por_vencer" && !(f.semaforo === "rojo" || f.semaforo === "vencido")) return false
+      if (filtro === "sin_fecha"  && f.lotes_sin_fecha === 0) return false
       if (filtro === "sin_stock"  && f.stock_venta + f.stock_bodega > 0) return false
       if (filtro === "inactivos"  && f.activo) return false
       if (filtro !== "inactivos"  && !f.activo) return false
@@ -76,7 +82,8 @@ export function InventarioFarmacia({ filas, proveedores, laboratorios, esGestor 
     })
   }, [filas, busqueda, filtro])
 
-  const alertas = filas.filter(f => f.activo && (f.semaforo === "rojo" || f.semaforo === "vencido")).length
+  const alertas  = filas.filter(f => f.activo && (f.semaforo === "rojo" || f.semaforo === "vencido")).length
+  const sinFecha = filas.filter(f => f.activo && f.lotes_sin_fecha > 0).length
 
   return (
     <div className="space-y-4">
@@ -97,14 +104,14 @@ export function InventarioFarmacia({ filas, proveedores, laboratorios, esGestor 
         {esGestor && (
           <Button
             onClick={() => { setEditando(null); setFormAbierto(true) }}
-            className="gap-1.5 bg-teal-600 hover:bg-teal-700"
+            className="gap-1.5 bg-brand-600 hover:bg-brand-700"
           >
             <Plus className="h-4 w-4" />Nuevo producto
           </Button>
         )}
       </div>
 
-      {/* ── Filtros + alerta ──────────────────────────────────────────────── */}
+      {/* ── Filtros + alertas ─────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center gap-2">
         {FILTROS.map(f => (
           <button
@@ -112,22 +119,34 @@ export function InventarioFarmacia({ filas, proveedores, laboratorios, esGestor 
             onClick={() => setFiltro(f.id)}
             className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
               filtro === f.id
-                ? "bg-teal-600 text-white"
+                ? "bg-brand-600 text-white"
                 : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
             }`}
           >
             {f.label}
           </button>
         ))}
-        {alertas > 0 && filtro !== "por_vencer" && (
-          <button
-            onClick={() => setFiltro("por_vencer")}
-            className="ml-auto flex items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-700"
-          >
-            <AlertTriangle className="h-3 w-3" />
-            {alertas} por vencer
-          </button>
-        )}
+        <div className="ml-auto flex flex-wrap gap-2">
+          {sinFecha > 0 && filtro !== "sin_fecha" && (
+            <button
+              onClick={() => setFiltro("sin_fecha")}
+              className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-600"
+              title="Lotes cargados sin fecha de vencimiento: se venden, pero conviene completarla"
+            >
+              <CalendarOff className="h-3 w-3" />
+              {sinFecha} sin fecha
+            </button>
+          )}
+          {alertas > 0 && filtro !== "por_vencer" && (
+            <button
+              onClick={() => setFiltro("por_vencer")}
+              className="flex items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-700"
+            >
+              <AlertTriangle className="h-3 w-3" />
+              {alertas} por vencer
+            </button>
+          )}
+        </div>
       </div>
 
       {/* ── Tabla ─────────────────────────────────────────────────────────── */}
@@ -141,13 +160,14 @@ export function InventarioFarmacia({ filas, proveedores, laboratorios, esGestor 
               <th className="px-4 py-2.5 text-right text-[10px] font-bold uppercase tracking-wider text-slate-400">Bodega</th>
               <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-slate-400">Vence</th>
               <th className="px-4 py-2.5 text-right text-[10px] font-bold uppercase tracking-wider text-slate-400">Precio</th>
-              {esGestor && <th className="px-4 py-2.5 text-right text-[10px] font-bold uppercase tracking-wider text-slate-400">Costo</th>}
+              {esGestor && <th className="px-4 py-2.5 text-right text-[10px] font-bold uppercase tracking-wider text-slate-400" title="Costo neto más IVA">Costo c/IVA</th>}
+              {esGestor && <th className="px-4 py-2.5 text-right text-[10px] font-bold uppercase tracking-wider text-slate-400" title="Utilidad sobre el precio de venta">Margen</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
             {visibles.length === 0 && (
               <tr>
-                <td colSpan={esGestor ? 7 : 6} className="py-16 text-center">
+                <td colSpan={esGestor ? 8 : 6} className="py-16 text-center">
                   <p className="text-3xl">💊</p>
                   <p className="mt-2 text-sm font-medium text-slate-700">
                     {filas.length === 0 ? "El inventario está vacío" : "Sin resultados"}
@@ -155,7 +175,7 @@ export function InventarioFarmacia({ filas, proveedores, laboratorios, esGestor 
                   <p className="mt-1 text-xs text-slate-400">
                     {filas.length === 0
                       ? esGestor ? "Crea el primer producto con el botón de arriba" : "El dueño o regente deben cargar el catálogo"
-                      : "Proba con otro término u otro filtro"}
+                      : "Prueba con otro término u otro filtro"}
                   </p>
                 </td>
               </tr>
@@ -164,13 +184,15 @@ export function InventarioFarmacia({ filas, proveedores, laboratorios, esGestor 
             {visibles.map(f => {
               const sem = f.semaforo ? CADUCIDAD_META[f.semaforo] : null
               const sinStock = f.stock_venta + f.stock_bodega <= 0
+              const principio = principioConConcentracion(f)
+              const costoIva  = f.costo != null ? costoConIva(f.costo, f.iva_pct) : null
+              const mg        = f.costo != null ? margen(f.precio_venta, f.costo, f.iva_pct) : null
               return (
-                <tr key={f.id} className="group transition-colors hover:bg-teal-50/40">
+                <tr key={f.id} className="group transition-colors hover:bg-brand-50/40">
                   <td className="px-4 py-3">
                     <Link href={`/portal/farmacia/inventario/${f.id}`} className="block">
-                      <p className="font-semibold text-slate-900 group-hover:text-teal-700">
+                      <p className="font-semibold text-slate-900 group-hover:text-brand-700">
                         {f.nombre}
-                        {f.concentracion && <span className="ml-1 font-normal text-slate-400">{f.concentracion}</span>}
                         {!f.activo && (
                           <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">Inactivo</span>
                         )}
@@ -184,25 +206,40 @@ export function InventarioFarmacia({ filas, proveedores, laboratorios, esGestor 
                       </p>
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-xs text-slate-600">{f.principio_activo ?? "—"}</td>
+                  <td className="px-4 py-3 text-xs text-slate-600">
+                    {principio ?? <span className="text-slate-300">—</span>}
+                  </td>
                   <td className={`px-4 py-3 text-right tabular-nums ${sinStock ? "font-bold text-rose-600" : "text-slate-900"}`}>
                     {f.stock_venta}
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums text-slate-500">{f.stock_bodega}</td>
                   <td className="px-4 py-3">
-                    {f.vence && sem ? (
+                    {sem ? (
                       <span className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-bold ${sem.clases}`}>
                         <span className={`h-1.5 w-1.5 rounded-full ${sem.dot}`} />
-                        {fmtFecha(f.vence)}
+                        {f.vence ? fx.fecha(f.vence) : sem.label}
                       </span>
                     ) : (
                       <span className="text-xs text-slate-300">—</span>
                     )}
+                    {f.vence && f.lotes_sin_fecha > 0 && (
+                      <span className="ml-1.5 text-[10px] text-slate-400" title="Además hay lotes sin fecha de vencimiento">
+                        +{f.lotes_sin_fecha} sin fecha
+                      </span>
+                    )}
                   </td>
-                  <td className="px-4 py-3 text-right font-semibold tabular-nums text-slate-900">{fmt(f.precio_venta)}</td>
+                  <td className="px-4 py-3 text-right font-semibold tabular-nums text-slate-900">{fx.dinero(f.precio_venta)}</td>
                   {esGestor && (
                     <td className="px-4 py-3 text-right tabular-nums text-slate-500">
-                      {f.costo != null ? fmt(f.costo) : "—"}
+                      {costoIva != null ? fx.dinero(costoIva) : "—"}
+                      {f.iva_pct > 0 && <span className="ml-1 text-[10px] text-slate-400">IVA {f.iva_pct}%</span>}
+                    </td>
+                  )}
+                  {esGestor && (
+                    <td className={`px-4 py-3 text-right text-xs font-bold tabular-nums ${
+                      mg == null ? "text-slate-300" : mg < 0 ? "text-rose-600" : mg < 0.15 ? "text-amber-600" : "text-emerald-600"
+                    }`}>
+                      {mg == null ? "—" : fx.porcentaje(mg)}
                     </td>
                   )}
                 </tr>
@@ -213,7 +250,7 @@ export function InventarioFarmacia({ filas, proveedores, laboratorios, esGestor 
       </div>
 
       <p className="text-xs text-slate-400">
-        {visibles.length} de {filas.length} productos · toca un producto para ver sus lotes, vencimientos y movimientos
+        {visibles.length} de {filas.length} productos · toca un producto para ver sus lotes, vencimientos, movimientos e historial de cambios
       </p>
 
       {esGestor && (

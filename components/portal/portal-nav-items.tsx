@@ -91,7 +91,7 @@ export function PortalNavItems({ portal, top, sticky, esAdmin, otros }: Props) {
           {esAdmin && (
             <Link
               href="/admin"
-              className="flex shrink-0 items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-100"
+              className="flex shrink-0 items-center gap-1.5 rounded-lg border border-brand-200 bg-brand-50 px-3 py-1.5 text-sm font-semibold text-brand-700 transition-colors hover:bg-brand-100"
             >
               <Shield className="h-3.5 w-3.5" />
               Panel admin

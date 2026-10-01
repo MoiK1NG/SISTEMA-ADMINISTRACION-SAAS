@@ -1,6 +1,6 @@
 "use client"
 
-import { COP } from "@/lib/farmacia/formato"
+import { useFormato } from "@/components/farmacia/negocio-provider"
 import { useMemo, useRef, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import {
@@ -30,9 +30,6 @@ export interface ClientePos { id: string; nombre: string; cedula: string | null;
 
 interface ItemCarrito { producto: ProductoPos; cantidad: number }
 
-const fmt = (n: number) =>
-  COP.format(n)
-
 interface Props {
   productos:   ProductoPos[]
   clientes:    ClientePos[]
@@ -40,6 +37,7 @@ interface Props {
 }
 
 export function PosFarmacia({ productos, clientes, soloLectura }: Props) {
+  const f = useFormato()
   const router = useRouter()
   const inputRef = useRef<HTMLInputElement>(null)
   const [busqueda, setBusqueda] = useState("")
@@ -118,7 +116,7 @@ export function PosFarmacia({ productos, clientes, soloLectura }: Props) {
             onChange={e => setBusqueda(e.target.value)}
             onKeyDown={e => e.key === "Enter" && onEnterBusqueda()}
             placeholder="Escanea el código o busca por nombre / principio activo…"
-            className="h-13 w-full rounded-2xl border border-slate-200 bg-white py-3.5 pl-12 pr-11 text-sm shadow-sm outline-none transition-all focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20"
+            className="h-13 w-full rounded-2xl border border-slate-200 bg-white py-3.5 pl-12 pr-11 text-sm shadow-sm outline-none transition-all focus:border-brand-400 focus:ring-2 focus:ring-brand-500/20"
           />
           <ScanBarcode className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-300" />
         </div>
@@ -153,22 +151,23 @@ export function PosFarmacia({ productos, clientes, soloLectura }: Props) {
                       className={`flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition-all ${
                         sinStock
                           ? "cursor-not-allowed border-slate-100 bg-slate-50 opacity-70"
-                          : "border-slate-100 bg-white hover:border-teal-300 hover:bg-teal-50/50 active:scale-[0.99]"
+                          : "border-slate-100 bg-white hover:border-brand-300 hover:bg-brand-50/50 active:scale-[0.99]"
                       }`}
                     >
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-semibold text-slate-900">
-                          {p.nombre} {p.concentracion && <span className="font-normal text-slate-400">{p.concentracion}</span>}
+                          {p.nombre}
                           {p.requiere_receta && (
                             <span className="ml-2 rounded-full bg-violet-50 px-1.5 py-0.5 text-[10px] font-bold text-violet-700">Rx</span>
                           )}
                         </p>
+                        {/* Principio activo con su concentración al lado (pedido del equipo) */}
                         <p className="mt-0.5 truncate text-xs text-slate-400">
-                          {p.principio_activo ?? "—"}{p.presentacion ? ` · ${p.presentacion}` : ""}
+                          {[p.principio_activo, p.concentracion].filter(Boolean).join(" ") || "—"}{p.presentacion ? ` · ${p.presentacion}` : ""}
                         </p>
                       </div>
                       <div className="shrink-0 text-right">
-                        <p className="text-sm font-bold text-slate-900">{fmt(p.precio)}</p>
+                        <p className="text-sm font-bold text-slate-900">{f.dinero(p.precio)}</p>
                         <p className={`text-[11px] font-semibold ${sinStock ? "text-rose-500" : "text-emerald-600"}`}>
                           {sinStock ? "Sin stock" : `${p.stock} disp.`}
                         </p>
@@ -176,13 +175,13 @@ export function PosFarmacia({ productos, clientes, soloLectura }: Props) {
                     </button>
 
                     {equivalentes.length > 0 && (
-                      <div className="ml-4 mt-1 flex flex-wrap items-center gap-1.5 rounded-xl bg-teal-50/60 px-3 py-2">
-                        <Repeat2 className="h-3 w-3 text-teal-600" />
-                        <span className="text-[11px] font-semibold text-teal-800">Equivalentes con stock:</span>
+                      <div className="ml-4 mt-1 flex flex-wrap items-center gap-1.5 rounded-xl bg-brand-50/60 px-3 py-2">
+                        <Repeat2 className="h-3 w-3 text-brand-600" />
+                        <span className="text-[11px] font-semibold text-brand-800">Equivalentes con stock:</span>
                         {equivalentes.map(e => (
                           <button key={e.id} onClick={() => agregar(e)} disabled={soloLectura}
-                                  className="rounded-full border border-teal-200 bg-white px-2.5 py-0.5 text-[11px] font-medium text-teal-800 hover:bg-teal-100">
-                            {e.nombre} · {fmt(e.precio)}
+                                  className="rounded-full border border-brand-200 bg-white px-2.5 py-0.5 text-[11px] font-medium text-brand-800 hover:bg-brand-100">
+                            {e.nombre} · {f.dinero(e.precio)}
                           </button>
                         ))}
                       </div>
@@ -199,7 +198,7 @@ export function PosFarmacia({ productos, clientes, soloLectura }: Props) {
       <div className="flex w-full flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm lg:w-[360px] lg:shrink-0">
         <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-600">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600">
               <ShoppingCart className="h-4 w-4 text-white" />
             </div>
             <p className="text-sm font-bold text-slate-900">Ticket</p>
@@ -224,9 +223,9 @@ export function PosFarmacia({ productos, clientes, soloLectura }: Props) {
             <div key={i.producto.id} className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2">
               <div className="min-w-0 flex-1">
                 <p className="truncate text-xs font-semibold text-slate-800">
-                  {i.producto.nombre} {i.producto.concentracion ?? ""}
+                  {i.producto.nombre}{i.producto.concentracion ? ` · ${i.producto.concentracion}` : ""}
                 </p>
-                <p className="text-[10px] text-slate-400">{fmt(i.producto.precio)} c/u</p>
+                <p className="text-[10px] text-slate-400">{f.dinero(i.producto.precio)} c/u</p>
               </div>
               <div className="flex shrink-0 items-center gap-1">
                 <button onClick={() => cambiarCantidad(i.producto.id, -1)}
@@ -236,11 +235,11 @@ export function PosFarmacia({ productos, clientes, soloLectura }: Props) {
                 <span className="w-6 text-center text-sm font-bold tabular-nums">{i.cantidad}</span>
                 <button onClick={() => cambiarCantidad(i.producto.id, 1)}
                         disabled={i.cantidad >= i.producto.stock}
-                        className="flex h-6 w-6 items-center justify-center rounded-full bg-teal-600 text-white hover:bg-teal-700 disabled:opacity-30">
+                        className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-600 text-white hover:bg-brand-700 disabled:opacity-30">
                   <Plus className="h-3 w-3" />
                 </button>
               </div>
-              <p className="w-16 shrink-0 text-right text-xs font-bold tabular-nums">{fmt(i.producto.precio * i.cantidad)}</p>
+              <p className="w-16 shrink-0 text-right text-xs font-bold tabular-nums">{f.dinero(i.producto.precio * i.cantidad)}</p>
             </div>
           ))}
         </div>
@@ -249,14 +248,14 @@ export function PosFarmacia({ productos, clientes, soloLectura }: Props) {
         <div className="space-y-3 border-t border-slate-100 px-4 py-4">
           <div className="flex items-baseline justify-between">
             <span className="text-sm font-bold text-slate-900">Total</span>
-            <span className="text-2xl font-black tabular-nums text-slate-900">{fmt(total)}</span>
+            <span className="text-2xl font-black tabular-nums text-slate-900">{f.dinero(total)}</span>
           </div>
           <Button
-            className="h-12 w-full rounded-xl bg-teal-600 text-base font-bold hover:bg-teal-700"
+            className="h-12 w-full rounded-xl bg-brand-600 text-base font-bold hover:bg-brand-700"
             disabled={carrito.length === 0 || soloLectura}
             onClick={() => setCobroAbierto(true)}
           >
-            💳 Cobrar {total > 0 ? fmt(total) : ""}
+            💳 Cobrar {total > 0 ? f.dinero(total) : ""}
           </Button>
           {soloLectura && (
             <p className="text-center text-[11px] text-amber-600">Modo lectura: no se puede vender</p>
@@ -280,8 +279,8 @@ export function PosFarmacia({ productos, clientes, soloLectura }: Props) {
         <div className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-2xl border border-emerald-200 bg-white px-5 py-3.5 shadow-xl">
           <CheckCircle2 className="h-6 w-6 text-emerald-500" />
           <div>
-            <p className="text-sm font-bold text-slate-900">Venta #{exito.numero} registrada · {fmt(exito.total)}</p>
-            {exito.vuelto > 0 && <p className="text-xs font-semibold text-emerald-600">Vuelto: {fmt(exito.vuelto)}</p>}
+            <p className="text-sm font-bold text-slate-900">Venta #{exito.numero} registrada · {f.dinero(exito.total)}</p>
+            {exito.vuelto > 0 && <p className="text-xs font-semibold text-emerald-600">Vuelto: {f.dinero(exito.vuelto)}</p>}
           </div>
         </div>
       )}
@@ -325,7 +324,7 @@ function SelectorCliente({ clientes, value, onChange, disabled }: {
     return (
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
-          <UserRound className="h-3.5 w-3.5 shrink-0 text-teal-600" />
+          <UserRound className="h-3.5 w-3.5 shrink-0 text-brand-600" />
           <p className="truncate text-xs font-semibold text-slate-800">{value.nombre}</p>
           {value.cedula && <span className="shrink-0 text-[10px] text-slate-400">CC {value.cedula}</span>}
         </div>
@@ -360,7 +359,7 @@ function SelectorCliente({ clientes, value, onChange, disabled }: {
                   {filtrados.map(c => (
                     <button key={c.id}
                             onClick={() => { onChange(c); setAbierto(false); setQ("") }}
-                            className="flex w-full items-center justify-between rounded-lg border border-slate-100 px-3 py-2 text-left text-sm hover:bg-teal-50">
+                            className="flex w-full items-center justify-between rounded-lg border border-slate-100 px-3 py-2 text-left text-sm hover:bg-brand-50">
                       <span className="font-medium text-slate-800">{c.nombre}</span>
                       <span className="text-xs text-slate-400">{c.cedula ? `CC ${c.cedula}` : ""}</span>
                     </button>
@@ -392,7 +391,7 @@ function SelectorCliente({ clientes, value, onChange, disabled }: {
                 </div>
                 <div className="flex gap-2">
                   <Button variant="outline" className="flex-1" onClick={() => setNuevo(null)}>Volver</Button>
-                  <Button className="flex-1 bg-teal-600 hover:bg-teal-700" onClick={crear}
+                  <Button className="flex-1 bg-brand-600 hover:bg-brand-700" onClick={crear}
                           disabled={isPending || !nuevo.nombre.trim()}>
                     {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Crear y usar"}
                   </Button>
@@ -420,6 +419,7 @@ function ModalCobroMixto({ open, total, items, productosRx, clienteId, onClose, 
   onClose:   () => void
   onCompletada: (r: { numero: number; total: number; vuelto: number }) => void
 }) {
+  const f = useFormato()
   const [montos, setMontos] = useState<Record<MetodoPagoFarmacia, string>>({
     efectivo: "", tarjeta_debito: "", tarjeta_credito: "", transferencia: "",
   })
@@ -481,7 +481,7 @@ function ModalCobroMixto({ open, total, items, productosRx, clienteId, onClose, 
 
           <div className="rounded-2xl bg-slate-50 p-4 text-center">
             <p className="text-xs text-slate-500">Total a cobrar</p>
-            <p className="text-3xl font-black text-slate-900">{fmt(total)}</p>
+            <p className="text-3xl font-black text-slate-900">{f.dinero(total)}</p>
           </div>
 
           {hayRx && (
@@ -531,16 +531,16 @@ function ModalCobroMixto({ open, total, items, productosRx, clienteId, onClose, 
 
           <div className="space-y-1 rounded-xl border border-slate-100 px-4 py-2.5 text-sm">
             <div className="flex justify-between text-xs text-slate-500">
-              <span>Pagado</span><span className="tabular-nums">{fmt(pagado)}</span>
+              <span>Pagado</span><span className="tabular-nums">{f.dinero(pagado)}</span>
             </div>
             {falta > 0 && (
               <div className="flex justify-between font-semibold text-rose-600">
-                <span>Falta</span><span className="tabular-nums">{fmt(falta)}</span>
+                <span>Falta</span><span className="tabular-nums">{f.dinero(falta)}</span>
               </div>
             )}
             {vuelto > 0 && (
               <div className="flex justify-between font-semibold text-emerald-600">
-                <span>Vuelto (del efectivo)</span><span className="tabular-nums">{fmt(vuelto)}</span>
+                <span>Vuelto (del efectivo)</span><span className="tabular-nums">{f.dinero(vuelto)}</span>
               </div>
             )}
             {noEfectivo > total && (
@@ -550,7 +550,7 @@ function ModalCobroMixto({ open, total, items, productosRx, clienteId, onClose, 
 
           <div className="flex gap-3">
             <Button variant="outline" className="flex-1" onClick={onClose} disabled={isPending}>Cancelar</Button>
-            <Button className="flex-1 bg-teal-600 hover:bg-teal-700" onClick={confirmar} disabled={!valido || isPending}>
+            <Button className="flex-1 bg-brand-600 hover:bg-brand-700" onClick={confirmar} disabled={!valido || isPending}>
               {isPending ? <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" />Registrando…</> : "Confirmar venta"}
             </Button>
           </div>

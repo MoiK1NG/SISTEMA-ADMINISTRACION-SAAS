@@ -17,3 +17,8 @@ out/
 .DS_Store
 *.pem
 *.tsbuildinfo
+
+# Datos del cliente y material de marca sin procesar (no se versionan)
+cargar-inventario/
+logo/
+qa/

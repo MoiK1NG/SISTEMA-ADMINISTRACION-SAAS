@@ -43,7 +43,7 @@ export default async function MembershipsPage() {
     { label: "Activas",          value: activas,     color: "text-emerald-600" },
     { label: "Vencen en 7 días", value: porVencer,   color: "text-amber-600"   },
     { label: "Expiradas",        value: expiradas,   color: "text-red-600"     },
-    { label: "Total",            value: filas.length, color: "text-blue-600"   },
+    { label: "Total",            value: filas.length, color: "text-brand-600"   },
   ]
 
   return (
@@ -84,7 +84,7 @@ export default async function MembershipsPage() {
 
       <p className="text-xs text-muted-foreground">
         Para asignar una membresía nueva a un cliente, entra a{" "}
-        <Link href="/admin/users" className="font-medium text-blue-600 hover:underline">Usuarios</Link>{" "}
+        <Link href="/admin/users" className="font-medium text-brand-600 hover:underline">Usuarios</Link>{" "}
         y usa el menú de la fila.
       </p>
     </div>

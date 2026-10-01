@@ -1,4 +1,4 @@
-import { COP, DIA_SEMANA, FECHA_HORA, MES_ANIO } from "@/lib/farmacia/formato"
+import { formato } from "@/lib/farmacia/formato"
 import Link from "next/link"
 import { Wallet, TrendingUp, Landmark, PackageOpen, Lock } from "lucide-react"
 import { PortalNav } from "@/components/portal/portal-nav"
@@ -7,18 +7,13 @@ import { contextoFarmacia } from "@/lib/farmacia/contexto"
 import { METODO_PAGO_LABEL, type MetodoPagoFarmacia } from "@/lib/farmacia/pos-constants"
 import { ExportarCsv } from "@/components/farmacia/exportar-csv"
 
-const fmt = (n: number) =>
-  COP.format(n)
-
-const fmtDia = (iso: string) =>
-  DIA_SEMANA.format(new Date(iso + "T12:00:00"))
-
 export default async function FinanzasFarmaciaPage() {
   const { supabase, viendoA, negocio, rol } = await contextoFarmacia()
+  const f = formato(negocio?.moneda)
 
   if (!negocio) {
     return (
-      <div className="min-h-screen bg-[#fafafa]">
+      <div className="min-h-screen bg-[#F7F9FC]">
         <PortalNav portal="farmacia" />
         <p className="py-24 text-center text-sm text-slate-500">No perteneces a ninguna farmacia.</p>
       </div>
@@ -29,7 +24,7 @@ export default async function FinanzasFarmaciaPage() {
   // el regente no ve finanzas, el cajero menos)
   if (rol !== "dueno") {
     return (
-      <div className="min-h-screen bg-[#fafafa]">
+      <div className="min-h-screen bg-[#F7F9FC]">
         <PortalNav portal="farmacia" />
         {viendoA && <BannerVerComo nombre={viendoA.full_name || viendoA.email} email={viendoA.email} />}
         <div className="mx-auto max-w-md px-4 py-24 text-center">
@@ -116,19 +111,19 @@ export default async function FinanzasFarmaciaPage() {
   const maxDia = Math.max(1, ...dias.map(d => d.ingreso))
 
   const kpis = [
-    { label: "Vendido hoy",   valor: fmt(ingresoHoy),  sub: `${porDia.get(hoyStr)?.ventas ?? 0} ventas` },
-    { label: "Vendido en el mes", valor: fmt(ingresoMes), sub: `${(ventasMes ?? []).length} ventas + ${fmt(ingresoPedidosMes)} en encargos` },
-    { label: "Margen del mes", valor: fmt(margenMes),  sub: `${margenPct}% sobre la venta` },
-    { label: "Debes / te deben", valor: `${fmt(deudaCxp)}`, sub: `por pagar · te deben ${fmt(porCobrar)}` },
+    { label: "Vendido hoy",   valor: f.dinero(ingresoHoy),  sub: `${porDia.get(hoyStr)?.ventas ?? 0} ventas` },
+    { label: "Vendido en el mes", valor: f.dinero(ingresoMes), sub: `${(ventasMes ?? []).length} ventas + ${f.dinero(ingresoPedidosMes)} en encargos` },
+    { label: "Margen del mes", valor: f.dinero(margenMes),  sub: `${margenPct}% sobre la venta` },
+    { label: "Debes / te deben", valor: `${f.dinero(deudaCxp)}`, sub: `por pagar · te deben ${f.dinero(porCobrar)}` },
   ]
 
-  const nombreMes = MES_ANIO.format(new Date())
+  const nombreMes = f.mesAnio(new Date())
 
   return (
-    <div className="min-h-screen bg-[#fafafa]">
+    <div className="min-h-screen bg-[#F7F9FC]">
       <header className="sticky top-0 z-30 border-b border-slate-100 bg-white/80 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 shadow-sm shadow-teal-500/30">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-600 to-brand-900 shadow-sm shadow-brand-500/30">
             <Wallet className="h-4 w-4 text-white" />
           </div>
           <div>
@@ -157,7 +152,7 @@ export default async function FinanzasFarmaciaPage() {
           {/* ── Flujo por método ───────────────────────────────────────────── */}
           <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
             <p className="mb-4 flex items-center gap-2 text-sm font-bold text-slate-900">
-              <Landmark className="h-4 w-4 text-teal-600" />Ingresos del mes por método
+              <Landmark className="h-4 w-4 text-brand-600" />Ingresos del mes por método
             </p>
             {porMetodo.size === 0 ? (
               <p className="py-8 text-center text-sm text-slate-400">Sin ventas este mes</p>
@@ -169,10 +164,10 @@ export default async function FinanzasFarmaciaPage() {
                       <span className="font-medium text-slate-700">
                         {METODO_PAGO_LABEL[metodo as MetodoPagoFarmacia] ?? metodo}
                       </span>
-                      <span className="font-bold tabular-nums text-slate-900">{fmt(monto)}</span>
+                      <span className="font-bold tabular-nums text-slate-900">{f.dinero(monto)}</span>
                     </div>
                     <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-                      <div className="h-full rounded-full bg-teal-500" style={{ width: `${Math.round((monto / maxMetodo) * 100)}%` }} />
+                      <div className="h-full rounded-full bg-brand-500" style={{ width: `${Math.round((monto / maxMetodo) * 100)}%` }} />
                     </div>
                   </div>
                 ))}
@@ -187,9 +182,9 @@ export default async function FinanzasFarmaciaPage() {
           <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
             <div className="mb-4 flex items-center justify-between">
               <p className="flex items-center gap-2 text-sm font-bold text-slate-900">
-                <PackageOpen className="h-4 w-4 text-teal-600" />Últimos cierres de caja
+                <PackageOpen className="h-4 w-4 text-brand-600" />Últimos cierres de caja
               </p>
-              <Link href="/portal/farmacia/caja" className="text-xs font-medium text-teal-700 hover:underline">Ver todos</Link>
+              <Link href="/portal/farmacia/caja" className="text-xs font-medium text-brand-700 hover:underline">Ver todos</Link>
             </div>
             {(cierres ?? []).length === 0 ? (
               <p className="py-8 text-center text-sm text-slate-400">Sin cierres todavía</p>
@@ -200,11 +195,11 @@ export default async function FinanzasFarmaciaPage() {
                   return (
                     <div key={i} className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-2.5 text-sm">
                       <span className="text-xs text-slate-500">
-                        {FECHA_HORA.format(new Date(c.periodo_hasta))}
+                        {f.fechaHora(c.periodo_hasta)}
                         <span className="ml-2 text-slate-400">· {c.num_ventas} ventas</span>
                       </span>
                       <span className={`font-bold tabular-nums ${Math.abs(dif) < 0.01 ? "text-emerald-600" : dif > 0 ? "text-amber-600" : "text-rose-600"}`}>
-                        {Math.abs(dif) < 0.01 ? "✓ Cuadró" : `${dif > 0 ? "+" : ""}${fmt(dif)}`}
+                        {Math.abs(dif) < 0.01 ? "✓ Cuadró" : `${dif > 0 ? "+" : ""}${f.dinero(dif)}`}
                       </span>
                     </div>
                   )
@@ -219,7 +214,7 @@ export default async function FinanzasFarmaciaPage() {
           <div className="flex items-center justify-between border-b border-slate-50 px-5 py-4">
             <div>
               <p className="flex items-center gap-2 text-sm font-bold text-slate-900">
-                <TrendingUp className="h-4 w-4 text-teal-600" />Día a día · {nombreMes}
+                <TrendingUp className="h-4 w-4 text-brand-600" />Día a día · {nombreMes}
               </p>
               <p className="mt-0.5 text-xs text-slate-400">Venta, costo y margen — la base del reporte para tu contador</p>
             </div>
@@ -247,22 +242,22 @@ export default async function FinanzasFarmaciaPage() {
                   {dias.map(d => {
                     const margen = d.ingreso - d.costo
                     return (
-                      <tr key={d.fecha} className={`hover:bg-slate-50/50 ${d.fecha === hoyStr ? "bg-teal-50/40" : ""}`}>
+                      <tr key={d.fecha} className={`hover:bg-slate-50/50 ${d.fecha === hoyStr ? "bg-brand-50/40" : ""}`}>
                         <td className="whitespace-nowrap px-4 py-2.5 text-xs font-medium capitalize text-slate-700">
-                          {fmtDia(d.fecha)}{d.fecha === hoyStr && <span className="ml-1.5 text-[10px] font-bold text-teal-600">HOY</span>}
+                          {f.diaSemana(d.fecha)}{d.fecha === hoyStr && <span className="ml-1.5 text-[10px] font-bold text-brand-600">HOY</span>}
                         </td>
                         <td className="px-4 py-2.5">
                           <div className="flex items-center gap-2">
                             <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
-                              <div className="h-full rounded-full bg-teal-500" style={{ width: `${Math.round((d.ingreso / maxDia) * 100)}%` }} />
+                              <div className="h-full rounded-full bg-brand-500" style={{ width: `${Math.round((d.ingreso / maxDia) * 100)}%` }} />
                             </div>
-                            <span className="w-24 shrink-0 text-right text-xs font-bold tabular-nums">{fmt(d.ingreso)}</span>
+                            <span className="w-24 shrink-0 text-right text-xs font-bold tabular-nums">{f.dinero(d.ingreso)}</span>
                           </div>
                         </td>
                         <td className="px-4 py-2.5 text-right text-xs tabular-nums text-slate-500">{d.ventas}</td>
-                        <td className="px-4 py-2.5 text-right text-xs tabular-nums text-slate-500">{fmt(d.costo)}</td>
+                        <td className="px-4 py-2.5 text-right text-xs tabular-nums text-slate-500">{f.dinero(d.costo)}</td>
                         <td className={`px-4 py-2.5 text-right text-xs font-bold tabular-nums ${margen >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
-                          {fmt(margen)}
+                          {f.dinero(margen)}
                         </td>
                       </tr>
                     )
@@ -274,7 +269,7 @@ export default async function FinanzasFarmaciaPage() {
         </div>
 
         <p className="text-xs text-slate-400">
-          El margen usa el costo registrado al momento de cada venta (no el costo actual del
+          El margen usa el costo con IVA registrado al momento de cada venta (no el costo actual del
           catálogo). Productos cargados sin costo aparecen con margen del 100%: completa el
           costo en el inventario para que el número sea real. La declaración de impuestos
           sigue siendo de tu contador — este reporte es su insumo, exportable arriba.

@@ -7,15 +7,16 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import {
-  Building2, Loader2, AlertTriangle, TrendingUp, Shield, Zap,
-  BarChart3, Lock, ChevronRight,
+  Loader2, AlertTriangle, ChevronRight,
+  ShoppingCart, CalendarClock, Users, Calculator,
 } from "lucide-react"
 
+// Hablamos en resultados de negocio, no en funciones técnicas (manual de marca)
 const FEATURES = [
-  { icon: BarChart3,  text: "Dashboards en tiempo real"             },
-  { icon: Shield,     text: "Seguridad con Row Level Security"       },
-  { icon: TrendingUp, text: "KPIs y reportes automáticos"            },
-  { icon: Zap,        text: "Múltiples portales en un solo lugar"    },
+  { icon: ShoppingCart,  text: "Ventas, inventario y caja en un solo lugar" },
+  { icon: CalendarClock, text: "Vencimientos bajo control, antes de que pasen" },
+  { icon: Users,         text: "Cada persona de tu equipo con su rol y permisos" },
+  { icon: Calculator,    text: "Cierre de caja ciego, sin discusiones" },
 ]
 
 export default function LoginPage() {
@@ -51,33 +52,26 @@ export default function LoginPage() {
       {/* ── Panel izquierdo — identidad de marca ──────────────────────────── */}
       <div className="hidden lg:flex lg:w-[52%] flex-col justify-between relative overflow-hidden bg-slate-50 border-r border-slate-100 p-12">
         {/* Manchas decorativas suaves */}
-        <div className="absolute -top-32 -right-32 h-96 w-96 rounded-full bg-blue-100/60 blur-3xl" />
-        <div className="absolute -bottom-40 -left-20 h-80 w-80 rounded-full bg-sky-100/50 blur-3xl" />
+        <div className="absolute -top-32 -right-32 h-96 w-96 rounded-full bg-brand-100/60 blur-3xl" />
+        <div className="absolute -bottom-40 -left-20 h-80 w-80 rounded-full bg-brand-100/50 blur-3xl" />
 
         {/* Logo */}
-        <div className="relative z-10 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 shadow-sm shadow-blue-600/25">
-            <Building2 className="h-5 w-5 text-white" />
-          </div>
-          <div>
-            <p className="text-base font-bold tracking-tight text-slate-900">SaaS Admin</p>
-            <p className="text-[11px] text-slate-400 uppercase tracking-widest">Sistema Empresarial</p>
-          </div>
-        </div>
+        <Link href="/" className="relative z-10 inline-flex" aria-label="LOMS 360, ir al inicio">
+          <img src="/brand/loms360-logo.svg" alt="LOMS 360" className="h-10 w-auto" />
+        </Link>
 
         {/* Mensaje central */}
         <div className="relative z-10 space-y-8">
           <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Plataforma multi-portal activa
+            <div className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-700">
+              La solución 360 para tu negocio
             </div>
-            <h1 className="text-4xl font-black leading-tight tracking-tight text-slate-900">
-              Gestiona tu negocio<br />
-              <span className="text-blue-600">sin complicaciones</span>
+            <h1 className="text-4xl font-bold leading-tight tracking-tight text-brand-900">
+              Tu negocio,<br />
+              <span className="text-brand-600">siempre bajo control</span>
             </h1>
             <p className="text-base text-slate-500 leading-relaxed max-w-sm">
-              Un sistema completo para préstamos, cobros, restaurantes, panaderías y más.
+              Clientes, ventas, inventario y finanzas conectados en una sola plataforma.
             </p>
           </div>
 
@@ -85,7 +79,7 @@ export default function LoginPage() {
             {FEATURES.map(({ icon: Icon, text }) => (
               <li key={text} className="flex items-center gap-3">
                 <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white border border-slate-200 shadow-sm">
-                  <Icon className="h-3.5 w-3.5 text-blue-600" />
+                  <Icon className="h-3.5 w-3.5 text-brand-600" />
                 </div>
                 <span className="text-sm text-slate-600">{text}</span>
               </li>
@@ -96,7 +90,7 @@ export default function LoginPage() {
         {/* Footer */}
         <div className="relative z-10">
           <p className="text-xs text-slate-400">
-            © {new Date().getFullYear()} SaaS Admin · Todos los derechos reservados
+            © {new Date().getFullYear()} LOMS 360 · Todos los derechos reservados
           </p>
         </div>
       </div>
@@ -104,18 +98,15 @@ export default function LoginPage() {
       {/* ── Panel derecho — formulario ────────────────────────────────────── */}
       <div className="flex flex-1 flex-col items-center justify-center bg-white px-6 py-12 sm:px-12">
         {/* Logo móvil */}
-        <div className="lg:hidden mb-10 flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600">
-            <Building2 className="h-4.5 w-4.5 text-white" />
-          </div>
-          <span className="text-lg font-bold text-slate-900">SaaS Admin</span>
-        </div>
+        <Link href="/" className="lg:hidden mb-10 inline-flex" aria-label="LOMS 360, ir al inicio">
+          <img src="/brand/loms360-logo.svg" alt="LOMS 360" className="h-9 w-auto" />
+        </Link>
 
         <div className="w-full max-w-sm space-y-8">
           {/* Encabezado */}
           <div>
-            <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Bienvenido de vuelta</h2>
-            <p className="mt-1.5 text-sm text-slate-500">Inicia sesión para acceder a tus portales</p>
+            <h2 className="text-2xl font-bold text-brand-900 tracking-tight">Hola de nuevo</h2>
+            <p className="mt-1.5 text-sm text-slate-500">Inicia sesión para ver cómo va tu negocio hoy</p>
           </div>
 
           {/* Formulario */}
@@ -147,7 +138,7 @@ export default function LoginPage() {
                 </Label>
                 <Link
                   href="/forgot-password"
-                  className="text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
+                  className="text-xs font-medium text-brand-600 hover:text-brand-700 transition-colors"
                 >
                   ¿Olvidaste tu contraseña?
                 </Link>
@@ -163,7 +154,7 @@ export default function LoginPage() {
 
             <Button
               type="submit" disabled={loading}
-              className="w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-700 font-semibold text-sm shadow-sm shadow-blue-600/20 transition-all"
+              className="w-full h-11 rounded-xl bg-brand-600 hover:bg-brand-700 font-semibold text-sm shadow-sm shadow-brand-600/20 transition-all"
             >
               {loading ? (
                 <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Iniciando sesión…</>

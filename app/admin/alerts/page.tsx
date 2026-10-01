@@ -132,9 +132,9 @@ export default async function AlertsPage() {
 
       {/* Aprobaciones pendientes */}
       {(pendingUsers?.length ?? 0) > 0 && (
-        <Card className="border-blue-200">
+        <Card className="border-brand-200">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2 text-blue-600">
+            <CardTitle className="text-base flex items-center gap-2 text-brand-600">
               <UserX className="h-4 w-4" />
               Aprobaciones pendientes
               <Badge className="ml-auto">{pendingUsers!.length}</Badge>
@@ -142,13 +142,13 @@ export default async function AlertsPage() {
           </CardHeader>
           <CardContent className="space-y-2 pt-0">
             {pendingUsers!.map((u: any) => (
-              <div key={u.id} className="flex items-center justify-between rounded-lg bg-blue-50 px-4 py-3">
+              <div key={u.id} className="flex items-center justify-between rounded-lg bg-brand-50 px-4 py-3">
                 <div>
-                  <p className="text-sm font-semibold text-blue-900">{u.full_name || "Sin nombre"}</p>
-                  <p className="text-xs text-blue-600">{u.email}</p>
+                  <p className="text-sm font-semibold text-brand-900">{u.full_name || "Sin nombre"}</p>
+                  <p className="text-xs text-brand-600">{u.email}</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <p className="text-xs text-blue-500">{new Date(u.created_at).toLocaleDateString("es-CO")}</p>
+                  <p className="text-xs text-brand-500">{new Date(u.created_at).toLocaleDateString("es-CO")}</p>
                   <Button asChild variant="outline" size="sm" className="h-7 text-xs">
                     <Link href="/admin/users">Revisar <ArrowRight className="h-3 w-3 ml-1" /></Link>
                   </Button>
