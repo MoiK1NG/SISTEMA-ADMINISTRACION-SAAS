@@ -3,17 +3,17 @@
 import { useFormato } from "@/components/farmacia/negocio-provider"
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { Plus, Loader2, MoreHorizontal, PackagePlus, PackageMinus, ArrowLeftRight } from "lucide-react"
+import { Plus, Loader2, MoreHorizontal, PackagePlus, PackageMinus, ArrowLeftRight, Pencil, CalendarPlus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
-  DropdownMenuLabel, DropdownMenuTrigger,
+  DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { CADUCIDAD_META, type EstadoCaducidad, diasParaVencer } from "@/lib/farmacia/caducidad"
-import { crearLoteFarmacia, registrarMovimientoFarmacia } from "../../../actions"
+import { crearLoteFarmacia, registrarMovimientoFarmacia, editarLoteFarmacia } from "../../../actions"
 
 export interface FilaLote {
   id:                string
@@ -49,6 +49,28 @@ export function LotesManager({ productoId, lotes, esGestor }: {
   // Dialog nuevo lote
   const [loteAbierto, setLoteAbierto] = useState(false)
   const [formLote, setFormLote]       = useState(LOTE_VACIO)
+
+  // Dialog editar lote (número, vencimiento, estantería)
+  const [editando, setEditando] = useState<FilaLote | null>(null)
+  const [formEdit, setFormEdit] = useState({ lote: "", fecha_vencimiento: "", estanteria: "" })
+
+  function abrirEdicion(l: FilaLote) {
+    setError(null)
+    setFormEdit({ lote: l.lote, fecha_vencimiento: l.fecha_vencimiento ?? "", estanteria: l.estanteria ?? "" })
+    setEditando(l)
+  }
+
+  function guardarLote() {
+    if (!editando) return
+    setError(null)
+    start(async () => {
+      try {
+        await editarLoteFarmacia({ lote_id: editando.id, producto_id: productoId, ...formEdit })
+        setEditando(null)
+        router.refresh()
+      } catch (e: any) { setError(e?.message ?? "No se pudo guardar el lote") }
+    })
+  }
 
   // Dialog movimiento
   const [mov, setMov] = useState<{ lote: FilaLote; tipo: string; label: string } | null>(null)
@@ -102,7 +124,7 @@ export function LotesManager({ productoId, lotes, esGestor }: {
         )}
       </div>
 
-      {error && !loteAbierto && !mov && (
+      {error && !loteAbierto && !mov && !editando && (
         <p className="mx-5 mt-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-700">{error}</p>
       )}
 
@@ -144,9 +166,18 @@ export function LotesManager({ productoId, lotes, esGestor }: {
                         <span className={`h-1.5 w-1.5 rounded-full ${sem.dot}`} />
                         {l.fecha_vencimiento ? f.fecha(l.fecha_vencimiento) : "Sin fecha"}
                       </span>
-                      <span className="ml-2 text-[10px] text-slate-400">
-                        {dias === null ? "completar la fecha" : dias < 0 ? `venció hace ${-dias} días` : `en ${dias} días`}
-                      </span>
+                      {dias === null && esGestor ? (
+                        <button
+                          onClick={() => abrirEdicion(l)}
+                          className="ml-2 inline-flex items-center gap-1 rounded-full border border-brand-200 bg-brand-50 px-2 py-0.5 text-[10px] font-semibold text-brand-700 hover:bg-brand-100"
+                        >
+                          <CalendarPlus className="h-3 w-3" />Completar fecha
+                        </button>
+                      ) : (
+                        <span className="ml-2 text-[10px] text-slate-400">
+                          {dias === null ? "falta la fecha" : dias < 0 ? `venció hace ${-dias} días` : `en ${dias} días`}
+                        </span>
+                      )}
                     </td>
                     <td className="px-5 py-3 text-right font-semibold tabular-nums text-slate-900">{l.cantidad_venta}</td>
                     <td className="px-5 py-3 text-right tabular-nums text-slate-500">{l.cantidad_bodega}</td>
@@ -160,6 +191,11 @@ export function LotesManager({ productoId, lotes, esGestor }: {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-56">
+                            <DropdownMenuItem className="cursor-pointer gap-2 text-sm" onClick={() => abrirEdicion(l)}>
+                              <Pencil className="h-4 w-4 text-slate-400" />
+                              Editar lote, vencimiento o estantería
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
                             <DropdownMenuLabel className="text-xs font-normal text-slate-400">
                               Movimiento sobre el lote {l.lote}
                             </DropdownMenuLabel>
@@ -228,6 +264,48 @@ export function LotesManager({ productoId, lotes, esGestor }: {
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Dialog: editar lote ────────────────────────────────────────────── */}
+      <Dialog open={editando !== null} onOpenChange={v => { if (!v) setEditando(null) }}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader><DialogTitle>Editar lote</DialogTitle></DialogHeader>
+          {editando && (
+            <div className="mt-2 space-y-4">
+              {error && <p className="rounded bg-rose-50 px-3 py-2 text-xs text-rose-600">{error}</p>}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label>Número de lote *</Label>
+                  <Input value={formEdit.lote} className="font-mono"
+                         onChange={e => setFormEdit(x => ({ ...x, lote: e.target.value }))} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Vence {editando.fecha_vencimiento ? "*" : <span className="font-normal text-slate-400">(opcional)</span>}</Label>
+                  <Input type="date" autoFocus={!editando.fecha_vencimiento} value={formEdit.fecha_vencimiento}
+                         onChange={e => setFormEdit(x => ({ ...x, fecha_vencimiento: e.target.value }))} />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Estantería (ubicación)</Label>
+                <Input placeholder="Ej: A-3, Vitrina 2…" value={formEdit.estanteria}
+                       onChange={e => setFormEdit(x => ({ ...x, estanteria: e.target.value }))} />
+              </div>
+              <p className="text-xs text-slate-400">
+                Las cantidades se cambian con los movimientos del lote. Cada cambio queda en el historial del producto.
+              </p>
+              <div className="flex gap-3">
+                <Button type="button" variant="outline" className="flex-1" onClick={() => setEditando(null)}>Cancelar</Button>
+                <Button
+                  className="flex-1 bg-brand-600 hover:bg-brand-700"
+                  onClick={guardarLote}
+                  disabled={isPending || !formEdit.lote.trim() || (Boolean(editando.fecha_vencimiento) && !formEdit.fecha_vencimiento)}
+                >
+                  {isPending ? <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />Guardando…</> : "Guardar"}
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 

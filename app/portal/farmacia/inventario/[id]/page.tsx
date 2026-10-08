@@ -9,6 +9,8 @@ import { contextoFarmacia } from "@/lib/farmacia/contexto"
 import { estadoCaducidad } from "@/lib/farmacia/caducidad"
 import { costoConIva, margen } from "@/lib/farmacia/formato"
 import { LotesManager, type FilaLote } from "./_components/lotes-manager"
+import { EditarProducto } from "./_components/editar-producto"
+import type { FilaProducto } from "../_components/inventario-farmacia"
 
 /** Nombres legibles de los campos que registra el historial de cambios */
 const CAMPO_LABEL: Record<string, string> = {
@@ -17,6 +19,7 @@ const CAMPO_LABEL: Record<string, string> = {
   codigo_barras: "Código de barras", registro_invima: "Registro sanitario",
   precio_venta: "Precio de venta", costo: "Costo neto", iva_pct: "IVA %",
   requiere_receta: "Requiere receta", activo: "Activo", laboratorio_id: "Laboratorio", proveedor_id: "Proveedor",
+  lote_numero: "Número de lote", lote_vencimiento: "Vencimiento de lote", lote_estanteria: "Estantería de lote",
 }
 
 const TIPO_MOV_LABEL: Record<string, string> = {
@@ -43,7 +46,7 @@ export default async function ProductoFarmaciaPage({
     .from("productos_farmacia")
     .select(`id, codigo_barras, nombre, principio_activo, concentracion, presentacion,
       categoria, registro_invima, precio_venta, costo, iva_pct, requiere_receta, activo,
-      laboratorios_farmacia(nombre), proveedores_farmacia(nombre)`)
+      laboratorio_id, proveedor_id, laboratorios_farmacia(nombre), proveedores_farmacia(nombre)`)
     .eq("id", id).eq("negocio_id", negocio.id)
     .maybeSingle()
 
@@ -51,7 +54,10 @@ export default async function ProductoFarmaciaPage({
 
   const esGestor = (rol === "dueno" || rol === "regente") && !viendoA
 
-  const [{ data: lotesRaw }, { data: movimientos }, { data: equivalentesRaw }, { data: historialRaw }, { data: equipo }] = await Promise.all([
+  const [
+    { data: lotesRaw }, { data: movimientos }, { data: equivalentesRaw }, { data: historialRaw }, { data: equipo },
+    { data: proveedores }, { data: laboratorios },
+  ] = await Promise.all([
     supabase.from("lotes_farmacia")
       .select("id, lote, fecha_vencimiento, cantidad_venta, cantidad_bodega, estanteria")
       .eq("producto_id", id)
@@ -81,6 +87,13 @@ export default async function ProductoFarmaciaPage({
     esGestor
       ? supabase.rpc("equipo_negocio", { p_negocio: negocio.id })
       : Promise.resolve({ data: [] as any[] }),
+    // Catálogos del formulario "Editar producto"
+    esGestor
+      ? supabase.from("proveedores_farmacia").select("id, nombre").eq("negocio_id", negocio.id).eq("activo", true).order("nombre")
+      : Promise.resolve({ data: [] as any[] }),
+    esGestor
+      ? supabase.from("laboratorios_farmacia").select("id, nombre").eq("negocio_id", negocio.id).order("nombre")
+      : Promise.resolve({ data: [] as any[] }),
   ])
 
   const nombrePorUsuario = new Map<string, string>((equipo ?? []).map((m: any) => [m.user_id, m.nombre]))
@@ -97,6 +110,29 @@ export default async function ProductoFarmaciaPage({
 
   const stockVenta  = lotes.reduce((s, l) => s + l.cantidad_venta, 0)
   const stockBodega = lotes.reduce((s, l) => s + l.cantidad_bodega, 0)
+
+  const productoForm: FilaProducto = {
+    id:               producto.id,
+    codigo_barras:    producto.codigo_barras,
+    nombre:           producto.nombre,
+    principio_activo: producto.principio_activo,
+    concentracion:    producto.concentracion,
+    presentacion:     producto.presentacion,
+    categoria:        producto.categoria,
+    registro_invima:  producto.registro_invima,
+    precio_venta:     Number(producto.precio_venta),
+    costo:            Number(producto.costo),
+    iva_pct:          Number(producto.iva_pct ?? 0),
+    requiere_receta:  producto.requiere_receta,
+    activo:           producto.activo,
+    laboratorio_id:   producto.laboratorio_id,
+    proveedor_id:     producto.proveedor_id,
+    stock_venta:      stockVenta,
+    stock_bodega:     stockBodega,
+    vence:            null,
+    lotes_sin_fecha:  lotes.filter(l => !l.fecha_vencimiento).length,
+    semaforo:         null,
+  }
 
   const lab  = Array.isArray(producto.laboratorios_farmacia) ? producto.laboratorios_farmacia[0] : producto.laboratorios_farmacia
   const prov = Array.isArray(producto.proveedores_farmacia)  ? producto.proveedores_farmacia[0]  : producto.proveedores_farmacia
@@ -149,6 +185,13 @@ export default async function ProductoFarmaciaPage({
               {producto.codigo_barras ? <span className="font-mono">{producto.codigo_barras}</span> : "sin código de barras"}
             </p>
           </div>
+          {esGestor && (
+            <EditarProducto
+              producto={productoForm}
+              proveedores={proveedores ?? []}
+              laboratorios={laboratorios ?? []}
+            />
+          )}
           {!producto.activo && (
             <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-500">Inactivo</span>
           )}
