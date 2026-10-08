@@ -276,16 +276,33 @@ export async function registrarMovimientoFarmacia(input: {
   return { success: true }
 }
 
-export async function actualizarEstanteria(loteId: string, productoId: string, estanteria: string) {
-  const { supabase, negocioId } = await requireNegocioAccion(["dueno", "regente"])
+/**
+ * Corrige un lote ya ingresado: número, fecha de vencimiento y estantería.
+ * Las cantidades no se tocan acá (para eso están los movimientos). La función
+ * SQL impide dejar sin fecha un lote que ya la tenía y registra cada cambio en
+ * el historial del producto.
+ */
+export async function editarLoteFarmacia(input: {
+  lote_id: string; producto_id: string; lote: string
+  fecha_vencimiento?: string | null; estanteria?: string
+}) {
+  const { supabase } = await requireNegocioAccion(["dueno", "regente"])
 
-  const { error } = await supabase
-    .from("lotes_farmacia")
-    .update({ estanteria: estanteria.trim() || null })
-    .eq("id", loteId).eq("negocio_id", negocioId)
+  const vencimiento = input.fecha_vencimiento?.trim() || null
+  if (vencimiento && !/^\d{4}-\d{2}-\d{2}$/.test(vencimiento)) {
+    throw new Error("Fecha de vencimiento inválida")
+  }
+
+  const { error } = await supabase.rpc("editar_lote_farmacia", {
+    p_lote:        input.lote_id,
+    p_numero:      textoRequerido(input.lote, "número de lote"),
+    p_vencimiento: vencimiento,
+    p_estanteria:  input.estanteria?.trim() || null,
+  })
   if (error) throw new Error(error.message)
 
-  revalidatePath(`/portal/farmacia/inventario/${productoId}`)
+  revalidatePath("/portal/farmacia/inventario")
+  revalidatePath(`/portal/farmacia/inventario/${input.producto_id}`)
   return { success: true }
 }
 

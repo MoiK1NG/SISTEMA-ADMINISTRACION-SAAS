@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react"
 import Link from "next/link"
-import { Search, Plus, ScanBarcode, AlertTriangle, CalendarOff } from "lucide-react"
+import { Search, Plus, ScanBarcode, AlertTriangle, CalendarOff, Pencil } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { CADUCIDAD_META, type EstadoCaducidad } from "@/lib/farmacia/caducidad"
@@ -162,12 +162,13 @@ export function InventarioFarmacia({ filas, proveedores, laboratorios, esGestor 
               <th className="px-4 py-2.5 text-right text-[10px] font-bold uppercase tracking-wider text-slate-400">Precio</th>
               {esGestor && <th className="px-4 py-2.5 text-right text-[10px] font-bold uppercase tracking-wider text-slate-400" title="Costo neto más IVA">Costo c/IVA</th>}
               {esGestor && <th className="px-4 py-2.5 text-right text-[10px] font-bold uppercase tracking-wider text-slate-400" title="Utilidad sobre el precio de venta">Margen</th>}
+              {esGestor && <th className="w-10 px-2 py-2.5"><span className="sr-only">Editar</span></th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
             {visibles.length === 0 && (
               <tr>
-                <td colSpan={esGestor ? 8 : 6} className="py-16 text-center">
+                <td colSpan={esGestor ? 9 : 6} className="py-16 text-center">
                   <p className="text-3xl">💊</p>
                   <p className="mt-2 text-sm font-medium text-slate-700">
                     {filas.length === 0 ? "El inventario está vacío" : "Sin resultados"}
@@ -240,6 +241,18 @@ export function InventarioFarmacia({ filas, proveedores, laboratorios, esGestor 
                       mg == null ? "text-slate-300" : mg < 0 ? "text-rose-600" : mg < 0.15 ? "text-amber-600" : "text-emerald-600"
                     }`}>
                       {mg == null ? "—" : fx.porcentaje(mg)}
+                    </td>
+                  )}
+                  {esGestor && (
+                    <td className="px-2 py-3 text-right">
+                      <button
+                        onClick={() => { setEditando(f); setFormAbierto(true) }}
+                        title={`Editar ${f.nombre}`}
+                        aria-label={`Editar ${f.nombre}`}
+                        className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-brand-50 hover:text-brand-700"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
                     </td>
                   )}
                 </tr>
