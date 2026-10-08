@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 import { requireNegocioAccion, type RolFarmacia } from "@/lib/farmacia/contexto"
 import { montoNoNegativo, montoValido, textoRequerido, unoDe } from "@/lib/portal-security"
 import { METODOS_PAGO_FARMACIA } from "@/lib/farmacia/pos-constants"
+import { borrarCuenta, crearCuentaConClave, validarClave, validarCorreo } from "@/lib/cuentas"
 
 const ROLES = ["dueno", "regente", "cajero"] as const
 
@@ -34,6 +35,41 @@ export async function agregarMiembro(email: string, rol: string) {
   revalidatePath("/portal/farmacia/equipo")
   revalidatePath("/portal/farmacia")
   return data as { user_id: string; nombre: string; aprobado: boolean }
+}
+
+/**
+ * El dueño crea la cuenta de alguien de su equipo con una contraseña inicial
+ * que le pasa en persona; al primer ingreso, la persona elige la suya. Si
+ * sumarla al equipo falla, la cuenta recién creada se borra para no dejarla
+ * suelta.
+ */
+export async function crearMiembroConCuenta(input: {
+  nombre: string; email: string; rol: string; clave: string
+}) {
+  const { supabase, user, negocioId } = await requireNegocioAccion(["dueno"])
+
+  const nombre    = textoRequerido(input.nombre, "nombre")
+  const correo    = validarCorreo(input.email)
+  const rolValido = unoDe(input.rol, ROLES, "rol") as RolFarmacia
+  const clave     = validarClave(input.clave)
+
+  const nuevoId = await crearCuentaConClave({ email: correo, nombre, clave })
+
+  const { error } = await supabase.rpc("agregar_miembro_negocio", {
+    p_negocio: negocioId,
+    p_email:   correo,
+    p_rol:     rolValido,
+  })
+  if (error) {
+    await borrarCuenta(nuevoId).catch(e => console.error("[crearMiembroConCuenta] no se pudo deshacer la cuenta", e))
+    throw new Error(error.message)
+  }
+
+  await logEquipo(supabase, user.id, "crear_miembro_con_cuenta", { email: correo, rol: rolValido })
+
+  revalidatePath("/portal/farmacia/equipo")
+  revalidatePath("/portal/farmacia")
+  return { nombre, email: correo }
 }
 
 export async function cambiarRolMiembro(miembroId: string, rol: string) {

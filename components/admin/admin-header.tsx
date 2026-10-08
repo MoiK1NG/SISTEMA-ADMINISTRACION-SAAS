@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { LogOut, User, Menu } from "lucide-react"
+import { LogOut, User, Menu, KeyRound } from "lucide-react"
 import type { Profile } from "@/lib/types"
 import { Badge } from "@/components/ui/badge"
 
@@ -78,6 +78,12 @@ export function AdminHeader({ profile }: AdminHeaderProps) {
                 <Link href="/dashboard">
                   <User className="mr-2 h-4 w-4" />
                   Panel de Usuario
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/cambiar-clave">
+                  <KeyRound className="mr-2 h-4 w-4" />
+                  Cambiar contraseña
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleLogout}>
