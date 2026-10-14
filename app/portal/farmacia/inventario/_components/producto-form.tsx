@@ -24,7 +24,7 @@ const CATEGORIAS = [
 const FORM_VACIO = {
   codigo_barras: "", nombre: "", principio_activo: "", concentracion: "",
   presentacion: "", laboratorio_id: "", proveedor_id: "", categoria: "otros",
-  registro_invima: "", precio_venta: 0, costo: 0, iva_pct: 0, requiere_receta: false, activo: true,
+  registro_invima: "", precio_venta: 0, costo: 0, iva_pct: 0, stock_minimo: 0, requiere_receta: false, activo: true,
 }
 
 interface Props {
@@ -60,6 +60,7 @@ export function ProductoFormDialog({ open, onOpenChange, producto, proveedores, 
         proveedor_id:     producto.proveedor_id ?? "",
         categoria:        producto.categoria,
         registro_invima:  producto.registro_invima ?? "",
+        stock_minimo:     producto.stock_minimo,
         precio_venta:     producto.precio_venta,
         costo:            producto.costo ?? 0,
         iva_pct:          producto.iva_pct,
@@ -245,13 +246,24 @@ export function ProductoFormDialog({ open, onOpenChange, producto, proveedores, 
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <Label>Registro sanitario (ISP / INVIMA / SEREMI)</Label>
-            <Input
-              placeholder="Ej: ISP F-12345/20"
-              value={form.registro_invima}
-              onChange={e => setForm(f => ({ ...f, registro_invima: e.target.value }))}
-            />
+          <div className="grid gap-3 sm:grid-cols-[1fr_150px]">
+            <div className="space-y-1.5">
+              <Label>Registro sanitario (ISP / INVIMA / SEREMI)</Label>
+              <Input
+                placeholder="Ej: ISP F-12345/20"
+                value={form.registro_invima}
+                onChange={e => setForm(f => ({ ...f, registro_invima: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Stock mínimo</Label>
+              <Input
+                type="number" min="0" step="1" placeholder="0 = sin alerta"
+                value={form.stock_minimo || ""}
+                onChange={e => setForm(f => ({ ...f, stock_minimo: Number(e.target.value) }))}
+              />
+              <p className="text-[11px] text-slate-400">Avisa cuando venta + bodega quede por debajo</p>
+            </div>
           </div>
 
           {/* Precio con IVA incluido; costo neto + IVA aparte → costo real y margen */}

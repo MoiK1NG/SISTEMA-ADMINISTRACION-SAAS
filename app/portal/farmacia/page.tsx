@@ -5,6 +5,10 @@ import { Button } from "@/components/ui/button"
 import { PortalNav } from "@/components/portal/portal-nav"
 import { BannerVerComo } from "@/components/portal/banner-ver-como"
 import { contextoFarmacia, ROL_LABEL } from "@/lib/farmacia/contexto"
+import { alertasDeHoy } from "@/lib/farmacia/alertas"
+import { ID_FISCAL } from "@/lib/farmacia/formato"
+import { AlertasHoy } from "./_components/alertas-hoy"
+import { DatosNegocioDialog } from "./_components/datos-negocio-dialog"
 
 function getInitials(name: string) {
   return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
@@ -12,14 +16,23 @@ function getInitials(name: string) {
 
 export default async function FarmaciaPage() {
   const { supabase, agenteId, viendoA, negocio, rol } = await contextoFarmacia()
+  const esGestor = rol === "dueno" || rol === "regente"
 
-  const [{ data: profile }, { data: equipo }] = await Promise.all([
+  const [{ data: profile }, { data: equipo }, alertas] = await Promise.all([
     supabase.from("profiles").select("full_name, email").eq("id", agenteId).single(),
     // Equipo (via función: la RLS de profiles no deja ver perfiles ajenos)
     negocio
       ? supabase.rpc("equipo_negocio", { p_negocio: negocio.id })
       : Promise.resolve({ data: [] as any[] }),
+    // Alertas del día, en vivo (vencimientos, stock mínimo, crónicos, cuentas)
+    negocio
+      ? alertasDeHoy(supabase, negocio.id, negocio.moneda, esGestor)
+      : Promise.resolve(null),
   ])
+
+  const datosNegocio = negocio
+    ? [negocio.nit && `${ID_FISCAL[negocio.moneda]} ${negocio.nit}`, negocio.direccion, negocio.telefono].filter(Boolean).join(" · ")
+    : ""
 
   const hora   = new Date().getHours()
   const saludo = hora < 12 ? "Buenos días" : hora < 18 ? "Buenas tardes" : "Buenas noches"
@@ -81,10 +94,22 @@ export default async function FarmaciaPage() {
           </div>
         ) : (
           <>
-            <div>
-              <p className="text-sm text-slate-500">{saludo}, {profile?.full_name?.split(" ")[0] ?? "bienvenido"}</p>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900">{negocio.nombre}</h1>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-sm text-slate-500">{saludo}, {profile?.full_name?.split(" ")[0] ?? "bienvenido"}</p>
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900">{negocio.nombre}</h1>
+                {datosNegocio && <p className="mt-1 text-xs text-slate-400">{datosNegocio}</p>}
+              </div>
+              {rol === "dueno" && !viendoA && <DatosNegocioDialog negocio={negocio} />}
             </div>
+
+            {/* ── Alertas de hoy ─────────────────────────────────────────────── */}
+            {alertas && (
+              <section>
+                <h2 className="mb-3 text-sm font-bold text-slate-900">Alertas de hoy</h2>
+                <AlertasHoy alertas={alertas} esGestor={esGestor} />
+              </section>
+            )}
 
             {/* ── Equipo ─────────────────────────────────────────────────────── */}
             <section className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">

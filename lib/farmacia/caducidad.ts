@@ -10,6 +10,12 @@
  */
 export type EstadoCaducidad = "verde" | "amarillo" | "rojo" | "vencido" | "sin_fecha"
 
+/** Umbrales compartidos por el semáforo, el inventario y las alertas del inicio. */
+export const DIAS_ROJO     = 90    // vence en 3 meses o menos
+export const DIAS_AMARILLO = 180   // vence en 6 meses o menos
+/** Pacientes crónicos: avisar cuando le quedan estos días de medicamento o menos. */
+export const DIAS_AVISO_CRONICO = 3
+
 export function diasParaVencer(fechaVencimiento: string): number {
   const hoy = new Date(); hoy.setHours(0, 0, 0, 0)
   const fin = new Date(fechaVencimiento + "T00:00:00")
@@ -24,9 +30,9 @@ export function diasParaVencer(fechaVencimiento: string): number {
 export function estadoCaducidad(fechaVencimiento: string | null, sinFecha = false): EstadoCaducidad | null {
   if (!fechaVencimiento) return sinFecha ? "sin_fecha" : null
   const d = diasParaVencer(fechaVencimiento)
-  if (d < 0)    return "vencido"
-  if (d <= 90)  return "rojo"
-  if (d <= 180) return "amarillo"
+  if (d < 0)             return "vencido"
+  if (d <= DIAS_ROJO)     return "rojo"
+  if (d <= DIAS_AMARILLO) return "amarillo"
   return "verde"
 }
 
