@@ -1,4 +1,9 @@
 <!doctype html>
+<!--
+  Regenerar el PDF con Edge headless. El --user-data-dir propio es obligatorio: sin él delega en la
+  instancia abierta y no imprime. El proceso retorna antes de escribir el archivo: esperar a que cambie.
+  "/c/Program Files (x86)/Microsoft/Edge/Application/msedge.exe" --headless=new --disable-gpu --no-first-run --disable-extensions --no-pdf-header-footer --virtual-time-budget=10000 --user-data-dir="C:/Users/Moises/AppData/Local/Temp/claude/edge-guia" --print-to-pdf="C:/Users/Moises/Documents/PERSONAL/SISTEMA-ADMINISTRACION-SAAS/docs/guia-farmacia/Guia-LOMS360-Farmacia.pdf" "file:///C:/Users/Moises/Documents/PERSONAL/SISTEMA-ADMINISTRACION-SAAS/docs/guia-farmacia/guia.html"
+-->
 <html lang="es">
 <head>
 <meta charset="utf-8">
@@ -122,10 +127,10 @@ th.c,td.c{ text-align:center; width:19mm; }
 .ok{ display:inline-block; width:4.6mm; height:4.6mm; border-radius:50%; background:var(--blue); position:relative; vertical-align:middle; }
 .ok::after{ content:""; position:absolute; left:1.65mm; top:0.75mm; width:1.05mm; height:2.1mm; border:solid var(--white); border-width:0 0.5mm 0.5mm 0; transform:rotate(45deg); }
 .no{ color:var(--muted); font-weight:600; }
-table.matrix{ font-size:9pt; }
-table.matrix td{ padding:1.4mm 3mm; }
+table.matrix{ font-size:8.5pt; line-height:1.4; }
+table.matrix td{ padding:1.1mm 3mm; }
 table.matrix th.c, table.matrix td.c{ width:16mm; }
-table.matrix .grp td{ padding:1.1mm 3mm; }
+table.matrix .grp td{ padding:0.9mm 3mm; }
 .grp td{ background:var(--bg-soft) !important; color:var(--navy); font-weight:600; font-size:9pt; padding:1.6mm 3mm; }
 .sem{ display:inline-block; width:3.6mm; height:3.6mm; border-radius:50%; vertical-align:middle; margin-right:2mm; }
 
@@ -178,7 +183,7 @@ table.matrix .grp td{ padding:1.1mm 3mm; }
     <div class="eyebrow">Guía de uso</div>
     <h1>Portal de Farmacia<span>Cómo entrar, quién puede hacer qué y cómo usar cada módulo</span></h1>
     <p class="lead">Para el dueño, el regente y los cajeros de la farmacia, y para el equipo de LOMS 360 que acompaña su uso.</p>
-    <div class="meta">Versión 1.0 · Octubre de 2026</div>
+    <div class="meta">Versión 1.1 · Octubre de 2026</div>
   </div>
   <div class="foot">
     <div class="tag">La solución <em>360</em> para tu negocio</div>
@@ -196,12 +201,13 @@ table.matrix .grp td{ padding:1.1mm 3mm; }
     <li><div class="n">1</div><div><div class="tt">Qué es LOMS 360</div></div></li>
     <li><div class="n">2</div><div><div class="tt">Cómo entrar al portal</div>
       <ul class="sub">
-        <li><span>2.1</span>Crear la cuenta</li>
-        <li><span>2.2</span>Qué pasa después de registrarte</li>
-        <li><span>2.3</span>Iniciar sesión</li>
-        <li><span>2.4</span>Olvidé mi contraseña</li>
-        <li><span>2.5</span>Mensajes que puedes ver y qué significan</li>
-        <li><span>2.6</span>Cierre de sesión automático</li>
+        <li><span>2.1</span>Cómo obtienes tu cuenta</li>
+        <li><span>2.2</span>Tu primer ingreso</li>
+        <li><span>2.3</span>Iniciar sesión y la barra del portal</li>
+        <li><span>2.4</span>Cambiar mi contraseña</li>
+        <li><span>2.5</span>Olvidé mi contraseña</li>
+        <li><span>2.6</span>Mensajes que puedes ver y qué significan</li>
+        <li><span>2.7</span>Cierre de sesión automático</li>
       </ul></div></li>
     <li><div class="n">3</div><div><div class="tt">Roles: quién puede hacer qué</div>
       <ul class="sub">
@@ -241,92 +247,110 @@ table.matrix .grp td{ padding:1.1mm 3mm; }
   <p>LOMS 360 es una plataforma de gestión que reúne en un solo lugar la relación con tus clientes (CRM) y la operación diaria del negocio (ERP). Cada tipo de negocio tiene su propio portal, con los módulos que ese negocio necesita. El portal de farmacia es el primero de la plataforma.</p>
   <p>En la farmacia, el portal te sirve para vender con control de lotes y vencimientos, cerrar la caja de cada turno, llevar las deudas con proveedores, cumplir con el libro de control de recetas, acompañar a los pacientes crónicos y ver los números del mes. Todo con roles definidos, para que cada persona del equipo vea y haga solo lo que le corresponde.</p>
   <div class="chips">
-    <div class="chip"><b>Ventas</b>Punto de venta con lector de código de barras y pago mixto.</div>
-    <div class="chip"><b>Inventario</b>Catálogo, lotes, vencimientos y movimientos de mercancía.</div>
+    <div class="chip"><b>Ventas</b>Punto de venta con lector de código de barras, pago mixto y comprobante.</div>
+    <div class="chip"><b>Inventario</b>Catálogo, lotes, vencimientos, stock mínimo y movimientos.</div>
     <div class="chip"><b>Caja</b>Cierre ciego por turno, con diferencias registradas.</div>
     <div class="chip"><b>Compras</b>Cuentas por pagar a proveedores y abonos.</div>
     <div class="chip"><b>Recetas</b>Libro de control de ventas con receta.</div>
     <div class="chip"><b>Pacientes</b>Tratamientos continuos y avisos de reposición.</div>
-    <div class="chip"><b>Finanzas</b>Ventas del mes, métodos de pago, cierres y márgenes.</div>
-    <div class="chip"><b>Equipo</b>Roles de dueño, regente y cajero, con auditoría de accesos.</div>
+    <div class="chip"><b>Finanzas</b>Ventas del mes, cierres, márgenes e inventario valorizado.</div>
+    <div class="chip"><b>Equipo</b>Cuentas y roles de dueño, regente y cajero, con auditoría de accesos.</div>
   </div>
   <p class="caption">Esta guía describe la versión del portal vigente en octubre de 2026. Las funciones que no aparecen aquí no están disponibles todavía.</p>
 
 <!-- ================= 2. CÓMO ENTRAR ================= -->
-  <div class="sp"></div><div class="sp"></div>
-  <div class="sec"><div class="n">2</div><h1>Cómo entrar al portal<small>Crear tu cuenta, iniciar sesión y entender los mensajes de acceso</small></h1></div>
+  <div class="sec page"><div class="n">2</div><h1>Cómo entrar al portal<small>Tu cuenta, tu primer ingreso, tu contraseña y los mensajes de acceso</small></h1></div>
 
-  <h2><span class="k">2.1</span>Crear la cuenta</h2>
-  <p>Cada persona del equipo necesita su propia cuenta. Es personal: con ella el sistema sabe quién vendió, quién cerró la caja y quién cambió un precio.</p>
-  <ol class="steps">
-    <li>Entra a <span class="ph">〈dirección del portal〉</span>.</li>
-    <li>Elige <strong>"Crear una cuenta"</strong>.</li>
-    <li>Completa tu nombre completo, tu correo y una contraseña de <strong>al menos 6 caracteres</strong>.</li>
-    <li>Revisa tu correo. Te llegará un mensaje de confirmación: abre el enlace que trae.</li>
-    <li>Vuelve al portal e inicia sesión con tu correo y tu contraseña.</li>
-  </ol>
-
-  <h2><span class="k">2.2</span>Qué pasa después de registrarte</h2>
-  <p>Tu cuenta queda <strong>pendiente de aprobación</strong>. Es una protección: nadie entra a los datos de una farmacia sin que alguien responsable lo autorice. Hay dos caminos para quedar aprobado:</p>
+  <h2><span class="k">2.1</span>Cómo obtienes tu cuenta</h2>
+  <p>Cada persona del equipo necesita su propia cuenta. Es personal: con ella el sistema sabe quién vendió, quién cerró la caja y quién cambió un precio. No tienes que registrarte: la cuenta te la crean y te entregan los datos para entrar.</p>
   <div class="cards two">
     <div class="card">
       <div class="dot"></div>
-      <h3>Camino A · Te agrega el dueño</h3>
+      <h3>Te la crea el dueño</h3>
       <div class="sub">Para regentes y cajeros de una farmacia que ya usa LOMS 360</div>
       <ul>
-        <li>El dueño entra al módulo <strong>Equipo</strong> y te agrega con tu correo.</li>
-        <li>Tu cuenta queda aprobada automáticamente y con acceso al portal de farmacia.</li>
-        <li>No tienes que hacer nada más: vuelve a iniciar sesión.</li>
+        <li>El dueño entra a <strong>Equipo</strong>, elige <strong>"Agregar persona"</strong> y crea tu cuenta con tu nombre, tu correo, tu rol y una <strong>contraseña inicial</strong>.</li>
+        <li>Te pasa en persona tu usuario (el correo) y esa contraseña inicial.</li>
+        <li>Tu cuenta queda activa al instante, con acceso al portal de farmacia.</li>
       </ul>
     </div>
     <div class="card navy">
       <div class="dot"></div>
-      <h3>Camino B · Te aprueba LOMS 360</h3>
+      <h3>Te la crea LOMS 360</h3>
       <div class="sub">Para el dueño de una farmacia nueva</div>
       <ul>
-        <li>Un administrador de LOMS 360 aprueba tu cuenta.</li>
-        <li>Te asigna la membresía (plan y vigencia) y te da acceso al portal de farmacia.</li>
+        <li>Un administrador de LOMS 360 crea tu cuenta con una contraseña inicial y te entrega los datos.</li>
+        <li>Te asigna la membresía (plan y vigencia) y el acceso al portal de farmacia.</li>
         <li>Desde ese momento puedes armar tu equipo.</li>
       </ul>
     </div>
   </div>
   <div class="flow">
-    <div class="nd"><b>Creas la cuenta</b>nombre, correo y contraseña</div>
-    <div class="ar"></div>
-    <div class="nd"><b>Confirmas el correo</b>con el enlace que recibes</div>
-    <div class="ar"></div>
-    <div class="nd"><b>Pendiente de aprobación</b>aún no puedes entrar</div>
-    <div class="ar"></div>
     <div class="branch">
-      <div class="nd"><b>A · El dueño te agrega</b>desde Equipo, con tu correo</div>
-      <div class="nd"><b>B · LOMS 360 te aprueba</b>y asigna la membresía</div>
+      <div class="nd"><b>El dueño crea tu cuenta</b>desde Equipo, con contraseña inicial</div>
+      <div class="nd"><b>LOMS 360 crea tu cuenta</b>y asigna la membresía</div>
     </div>
+    <div class="ar"></div>
+    <div class="nd"><b>Recibes tus datos</b>correo y contraseña inicial, en persona</div>
+    <div class="ar"></div>
+    <div class="nd"><b>Eliges tu contraseña</b>en tu primer ingreso</div>
     <div class="ar"></div>
     <div class="nd end"><b>Acceso al portal</b>entras a Farmacia</div>
   </div>
+  <div class="note">
+    <div class="t">¿Te registraste por tu cuenta?</div>
+    <p>El portal sigue teniendo la opción <strong>"Crear una cuenta"</strong>: nombre, correo, una contraseña de al menos 6 caracteres y la confirmación por correo. Pero una cuenta creada así queda <strong>pendiente de aprobación</strong>: no entra a ninguna farmacia hasta que el dueño te sume desde Equipo con la opción <strong>"Ya tiene cuenta"</strong>, o hasta que un administrador de LOMS 360 te apruebe. Por eso el camino normal es que te la creen.</p>
+  </div>
 
-  <h2><span class="k">2.3</span>Iniciar sesión</h2>
+  <h2><span class="k">2.2</span>Tu primer ingreso</h2>
+  <p>Si tu cuenta se creó con una contraseña inicial, al entrar por primera vez el sistema te pedirá cambiarla. Es un paso único y obligatorio: hasta entonces no podrás usar nada más.</p>
+  <ol class="steps">
+    <li>Entra a <span class="ph">〈dirección del portal〉</span> con tu correo y la contraseña inicial que te entregaron.</li>
+    <li>Se abre la pantalla <strong>"Elige tu contraseña"</strong>. Escribe la contraseña inicial y, debajo, la nueva dos veces. Debe tener <strong>al menos 8 caracteres</strong>.</li>
+    <li>Elige <strong>"Guardar contraseña"</strong> y luego <strong>"Continuar"</strong>. Desde ahora entras con la contraseña nueva; la inicial ya no sirve.</li>
+  </ol>
+  <div class="note">
+    <div class="t">Ten en cuenta</div>
+    <p>La contraseña inicial se muestra una sola vez a quien la creó. Si se perdió antes de tu primer ingreso, usa <strong>"¿Olvidaste tu contraseña?"</strong> en la pantalla de inicio de sesión (sección 2.5): al crear la nueva por ese camino, el sistema ya no te pedirá cambiarla otra vez.</p>
+  </div>
+
+  <h2><span class="k">2.3</span>Iniciar sesión y la barra del portal</h2>
   <ol class="steps">
     <li>Entra a <span class="ph">〈dirección del portal〉</span>.</li>
     <li>Escribe tu correo y tu contraseña.</li>
     <li>Se abre <strong>"Mis portales"</strong>, la lista de portales a los que tienes acceso.</li>
     <li>Entra a <strong>Farmacia</strong>.</li>
   </ol>
+  <p>La <strong>barra superior</strong> te acompaña en todas las pantallas: a la izquierda, las secciones del portal; a la derecha, tres botones fijos (en pantallas chicas se ven solo con su ícono):</p>
+  <ul>
+    <li><strong>Mis portales</strong>: vuelve a la lista de portales.</li>
+    <li><strong>Panel admin</strong>: solo lo ven los administradores de LOMS 360.</li>
+    <li><strong>Cerrar sesión</strong>: sale del sistema.</li>
+  </ul>
 
-  <h2><span class="k">2.4</span>Olvidé mi contraseña</h2>
+  <h2><span class="k">2.4</span>Cambiar mi contraseña</h2>
+  <p>Cámbiala cuando quieras, por ejemplo si sospechas que alguien más la conoce.</p>
+  <ol class="steps">
+    <li>En <strong>"Mis portales"</strong> (o en el panel admin, si eres administrador), abre el <strong>menú de tu cuenta</strong>: el círculo con tus iniciales, arriba a la derecha.</li>
+    <li>Elige <strong>"Cambiar contraseña"</strong>.</li>
+    <li>Escribe la contraseña actual y la nueva dos veces (<strong>mínimo 8 caracteres</strong>).</li>
+    <li>Elige <strong>"Guardar contraseña"</strong>. Desde ahora entras con la nueva.</li>
+  </ol>
+
+  <h2><span class="k">2.5</span>Olvidé mi contraseña</h2>
   <ol class="steps">
     <li>En la pantalla de inicio de sesión, elige <strong>"¿Olvidaste tu contraseña?"</strong>.</li>
-    <li>Escribe el correo con el que te registraste.</li>
+    <li>Escribe el correo de tu cuenta.</li>
     <li>Recibirás un correo con un enlace para crear una contraseña nueva (mínimo 6 caracteres).</li>
     <li>Inicia sesión con la contraseña nueva.</li>
   </ol>
 
-  <h2><span class="k">2.5</span>Mensajes que puedes ver y qué significan</h2>
+  <h2><span class="k">2.6</span>Mensajes que puedes ver y qué significan</h2>
   <p>Si el portal no te deja pasar, te mostrará uno de estos mensajes. Ninguno borra tu cuenta ni tus datos: solo indican qué falta para que puedas entrar.</p>
   <table class="keep">
     <thead><tr><th style="width:38mm">Mensaje</th><th>Qué significa</th><th style="width:60mm">Qué hacer</th></tr></thead>
     <tbody>
-      <tr><td><strong>Aprobación pendiente</strong></td><td>Tu cuenta existe, pero nadie la aprobó todavía.</td><td>Si trabajas en una farmacia, pide al dueño que te agregue desde Equipo. Si eres el dueño de una farmacia nueva, espera la aprobación de LOMS 360.</td></tr>
+      <tr><td><strong>Aprobación pendiente</strong></td><td>Tu cuenta existe, pero nadie la aprobó todavía. Pasa solo si te registraste por tu cuenta.</td><td>Pide al dueño que te sume desde Equipo con "Ya tiene cuenta". Si eres el dueño de una farmacia nueva, espera la aprobación de LOMS 360.</td></tr>
       <tr><td><strong>Cuenta suspendida</strong></td><td>Un administrador de LOMS 360 desactivó tu cuenta.</td><td>Contacta a LOMS 360 (sección 7).</td></tr>
       <tr><td><strong>Membresía expirada o inactiva</strong></td><td>La membresía del dueño venció o no está activa. El acceso del regente y de los cajeros depende de ella.</td><td>El dueño debe contactar a LOMS 360 para renovarla. Mientras tanto, nadie del equipo puede entrar.</td></tr>
       <tr><td><strong>Sin acceso a este portal</strong></td><td>Tu cuenta está aprobada, pero no tiene acceso al portal de farmacia.</td><td>Pide al dueño que revise tu rol en Equipo, o contacta a LOMS 360.</td></tr>
@@ -334,7 +358,7 @@ table.matrix .grp td{ padding:1.1mm 3mm; }
     </tbody>
   </table>
 
-  <h2><span class="k">2.6</span>Cierre de sesión automático</h2>
+  <h2><span class="k">2.7</span>Cierre de sesión automático</h2>
   <p>Cuando un <strong>cajero</strong> cierra la caja, el sistema cierra también su sesión. Antes de hacerlo, muestra el cuadre durante <strong>30 segundos</strong> para que pueda leerlo; si no quiere esperar, puede elegir <strong>"Salir ahora"</strong>.</p>
   <div class="note">
     <div class="t">Ten en cuenta</div>
@@ -364,9 +388,9 @@ table.matrix .grp td{ padding:1.1mm 3mm; }
     <div class="card navy">
       <div class="dot"></div>
       <h3>Dueño</h3>
-      <div class="sub">Responsable del negocio y de su membresía</div>
+      <div class="sub">Responsable del negocio</div>
       <ul>
-        <li>Agrega, cambia de rol y quita miembros del equipo.</li>
+        <li>Crea las cuentas de su equipo, les asigna rol y las quita.</li>
         <li>Ve todo, incluidos costos, márgenes y finanzas.</li>
         <li>Es el único que elimina productos, anula cuentas por pagar y edita los datos del negocio.</li>
         <li>Paga la membresía de la que depende todo el equipo.</li>
@@ -377,7 +401,7 @@ table.matrix .grp td{ padding:1.1mm 3mm; }
       <h3>Regente</h3>
       <div class="sub">Farmacéutico responsable</div>
       <ul>
-        <li>Gestiona el inventario: productos, lotes, movimientos y compras.</li>
+        <li>Gestiona el inventario: productos, lotes, stock mínimo y compras.</li>
         <li>Anula ventas y cancela pedidos, siempre con motivo.</li>
         <li>Ve costos y márgenes de cada producto. Finanzas es solo del dueño.</li>
         <li>No gestiona el equipo ni edita los datos del negocio.</li>
@@ -405,15 +429,18 @@ table.matrix .grp td{ padding:1.1mm 3mm; }
     <tbody>
       <tr class="grp"><td colspan="4">Negocio y equipo</td></tr>
       <tr><td>Gestionar equipo (agregar, cambiar rol, quitar)</td><td class="c"><span class="ok"></span></td><td class="c"><span class="no">—</span></td><td class="c"><span class="no">—</span></td></tr>
+      <tr><td>Crear cuentas del equipo con contraseña inicial</td><td class="c"><span class="ok"></span></td><td class="c"><span class="no">—</span></td><td class="c"><span class="no">—</span></td></tr>
       <tr><td>Editar datos del negocio</td><td class="c"><span class="ok"></span></td><td class="c"><span class="no">—</span></td><td class="c"><span class="no">—</span></td></tr>
       <tr><td>Ver auditoría de accesos del equipo</td><td class="c"><span class="ok"></span></td><td class="c"><span class="ok"></span></td><td class="c"><span class="no">—</span></td></tr>
       <tr class="grp"><td colspan="4">Inventario</td></tr>
-      <tr><td>Crear y editar productos</td><td class="c"><span class="ok"></span></td><td class="c"><span class="ok"></span></td><td class="c"><span class="no">—</span></td></tr>
+      <tr><td>Crear y editar productos y lotes (cada cambio queda en el historial)</td><td class="c"><span class="ok"></span></td><td class="c"><span class="ok"></span></td><td class="c"><span class="no">—</span></td></tr>
+      <tr><td>Definir el stock mínimo de un producto</td><td class="c"><span class="ok"></span></td><td class="c"><span class="ok"></span></td><td class="c"><span class="no">—</span></td></tr>
       <tr><td>Eliminar productos</td><td class="c"><span class="ok"></span></td><td class="c"><span class="no">—</span></td><td class="c"><span class="no">—</span></td></tr>
       <tr><td>Crear proveedores y laboratorios</td><td class="c"><span class="ok"></span></td><td class="c"><span class="ok"></span></td><td class="c"><span class="no">—</span></td></tr>
-      <tr><td>Ingresar lotes y mover mercancía (bodega y venta, mermas, estantería)</td><td class="c"><span class="ok"></span></td><td class="c"><span class="ok"></span></td><td class="c"><span class="no">—</span></td></tr>
+      <tr><td>Ingresar lotes y mover mercancía (bodega, venta, mermas)</td><td class="c"><span class="ok"></span></td><td class="c"><span class="ok"></span></td><td class="c"><span class="no">—</span></td></tr>
       <tr class="grp"><td colspan="4">Ventas y pedidos</td></tr>
       <tr><td>Vender (POS) y registrar clientes</td><td class="c"><span class="ok"></span></td><td class="c"><span class="ok"></span></td><td class="c"><span class="ok"></span></td></tr>
+      <tr><td>Imprimir comprobantes de venta y exportar ventas a CSV</td><td class="c"><span class="ok"></span></td><td class="c"><span class="ok"></span></td><td class="c"><span class="ok"></span></td></tr>
       <tr><td>Anular una venta</td><td class="c"><span class="ok"></span></td><td class="c"><span class="ok"></span></td><td class="c"><span class="no">—</span></td></tr>
       <tr><td>Crear pedidos y encargos, abonar, avanzar y entregar</td><td class="c"><span class="ok"></span></td><td class="c"><span class="ok"></span></td><td class="c"><span class="ok"></span></td></tr>
       <tr><td>Cancelar un pedido</td><td class="c"><span class="ok"></span></td><td class="c"><span class="ok"></span></td><td class="c"><span class="no">—</span></td></tr>
@@ -427,6 +454,7 @@ table.matrix .grp td{ padding:1.1mm 3mm; }
       <tr><td>Pacientes crónicos: crear, renovar, activar y desactivar tratamientos</td><td class="c"><span class="ok"></span></td><td class="c"><span class="ok"></span></td><td class="c"><span class="ok"></span></td></tr>
       <tr><td>Ver costos y márgenes de cada producto (Inventario)</td><td class="c"><span class="ok"></span></td><td class="c"><span class="ok"></span></td><td class="c"><span class="no">—</span></td></tr>
       <tr><td>Finanzas del negocio</td><td class="c"><span class="ok"></span></td><td class="c"><span class="no">—</span></td><td class="c"><span class="no">—</span></td></tr>
+      <tr><td>Ver el inventario valorizado (Finanzas)</td><td class="c"><span class="ok"></span></td><td class="c"><span class="no">—</span></td><td class="c"><span class="no">—</span></td></tr>
     </tbody>
   </table>
 </section>
@@ -438,7 +466,8 @@ table.matrix .grp td{ padding:1.1mm 3mm; }
   <h2><span class="k">4.1</span>Desde el equipo de LOMS 360</h2>
   <p>Los administradores de LOMS 360 se encargan de lo que está por encima de la farmacia: la cuenta del dueño y su membresía. Desde el panel de administración pueden:</p>
   <ul>
-    <li><strong>Aprobar una cuenta nueva</strong>, para que pueda entrar a la plataforma.</li>
+    <li><strong>Crear una cuenta</strong> con contraseña inicial (Usuarios › <strong>"Crear usuario"</strong>). Queda aprobada y activa desde el primer momento; el acceso al portal y la membresía se asignan después. Solo el superadministrador puede crear administradores.</li>
+    <li><strong>Aprobar una cuenta</strong> que alguien creó por su lado desde "Crear una cuenta", para que pueda entrar a la plataforma.</li>
     <li><strong>Asignar la membresía</strong>: el plan contratado y su vigencia.</li>
     <li><strong>Dar acceso al portal Farmacia</strong> a la cuenta del dueño.</li>
     <li><strong>Suspender o reactivar</strong> una cuenta.</li>
@@ -452,14 +481,37 @@ table.matrix .grp td{ padding:1.1mm 3mm; }
 
   <h2><span class="k">4.2</span>Desde la farmacia: módulo Equipo</h2>
   <p>El dueño arma y mantiene su equipo desde el módulo <strong>Equipo</strong>. Regentes y cajeros no pagan una membresía aparte: dependen de la del dueño.</p>
+  <div class="keep">
   <h3>Agregar a una persona</h3>
-  <ol class="steps">
-    <li>Pide a la persona que cree su cuenta en <span class="ph">〈dirección del portal〉</span> y confirme su correo (sección 2.1). Sin cuenta creada no podrás agregarla.</li>
-    <li>Entra a <strong>Equipo</strong> y elige agregar miembro.</li>
-    <li>Escribe el <strong>correo</strong> con el que la persona se registró.</li>
-    <li>Elige su rol: <strong>dueño</strong>, <strong>regente</strong> o <strong>cajero</strong>.</li>
-    <li>Confirma. La persona queda aprobada y con acceso al portal de farmacia al instante; solo tiene que iniciar sesión.</li>
-  </ol>
+  <p>Entra a <strong>Equipo</strong> y elige <strong>"Agregar persona"</strong>. Verás dos opciones:</p>
+  <div class="cards two">
+    <div class="card navy">
+      <div class="dot"></div>
+      <h3>Crear cuenta nueva</h3>
+      <div class="sub">El camino normal: la persona todavía no tiene cuenta</div>
+      <ul>
+        <li>Escribe su nombre completo y su correo, y elige su rol: <strong>dueño</strong>, <strong>regente</strong> o <strong>cajero</strong>.</li>
+        <li>Define una <strong>contraseña inicial</strong> de al menos 8 caracteres, o deja que el sistema la genere con <strong>"Generar"</strong>.</li>
+        <li>Elige <strong>"Crear cuenta"</strong>. El sistema muestra el usuario y la contraseña inicial <strong>una sola vez</strong>, con el botón <strong>"Copiar datos"</strong>.</li>
+        <li>Pásale esos datos <strong>en persona</strong>. La cuenta ya está activa; al entrar, la persona tendrá que elegir su propia contraseña.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="dot"></div>
+      <h3>Ya tiene cuenta</h3>
+      <div class="sub">Para alguien que se registró por su cuenta en el portal</div>
+      <ul>
+        <li>Escribe el <strong>correo</strong> con el que se registró y elige su rol.</li>
+        <li>Elige <strong>"Agregar"</strong>. La cuenta queda aprobada y con acceso al portal de farmacia al instante; solo tiene que iniciar sesión.</li>
+        <li>Sin cuenta creada y confirmada no podrás agregarla.</li>
+      </ul>
+    </div>
+  </div>
+  </div>
+  <div class="note">
+    <div class="t">Ten en cuenta</div>
+    <p>La contraseña inicial no se vuelve a mostrar. Si se pierde antes del primer ingreso, la persona puede usar <strong>"¿Olvidaste tu contraseña?"</strong> con su correo y crear una nueva por ese camino.</p>
+  </div>
   <div class="keep">
   <h3>Cambiar el rol o quitar a alguien</h3>
   <ul>
@@ -474,7 +526,7 @@ table.matrix .grp td{ padding:1.1mm 3mm; }
   <h2><span class="k">4.4</span>Buenas prácticas</h2>
   <div class="cards four">
     <div class="card"><div class="dot"></div><h3 style="font-size:10.5pt">Una cuenta por persona</h3><ul><li>Así cada venta, cierre y cambio tiene un responsable claro.</li></ul></div>
-    <div class="card"><div class="dot"></div><h3 style="font-size:10.5pt">Sin compartir contraseñas</h3><ul><li>Si alguien la olvida, la recupera desde "¿Olvidaste tu contraseña?".</li></ul></div>
+    <div class="card"><div class="dot"></div><h3 style="font-size:10.5pt">Sin compartir contraseñas</h3><ul><li>La inicial se entrega en persona y se cambia en el primer ingreso. Si alguien la olvida, la recupera desde "¿Olvidaste tu contraseña?".</li></ul></div>
     <div class="card"><div class="dot"></div><h3 style="font-size:10.5pt">Quitar a quien se va</h3><ul><li>Cuando alguien deja de trabajar en la farmacia, quítalo del equipo ese mismo día.</li></ul></div>
     <div class="card"><div class="dot"></div><h3 style="font-size:10.5pt">Cerrar caja al terminar</h3><ul><li>El cajero cierra su caja al final de cada turno. Su sesión se cierra con ella.</li></ul></div>
   </div>
@@ -487,8 +539,20 @@ table.matrix .grp td{ padding:1.1mm 3mm; }
   <p>Cada módulo se explica con el mismo esquema: para qué sirve, quién lo usa y los pasos clave. Cuando hay algo que conviene saber antes de usarlo, lo encontrarás en una caja "Ten en cuenta".</p>
 
   <h2><span class="k">5.1</span>Panel</h2>
-  <p class="who">Lo usan: <b>dueño, regente y cajero</b></p>
-  <p>Es la primera pantalla al entrar a Farmacia. Muestra el nombre de la farmacia, el equipo y los accesos a cada módulo. Desde aquí llegas a cualquier parte del portal; la barra de navegación te acompaña en todas las pantallas.</p>
+  <p class="who">Lo usan: <b>dueño, regente y cajero</b> · Datos del negocio: <b>dueño</b></p>
+  <p>Es la primera pantalla al entrar a Farmacia. Muestra el nombre y los datos de la farmacia, las <strong>alertas de hoy</strong>, el equipo y los accesos a cada módulo. La barra superior, con <strong>Mis portales</strong>, <strong>Panel admin</strong> y <strong>Cerrar sesión</strong> a la derecha (sección 2.3), te acompaña en todas las pantallas.</p>
+  <h3>Alertas de hoy</h3>
+  <p>Son tarjetas con un conteo y un enlace a la pantalla donde se resuelve cada cosa. Se calculan al abrir el panel, con los datos de ese instante. Aparecen solo las que tienen algo que mostrar; si no hay nada pendiente, verás <strong>"Todo en orden"</strong>:</p>
+  <ul>
+    <li><strong>Productos vencidos con stock</strong>: hay que retirarlos del estante.</li>
+    <li><strong>Productos por vencer</strong>: vencen en 3 meses o menos.</li>
+    <li><strong>Productos con lotes sin fecha</strong>: falta completar la fecha de vencimiento.</li>
+    <li><strong>Productos bajo el stock mínimo</strong>: toca reponer con el proveedor.</li>
+    <li><strong>Pacientes crónicos por quedarse sin medicamento</strong> (3 días o menos): avísales.</li>
+    <li><strong>Cuentas por pagar vencidas</strong>: solo las ven el dueño y el regente.</li>
+  </ul>
+  <h3>Datos del negocio</h3>
+  <p>Junto al nombre de la farmacia, el dueño tiene el botón <strong>"Datos del negocio"</strong>. Ahí edita el nombre, el <strong>RUT</strong> (NIT en Colombia), la dirección y el teléfono. Esos datos salen impresos en el comprobante de venta (sección 5.2), así que conviene completarlos antes de empezar a vender.</p>
 
   <h2><span class="k">5.2</span>Vender (POS)</h2>
   <p class="who">Lo usan: <b>dueño, regente y cajero</b></p>
@@ -497,9 +561,10 @@ table.matrix .grp td{ padding:1.1mm 3mm; }
     <li><strong>Busca el producto.</strong> Escanea el código de barras con el lector: al presionar Enter, si el código coincide, el producto se agrega al ticket. También puedes escribir el nombre comercial o el principio activo.</li>
     <li><strong>Revisa el stock.</strong> Junto a cada producto se ve el stock disponible. Si no hay unidades, el sistema te sugiere <strong>equivalentes con el mismo principio activo</strong> para ofrecer al cliente.</li>
     <li><strong>Ajusta las cantidades</strong> en el ticket.</li>
-    <li><strong>Asocia un cliente</strong> si lo deseas. Es opcional y, si no existe, puedes crearlo en el momento.</li>
+    <li><strong>Asocia un cliente</strong> si lo deseas. Escribe al menos 2 letras de su nombre o su documento (RUT) para buscarlo. Es opcional y, si no existe, puedes crearlo en el momento.</li>
     <li><strong>Completa la receta</strong> cuando el producto sea <strong>Rx</strong>: el sistema te pide médico y paciente. Esos datos van al libro de control de recetas.</li>
     <li><strong>Cobra.</strong> Elige uno o varios métodos de pago: efectivo, débito, crédito o transferencia, combinados como el cliente prefiera. El vuelto se calcula solo sobre el efectivo.</li>
+    <li><strong>Imprime el comprobante</strong> si el cliente lo pide: en el aviso verde que confirma la venta está el botón <strong>"Imprimir"</strong>. Mientras el carrito siga vacío, también puedes abrirlo desde <strong>"Último comprobante"</strong>, en la cabecera del ticket.</li>
   </ol>
   <div class="box">
     <div class="t">Ejemplo de pago mixto</div>
@@ -510,12 +575,25 @@ table.matrix .grp td{ padding:1.1mm 3mm; }
     <ul>
       <li>El stock se descuenta con el criterio <strong>FEFO</strong>: primero el lote que vence antes, aunque no sea el que tienes más a la mano. Así se evita que se venzan unidades en el estante.</li>
       <li>Los lotes vencidos no se venden: el sistema no los ofrece.</li>
+      <li>Si al cobrar aparece un aviso de que el stock cambió, es porque otro cajero vendió la última unidad mientras armabas el ticket. El ticket se corrige solo con el stock real: revísalo y vuelve a cobrar.</li>
     </ul>
   </div>
+  <h3>El comprobante de venta</h3>
+  <p>Es un <strong>comprobante interno</strong> para el cliente. Trae el nombre, el RUT, la dirección y el teléfono de la farmacia, la fecha, el número de venta, los productos, el total, los pagos y el vuelto. <strong>No es boleta ni factura</strong>: el documento tributario sigue saliendo por el canal que use la farmacia. Se imprime en una impresora térmica de 80 mm o en una hoja común; en el cuadro de impresión también puedes elegir "Guardar como PDF". Desde <strong>Ventas</strong> puedes reimprimir el comprobante de cualquier venta.</p>
 
   <h2><span class="k">5.3</span>Ventas</h2>
   <p class="who">Lo usan: <b>dueño, regente y cajero</b> · Anular: <b>dueño y regente</b></p>
-  <p>Muestra las ventas de los <strong>últimos 7 días</strong>, con el detalle de productos y de pagos de cada una. También aparecen aquí los <strong>encargos cobrados</strong>.</p>
+  <p>Muestra las ventas del período que elijas, con el detalle de productos y de pagos de cada una. También aparecen aquí los <strong>encargos cobrados</strong>. Al entrar se ven los <strong>últimos 7 días</strong>.</p>
+  <h3>Elegir el período</h3>
+  <ul>
+    <li>Indica <strong>Desde</strong> y <strong>Hasta</strong> y aplica, o usa los atajos <strong>Hoy · 7 días · 30 días · Este mes</strong>.</li>
+    <li>Si el período tiene más de <strong>500 operaciones</strong>, se muestran las últimas 500 y el sistema te pide acotar las fechas para ver todas.</li>
+  </ul>
+  <h3>Exportar y reimprimir</h3>
+  <ul>
+    <li><strong>"Exportar CSV"</strong> descarga las ventas del período con número, fecha, estado, cliente, productos, pagos y total. Sirve para el contador o para revisarlas en una planilla.</li>
+    <li>El <strong>ícono de impresora</strong> de cada venta abre su comprobante para verlo o reimprimirlo (sección 5.2).</li>
+  </ul>
   <h3>Anular una venta</h3>
   <ol class="steps">
     <li>Busca la venta en la lista y abre su detalle.</li>
@@ -542,9 +620,12 @@ table.matrix .grp td{ padding:1.1mm 3mm; }
   <p>Es el catálogo de la farmacia y el control de lo que hay en bodega y en venta. Cada producto tiene sus lotes, con fecha de vencimiento, y todo movimiento queda registrado.</p>
   <h3>Qué encuentras en el módulo</h3>
   <ul>
-    <li><strong>Catálogo</strong> con buscador y <strong>filtros</strong>: por vencer, sin stock e inactivos, para trabajar listas cortas.</li>
-    <li><strong>Detalle del producto</strong>: sus lotes, sus movimientos y el <strong>historial de cambios</strong>, que muestra quién cambió el precio, el costo, el nombre u otro dato, y cuándo.</li>
+    <li><strong>Catálogo</strong> con buscador y <strong>filtros</strong>: Todos · Vencidos · Por vencer · Sin fecha · Bajo mínimo · Sin stock · Inactivos, para trabajar listas cortas. El buscador ignora las tildes ("acido" encuentra "Ácido"). Con muchos resultados, aparece el botón <strong>"Mostrar 200 más"</strong>.</li>
+    <li><strong>Detalle del producto</strong>: sus lotes, sus movimientos y el <strong>historial de cambios</strong>, que muestra qué cambió, de qué valor a cuál, quién lo hizo y cuándo.</li>
   </ul>
+  <h3>Editar un producto</h3>
+  <p class="who">Lo usan: <b>dueño y regente</b></p>
+  <p>Usa el <strong>lápiz</strong> al final de la fila en el inventario, o el botón <strong>"Editar producto"</strong> dentro del detalle. Se abre el mismo formulario con el que lo creaste. Cada cambio queda en el historial de cambios del producto.</p>
   <h3>Datos de un producto</h3>
   <table class="keep">
     <thead><tr><th style="width:46mm">Dato</th><th>Qué registrar</th></tr></thead>
@@ -556,6 +637,7 @@ table.matrix .grp td{ padding:1.1mm 3mm; }
       <tr><td><strong>Laboratorio y proveedor</strong></td><td>Quién lo fabrica y a quién se lo compras.</td></tr>
       <tr><td><strong>Categoría</strong></td><td>Libre: la que te sirva para ordenar el catálogo.</td></tr>
       <tr><td><strong>Registro sanitario</strong></td><td>El número de registro del producto (ISP en Chile, INVIMA en Colombia).</td></tr>
+      <tr><td><strong>Stock mínimo</strong></td><td>La cantidad (venta más bodega) por debajo de la cual quieres un aviso; con 0 no hay alerta. Al cruzarla, la fila muestra <strong>"Bajo mínimo"</strong>, el producto entra en ese filtro y en las alertas del inicio. Lo ve todo el equipo.</td></tr>
       <tr><td><strong>Precio de venta</strong></td><td>Con IVA incluido. Es el que ve el cliente.</td></tr>
       <tr><td><strong>Costo neto y % IVA</strong></td><td>El costo sin impuesto y el porcentaje de IVA (19 % en Chile). Con eso el sistema calcula el costo con IVA, el <strong>margen</strong> y la utilidad. Solo el dueño y el regente los ven.</td></tr>
     </tbody>
@@ -564,13 +646,13 @@ table.matrix .grp td{ padding:1.1mm 3mm; }
   <h3>Semáforo de vencimiento</h3>
   <p>Cada producto muestra un color según el lote que vence antes. Te ayuda a decidir qué mover primero y qué revisar.</p>
   <table class="keep">
-    <thead><tr><th style="width:40mm">Color</th><th style="width:48mm">Vence en</th><th>Qué hacer</th></tr></thead>
+    <thead><tr><th style="width:36mm">Color</th><th style="width:44mm">Vence en</th><th>Qué hacer</th></tr></thead>
     <tbody>
       <tr><td><span class="sem" style="background:var(--ok)"></span><strong>Verde</strong></td><td>Más de 6 meses</td><td>Nada en particular.</td></tr>
-      <tr><td><span class="sem" style="background:var(--warn)"></span><strong>Amarillo</strong></td><td>Entre 3 y 6 meses</td><td>Priorizar su venta; revisar las compras del producto.</td></tr>
-      <tr><td><span class="sem" style="background:var(--err)"></span><strong>Rojo</strong></td><td>Menos de 3 meses</td><td>Atención inmediata: vender o gestionar con el proveedor.</td></tr>
-      <tr><td><span class="sem" style="background:var(--text)"></span><strong>Negro</strong></td><td>Ya vencido</td><td>No se puede vender. Retirar y registrar la merma.</td></tr>
-      <tr><td><span class="sem" style="background:var(--muted)"></span><strong>Gris · "Sin fecha"</strong></td><td>Lote cargado sin fecha de vencimiento</td><td>Se puede vender, pero hay que completar la fecha cuanto antes para que el semáforo funcione.</td></tr>
+      <tr><td><span class="sem" style="background:var(--warn)"></span><strong>Amarillo</strong></td><td>Entre 3 y 6 meses</td><td>Priorizar su venta y revisar sus compras.</td></tr>
+      <tr><td><span class="sem" style="background:var(--err)"></span><strong>Rojo</strong></td><td>Menos de 3 meses</td><td>Vender ya o gestionar con el proveedor.</td></tr>
+      <tr><td><span class="sem" style="background:var(--text)"></span><strong>Negro</strong></td><td>Ya vencido</td><td>No se vende. Retirar y registrar la merma.</td></tr>
+      <tr><td><span class="sem" style="background:var(--muted)"></span><strong>Gris · "Sin fecha"</strong></td><td>Lote cargado sin fecha</td><td>Se vende; completa la fecha con <strong>"Completar fecha"</strong> en el lote para que el semáforo funcione.</td></tr>
     </tbody>
   </table>
 
@@ -579,6 +661,7 @@ table.matrix .grp td{ padding:1.1mm 3mm; }
   <p>Se gestionan desde el detalle de cada producto, dentro de Inventario. La mercancía vive en dos lugares, <strong>bodega</strong> y <strong>venta</strong>, y puede tener una ubicación de estantería.</p>
   <ol class="steps">
     <li><strong>Ingresar un lote</strong>: número de lote, fecha de vencimiento, unidades que van a venta y unidades que van a bodega, y la estantería. En la carga inicial la fecha puede quedar vacía: el producto aparecerá en gris, "Sin fecha", hasta que la completes.</li>
+    <li><strong>Editar un lote</strong>: en el menú del lote, elige <strong>"Editar lote, vencimiento o estantería"</strong>. Si el lote no tiene fecha, verás directo el botón <strong>"Completar fecha"</strong>. Un lote que ya tiene fecha no puede quedar sin fecha. Las cantidades no se editan aquí: se cambian con los movimientos.</li>
     <li><strong>Mover entre bodega y venta</strong> cuando repones el estante o guardas excedentes.</li>
     <li><strong>Registrar mermas</strong> (roturas, vencimientos, pérdidas) indicando el motivo.</li>
   </ol>
@@ -633,7 +716,9 @@ table.matrix .grp td{ padding:1.1mm 3mm; }
 
   <h2><span class="k">5.10</span>Finanzas</h2>
   <p class="who">Lo usa: <b>dueño</b></p>
-  <p>Resume los números del negocio para tomar decisiones sin sacar cuentas a mano. Incluye las <strong>ventas del mes</strong>, las ventas <strong>por día</strong> y <strong>por método de pago</strong>, los <strong>cierres de caja con sus diferencias</strong>, las <strong>cuentas por pagar pendientes</strong> y los <strong>márgenes</strong>.</p>
+  <p>Resume los números del negocio para tomar decisiones sin sacar cuentas a mano. Incluye las <strong>ventas del mes</strong>, las ventas <strong>por día</strong> y <strong>por método de pago</strong>, los <strong>cierres de caja con sus diferencias</strong>, las <strong>cuentas por pagar pendientes</strong>, los <strong>márgenes</strong> y el <strong>inventario valorizado</strong>.</p>
+  <h3>Inventario valorizado</h3>
+  <p>Muestra cuánto dinero tienes hoy en el estante y la bodega: el valor <strong>a costo con IVA</strong> y <strong>a precio de venta</strong>, las unidades y la cantidad de productos con stock, con el desglose por categoría. Se puede <strong>exportar a CSV</strong> producto por producto. Si hay productos con stock sin costo cargado, el sistema lo avisa: el valor a costo queda subestimado hasta que los completes en Inventario.</p>
   <div class="note">
     <div class="t">Ten en cuenta</div>
     <p>El margen usa el costo con IVA que tenía cada producto en el momento de la venta, así un cambio de costo posterior no altera los meses anteriores. Un producto cargado sin costo aparece con margen del 100&nbsp;%: completa su costo en Inventario para que el número sea real. El resumen se puede exportar para tu contador.</p>
@@ -641,7 +726,7 @@ table.matrix .grp td{ padding:1.1mm 3mm; }
 
   <h2><span class="k">5.11</span>Equipo</h2>
   <p class="who">Lo usa: <b>dueño</b> · Auditoría de accesos: <b>dueño y regente</b></p>
-  <p>Aquí el dueño agrega personas, les asigna rol y las quita cuando dejan de trabajar en la farmacia. También muestra la auditoría de accesos. Está explicado en detalle en la <strong>sección 4</strong>.</p>
+  <p>Aquí el dueño crea las cuentas de su equipo (o suma a quien ya tiene una), les asigna rol y las quita cuando dejan de trabajar en la farmacia. También muestra la auditoría de accesos. Está explicado en detalle en la <strong>sección 4</strong>.</p>
 </section>
 
 <!-- ================= 6. PREGUNTAS FRECUENTES ================= -->
@@ -649,14 +734,18 @@ table.matrix .grp td{ padding:1.1mm 3mm; }
   <div class="sp"></div><div class="sp"></div>
   <div class="sec"><div class="n">6</div><h1>Preguntas frecuentes<small>Respuestas cortas a lo que más se consulta</small></h1></div>
   <div class="faq">
-    <div class="item"><p class="q">No me llega el correo de confirmación.</p><p class="a">Revisa las carpetas de spam o promociones y confirma que escribiste bien el correo al registrarte. Si después de unos minutos no llegó, escríbenos (sección 7) indicando el correo que usaste.</p></div>
-    <div class="item"><p class="q">Entro y me dice "Aprobación pendiente".</p><p class="a">Nadie aprobó tu cuenta todavía. Si trabajas en una farmacia, pide al dueño que te agregue desde Equipo con tu correo: quedarás aprobado al instante. Si eres el dueño de una farmacia nueva, el equipo de LOMS 360 debe aprobarte.</p></div>
+    <div class="item"><p class="q">No me llega el correo de confirmación.</p><p class="a">Ese correo solo se envía si creaste la cuenta tú mismo con "Crear una cuenta". Revisa las carpetas de spam o promociones y confirma que escribiste bien el correo al registrarte. Si después de unos minutos no llegó, escríbenos (sección 7) indicando el correo que usaste.</p></div>
+    <div class="item"><p class="q">Entro y me dice "Aprobación pendiente".</p><p class="a">Nadie aprobó tu cuenta todavía. Si trabajas en una farmacia, pide al dueño que te sume desde Equipo con la opción "Ya tiene cuenta" y tu correo: quedarás aprobado al instante. Si eres el dueño de una farmacia nueva, el equipo de LOMS 360 debe aprobarte.</p></div>
+    <div class="item"><p class="q">Me crearon la cuenta y no sé la contraseña.</p><p class="a">Quien creó tu cuenta (el dueño o LOMS 360) vio la contraseña inicial una sola vez y debe pasártela en persona. Al entrar con ella, el sistema te pide elegir una propia. Si se perdió, usa "¿Olvidaste tu contraseña?" con tu correo y crea una nueva.</p></div>
     <div class="item"><p class="q">Soy cajero y no veo costos ni márgenes.</p><p class="a">Es correcto. El rol de cajero no muestra costos, márgenes, finanzas ni los totales esperados del cierre. Si tu trabajo requiere ver costos y márgenes de los productos, el dueño puede cambiar tu rol a regente.</p></div>
     <div class="item"><p class="q">Vendí y el stock no bajó del lote que esperaba.</p><p class="a">El sistema descuenta primero el lote que vence antes (criterio FEFO), independientemente de dónde esté la unidad en el estante. Es el comportamiento esperado y evita que se venzan productos.</p></div>
-    <div class="item"><p class="q">El semáforo de un producto dice "Sin fecha".</p><p class="a">Hay un lote cargado sin fecha de vencimiento, algo habitual en la carga inicial. El producto se puede vender, pero conviene entrar al lote y completar la fecha para que el semáforo lo clasifique.</p></div>
+    <div class="item"><p class="q">El semáforo de un producto dice "Sin fecha".</p><p class="a">Hay un lote cargado sin fecha de vencimiento, algo habitual en la carga inicial. El producto se puede vender, pero conviene entrar a su detalle y usar el botón "Completar fecha" del lote para que el semáforo lo clasifique.</p></div>
+    <div class="item"><p class="q">¿Qué significa "Bajo mínimo"?</p><p class="a">Que el stock del producto, sumando venta y bodega, quedó por debajo del stock mínimo que el dueño o el regente definieron en su ficha. Es la señal para reponer con el proveedor. Si el stock mínimo es 0, ese producto no genera la alerta.</p></div>
+    <div class="item"><p class="q">¿Puedo cambiar la cantidad de un lote desde "Editar lote"?</p><p class="a">No. Desde ahí cambias el número de lote, la fecha de vencimiento y la estantería. Las cantidades se cambian con los movimientos del lote (entre bodega y venta, mermas), para que cada unidad tenga su rastro.</p></div>
     <div class="item"><p class="q">¿Cómo cargo un producto con varios principios activos?</p><p class="a">En el campo de principio activo, escribe cada uno con su concentración y sepáralos con "+". Por ejemplo: paracetamol 500 mg + cafeína 65 mg.</p></div>
     <div class="item"><p class="q">¿Qué es el cierre ciego?</p><p class="a">Es un cierre de caja en el que el cajero declara lo que contó sin ver cuánto debería haber. El sistema compara y guarda la diferencia. Da un cuadre más honesto que uno donde el total esperado está a la vista.</p></div>
     <div class="item"><p class="q">¿Qué pasa si vence la membresía?</p><p class="a">Nadie del equipo puede entrar al portal: el acceso del regente y de los cajeros depende de la membresía del dueño. El dueño debe contactar a LOMS 360 para renovarla.</p></div>
+    <div class="item"><p class="q">¿El comprobante de venta sirve como boleta?</p><p class="a">No. Es un comprobante interno para el cliente, con los datos de la farmacia, los productos y los pagos. La boleta o factura sigue saliendo por el canal que use la farmacia.</p></div>
     <div class="item"><p class="q">Anulé una venta por error. ¿Cómo la recupero?</p><p class="a">No se recupera. La anulación devolvió el stock al lote y dejó la venta marcada con su motivo. Para corregir, vuelve a registrar la venta desde Vender.</p></div>
     <div class="item"><p class="q">¿Quién cambia la moneda o el IVA del negocio?</p><p class="a">El equipo de LOMS 360. Esos datos se definen al habilitar el portal y no se modifican desde la farmacia. Si necesitas un cambio, escríbenos.</p></div>
   </div>
@@ -671,7 +760,7 @@ table.matrix .grp td{ padding:1.1mm 3mm; }
     <li>El mensaje exacto que viste en pantalla, si hubo alguno.</li>
   </ul>
   <p>Si el problema es de acceso (aprobación, membresía o suspensión), lo resuelve un administrador de LOMS 360. Si es de uso del portal, podemos revisar tu caso con "ver como cliente", sin modificar nada de tu farmacia.</p>
-  <div class="version">Guía de uso · Portal de Farmacia · Versión 1.0 · Octubre de 2026 · LOMS 360</div>
+  <div class="version">Guía de uso · Portal de Farmacia · Versión 1.1 · Octubre de 2026 · LOMS 360</div>
 </section>
 
 <!-- ================= CONTRAPORTADA ================= -->
