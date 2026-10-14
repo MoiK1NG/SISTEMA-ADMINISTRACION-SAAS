@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
+import { confirmarClaveRestablecida } from "@/app/auth/actions"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
@@ -48,6 +49,9 @@ export default function ResetPasswordPage() {
       setLoading(false)
       return
     }
+
+    // Si era una contraseña inicial, ya quedó cambiada: no volver a pedirla
+    await confirmarClaveRestablecida().catch(() => {})
 
     setEstado("exito")
     setLoading(false)

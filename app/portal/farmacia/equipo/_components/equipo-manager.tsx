@@ -14,7 +14,8 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { agregarMiembro, cambiarRolMiembro, quitarMiembro } from "../../actions"
+import { agregarMiembro, crearMiembroConCuenta, cambiarRolMiembro, quitarMiembro } from "../../actions"
+import { CampoClaveInicial, CredencialesCreadas, generarClave } from "@/components/credenciales-iniciales"
 
 export interface FilaMiembro {
   id:       string
@@ -44,6 +45,12 @@ export function EquipoManager({ miembros, puedeGestionar, miUserId }: Props) {
   const [open, setOpen]       = useState(false)
   const [email, setEmail]     = useState("")
   const [rol, setRol]         = useState<FilaMiembro["rol"]>("cajero")
+  // Alta: "nueva" crea la cuenta con contraseña inicial; "existente" suma a
+  // alguien que ya se registró por su cuenta
+  const [modo, setModo]       = useState<"nueva" | "existente">("nueva")
+  const [nombre, setNombre]   = useState("")
+  const [clave, setClave]     = useState("")
+  const [creada, setCreada]   = useState<{ nombre: string; email: string; clave: string } | null>(null)
   const [error, setError]     = useState<string | null>(null)
   const [aviso, setAviso]     = useState<string | null>(null)
   const [isPending, start]    = useTransition()
@@ -53,6 +60,25 @@ export function EquipoManager({ miembros, puedeGestionar, miUserId }: Props) {
     start(async () => {
       try { await fn(); router.refresh() }
       catch (e: any) { setError(e?.message ?? "No se pudo completar la acción") }
+    })
+  }
+
+  function abrirAlta() {
+    setError(null); setAviso(null); setCreada(null)
+    setModo("nueva"); setNombre(""); setEmail(""); setRol("cajero"); setClave(generarClave())
+    setOpen(true)
+  }
+
+  function handleCrear() {
+    setError(null); setAviso(null)
+    start(async () => {
+      try {
+        const r = await crearMiembroConCuenta({ nombre, email, rol, clave })
+        setCreada({ nombre: r.nombre, email: r.email, clave })   // se muestra una sola vez
+        router.refresh()
+      } catch (e: any) {
+        setError(e?.message ?? "No se pudo crear la cuenta")
+      }
     })
   }
 
@@ -86,7 +112,7 @@ export function EquipoManager({ miembros, puedeGestionar, miUserId }: Props) {
           {miembros.length} {miembros.length === 1 ? "persona" : "personas"} en el equipo
         </p>
         {puedeGestionar && (
-          <Button size="sm" onClick={() => { setError(null); setOpen(true) }} className="gap-1.5 bg-brand-600 hover:bg-brand-700">
+          <Button size="sm" onClick={abrirAlta} className="gap-1.5 bg-brand-600 hover:bg-brand-700">
             <UserPlus className="h-3.5 w-3.5" />Agregar persona
           </Button>
         )}
@@ -156,25 +182,49 @@ export function EquipoManager({ miembros, puedeGestionar, miUserId }: Props) {
       </div>
 
       {/* ── Dialog agregar ──────────────────────────────────────────────────── */}
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={v => { setOpen(v); if (!v) setCreada(null) }}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader><DialogTitle>Agregar al equipo</DialogTitle></DialogHeader>
+          {creada ? (
+            <div className="mt-2">
+              <CredencialesCreadas {...creada} onListo={() => { setOpen(false); setCreada(null) }} />
+            </div>
+          ) : (
           <div className="mt-2 space-y-4">
             {error && <p className="rounded bg-rose-50 px-3 py-2 text-xs text-rose-600">{error}</p>}
 
-            <div className="space-y-1 rounded-xl border border-slate-100 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-500">
-              <p><strong>1.</strong> La persona crea su cuenta en la página de registro (botón &quot;Regístrate&quot; del login) con el correo que vas a ingresar acá.</p>
-              <p><strong>2.</strong> Tú la agregas con ese correo y eliges su rol.</p>
-              <p>Al agregarla queda <strong>activada al instante</strong> — no paga membresía (hereda la del negocio) ni necesita aprobación de nadie más.</p>
+            {/* ── Cuenta nueva o existente ─────────────────────────────────── */}
+            <div className="grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1 text-xs font-semibold">
+              {([["nueva", "Crear cuenta nueva"], ["existente", "Ya tiene cuenta"]] as const).map(([m, label]) => (
+                <button key={m} type="button" onClick={() => { setModo(m); setError(null) }}
+                        className={`rounded-lg px-2 py-1.5 transition-colors ${modo === m ? "bg-white text-brand-700 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>
+                  {label}
+                </button>
+              ))}
             </div>
+
+            <p className="rounded-xl border border-slate-100 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-500">
+              {modo === "nueva"
+                ? <>Creas la cuenta con una contraseña inicial y se la pasas en persona. Queda <strong>activa al instante</strong>, sin pagar membresía aparte (hereda la del negocio).</>
+                : <>Para alguien que ya se registró en la página de registro. Escribe el correo con el que se registró; queda <strong>activa al instante</strong>.</>}
+            </p>
+
+            {modo === "nueva" && (
+              <div className="space-y-1.5">
+                <Label>Nombre completo</Label>
+                <Input placeholder="Ej: Ana Pérez" autoFocus value={nombre} onChange={e => setNombre(e.target.value)} />
+              </div>
+            )}
 
             <div className="space-y-1.5">
               <Label>Correo de la persona</Label>
               <Input
-                type="email" placeholder="cajero@correo.com" autoFocus
+                type="email" placeholder="cajero@correo.com" autoFocus={modo === "existente"}
                 value={email} onChange={e => setEmail(e.target.value)}
               />
             </div>
+
+            {modo === "nueva" && <CampoClaveInicial value={clave} onChange={setClave} />}
 
             <div className="space-y-1.5">
               <Label>Rol</Label>
@@ -199,13 +249,16 @@ export function EquipoManager({ miembros, puedeGestionar, miUserId }: Props) {
               </Button>
               <Button
                 className="flex-1 bg-brand-600 hover:bg-brand-700"
-                onClick={handleAgregar}
-                disabled={isPending || !email.trim()}
+                onClick={modo === "nueva" ? handleCrear : handleAgregar}
+                disabled={isPending || !email.trim() || (modo === "nueva" && (!nombre.trim() || clave.length < 8))}
               >
-                {isPending ? <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />Agregando…</> : "Agregar"}
+                {isPending
+                  ? <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />{modo === "nueva" ? "Creando…" : "Agregando…"}</>
+                  : modo === "nueva" ? "Crear cuenta" : "Agregar"}
               </Button>
             </div>
           </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

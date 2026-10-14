@@ -8,7 +8,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { LogOut, Settings, LayoutDashboard, ChevronDown } from "lucide-react"
+import { LogOut, Settings, LayoutDashboard, ChevronDown, KeyRound } from "lucide-react"
 import type { Profile } from "@/lib/types"
 
 interface DashboardHeaderProps { profile: Profile }
@@ -89,6 +89,12 @@ export function DashboardHeader({ profile }: DashboardHeaderProps) {
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator className="bg-slate-100" />
+              <DropdownMenuItem asChild className="rounded-lg mx-1 focus:bg-slate-50">
+                <Link href="/cambiar-clave" className="flex items-center gap-2 text-sm">
+                  <KeyRound className="h-4 w-4 text-slate-400" />
+                  Cambiar contraseña
+                </Link>
+              </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={handleLogout}
                 className="rounded-lg mx-1 mb-1 text-rose-600 focus:bg-rose-50 focus:text-rose-700 cursor-pointer flex items-center gap-2 text-sm"

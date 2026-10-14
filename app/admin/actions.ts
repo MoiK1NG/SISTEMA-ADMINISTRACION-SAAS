@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { requireClient } from "@/lib/supabase/require-client"
 import type { MembershipStatus } from "@/lib/types"
+import { borrarCuenta, crearCuentaConClave, validarClave, validarCorreo } from "@/lib/cuentas"
 
 // Helper para verificar rol de admin
 async function verifyAdmin() {
@@ -26,6 +27,47 @@ async function verifyAdmin() {
 }
 
 // Helper para verificar superadmin
+/**
+ * Un admin crea una cuenta con contraseña inicial: queda aprobada y activa, y
+ * al primer ingreso la persona elige su contraseña. Rol "user" para cualquier
+ * admin; crear otro admin queda reservado al superadmin (igual que cambiar
+ * roles). El acceso a portales y la membresía se asignan como siempre.
+ */
+export async function crearUsuario(input: {
+  nombre: string; email: string; clave: string; rol: "user" | "admin"
+}) {
+  const { supabase, user, adminProfile } = await verifyAdmin()
+
+  const nombre = (input.nombre ?? "").trim()
+  if (!nombre) throw new Error("El nombre es obligatorio")
+  const correo = validarCorreo(input.email)
+  const clave  = validarClave(input.clave)
+  const rol    = input.rol === "admin" ? "admin" : "user"
+  if (rol === "admin" && adminProfile.role !== "superadmin") {
+    throw new Error("Solo un superadmin puede crear administradores")
+  }
+
+  const nuevoId = await crearCuentaConClave({ email: correo, nombre, clave })
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ full_name: nombre, role: rol, is_approved: true, is_active: true })
+    .eq("id", nuevoId)
+  if (error) {
+    await borrarCuenta(nuevoId).catch(e => console.error("[crearUsuario] no se pudo deshacer la cuenta", e))
+    throw new Error(error.message)
+  }
+
+  await logAudit(supabase, user.id, {
+    action: "create_user", entity_type: "user", entity_id: nuevoId, entity_name: nombre,
+    details: { email: correo, rol },
+  })
+
+  revalidatePath("/admin/users")
+  revalidatePath("/admin")
+  return { id: nuevoId, nombre, email: correo }
+}
+
 /**
  * Corre el mantenimiento diario a mano (botón del panel). Es lo mismo que hace
  * la tarea programada de Vercel; sirve para verificar que funciona sin esperar

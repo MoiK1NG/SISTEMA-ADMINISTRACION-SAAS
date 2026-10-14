@@ -1,5 +1,6 @@
 import { requireClient } from "@/lib/supabase/require-client"
 import { UsersTable } from "@/components/admin/users-table"
+import { CrearUsuarioDialog } from "@/components/admin/crear-usuario-dialog"
 import { redirect } from "next/navigation"
 
 export default async function UsersPage() {
@@ -50,6 +51,7 @@ export default async function UsersPage() {
             Administra los usuarios de tu plataforma, sus roles, aprobaciones y accesos a portales.
           </p>
         </div>
+        <CrearUsuarioDialog esSuperadmin={currentUserProfile.role === "superadmin"} />
       </div>
 
       <UsersTable 

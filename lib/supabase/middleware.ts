@@ -101,6 +101,24 @@ export async function updateSession(request: NextRequest) {
   }
 
   // =========================================================================
+  // CAPA 1b – Contraseña inicial
+  // Una cuenta creada por el dueño o un admin trae una contraseña que conoce
+  // quien la creó: hasta que la persona elija la suya, solo puede estar en
+  // /cambiar-clave. La marca está en app_metadata (solo el servidor la cambia)
+  // y viene en el mismo getUser(): no cuesta una consulta extra.
+  // =========================================================================
+  if (
+    user.app_metadata?.debe_cambiar_clave === true &&
+    !isPublicRoute &&
+    !pathname.startsWith('/cambiar-clave')
+  ) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/cambiar-clave'
+    url.search = ''
+    return NextResponse.redirect(url)
+  }
+
+  // =========================================================================
   // CAPA 2 – Perfil del usuario (aprobado, activo, rol)
   // Se omite en rutas públicas para no hacer una query innecesaria.
   // =========================================================================
