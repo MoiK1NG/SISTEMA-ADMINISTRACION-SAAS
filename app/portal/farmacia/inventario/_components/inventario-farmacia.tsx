@@ -1,13 +1,13 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useDeferredValue, useMemo, useState } from "react"
 import Link from "next/link"
-import { Search, Plus, ScanBarcode, AlertTriangle, CalendarOff, Pencil } from "lucide-react"
+import { Search, Plus, ScanBarcode, AlertTriangle, CalendarOff, Pencil, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { CADUCIDAD_META, type EstadoCaducidad } from "@/lib/farmacia/caducidad"
-import { costoConIva, margen } from "@/lib/farmacia/formato"
 import { useFormato } from "@/components/farmacia/negocio-provider"
+import { buscar, indexar } from "@/lib/farmacia/busqueda"
 import { ProductoFormDialog } from "./producto-form"
 
 export interface CatalogoItem { id: string; nombre: string }
@@ -24,6 +24,9 @@ export interface FilaProducto {
   precio_venta:     number
   costo:            number | null   // neto, null para el cajero
   iva_pct:          number
+  /** Calculados en el servidor (null para el cajero) */
+  costo_iva:        number | null
+  margen:           number | null
   requiere_receta:  boolean
   activo:           boolean
   laboratorio_id:   string | null
@@ -46,6 +49,9 @@ const FILTROS: { id: Filtro; label: string }[] = [
   { id: "inactivos",  label: "Inactivos"    },
 ]
 
+/** Filas que se renderizan de una vez; el resto con "Mostrar más". */
+const VENTANA = 200
+
 interface Props {
   filas:        FilaProducto[]
   proveedores:  CatalogoItem[]
@@ -58,32 +64,52 @@ export function principioConConcentracion(p: { principio_activo: string | null; 
   return [p.principio_activo, p.concentracion].filter(Boolean).join(" ") || null
 }
 
+function pasaFiltro(f: FilaProducto, filtro: Filtro): boolean {
+  if (filtro === "por_vencer" && !(f.semaforo === "rojo" || f.semaforo === "vencido")) return false
+  if (filtro === "sin_fecha"  && f.lotes_sin_fecha === 0) return false
+  if (filtro === "sin_stock"  && f.stock_venta + f.stock_bodega > 0) return false
+  if (filtro === "inactivos"  && f.activo) return false
+  if (filtro !== "inactivos"  && !f.activo) return false
+  return true
+}
+
 export function InventarioFarmacia({ filas, proveedores, laboratorios, esGestor }: Props) {
   const fx = useFormato()
   const [busqueda, setBusqueda] = useState("")
+  // La tabla se filtra con el valor diferido: escribir nunca espera al filtrado
+  const qDiferida = useDeferredValue(busqueda)
   const [filtro, setFiltro]     = useState<Filtro>("todos")
+  const [limite, setLimite]     = useState(VENTANA)
   const [formAbierto, setFormAbierto] = useState(false)
   const [editando, setEditando] = useState<FilaProducto | null>(null)
 
-  const visibles = useMemo(() => {
-    const q = busqueda.trim().toLowerCase()
-    return filas.filter(f => {
-      if (filtro === "por_vencer" && !(f.semaforo === "rojo" || f.semaforo === "vencido")) return false
-      if (filtro === "sin_fecha"  && f.lotes_sin_fecha === 0) return false
-      if (filtro === "sin_stock"  && f.stock_venta + f.stock_bodega > 0) return false
-      if (filtro === "inactivos"  && f.activo) return false
-      if (filtro !== "inactivos"  && !f.activo) return false
-      if (!q) return true
-      return (
-        f.nombre.toLowerCase().includes(q) ||
-        (f.principio_activo ?? "").toLowerCase().includes(q) ||
-        (f.codigo_barras ?? "").includes(q)
-      )
-    })
-  }, [filas, busqueda, filtro])
+  // Índice de texto (sin tildes, minúsculas) armado una vez por catálogo
+  const indice = useMemo(
+    () => indexar(filas, f => `${f.nombre} ${f.principio_activo ?? ""} ${f.codigo_barras ?? ""}`),
+    [filas],
+  )
 
-  const alertas  = filas.filter(f => f.activo && (f.semaforo === "rojo" || f.semaforo === "vencido")).length
-  const sinFecha = filas.filter(f => f.activo && f.lotes_sin_fecha > 0).length
+  const visibles = useMemo(() => {
+    const q = qDiferida.trim()
+    const base = q ? buscar(indice, q, Number.MAX_SAFE_INTEGER) : filas
+    return base.filter(f => pasaFiltro(f, filtro))
+  }, [filas, indice, qDiferida, filtro])
+
+  // Contadores de la barra, una sola pasada y solo cuando cambia el catálogo
+  const { alertas, sinFecha } = useMemo(() => {
+    let alertas = 0, sinFecha = 0
+    for (const f of filas) {
+      if (!f.activo) continue
+      if (f.semaforo === "rojo" || f.semaforo === "vencido") alertas++
+      if (f.lotes_sin_fecha > 0) sinFecha++
+    }
+    return { alertas, sinFecha }
+  }, [filas])
+
+  function cambiarBusqueda(v: string) { setBusqueda(v); setLimite(VENTANA) }
+  function cambiarFiltro(v: Filtro)   { setFiltro(v);   setLimite(VENTANA) }
+
+  const mostradas = visibles.length > limite ? visibles.slice(0, limite) : visibles
 
   return (
     <div className="space-y-4">
@@ -96,7 +122,7 @@ export function InventarioFarmacia({ filas, proveedores, laboratorios, esGestor 
             autoFocus
             placeholder="Buscar o escanear: nombre, principio activo o código…"
             value={busqueda}
-            onChange={e => setBusqueda(e.target.value)}
+            onChange={e => cambiarBusqueda(e.target.value)}
             className="h-11 rounded-xl pl-10"
           />
           <ScanBarcode className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-300" />
@@ -116,7 +142,7 @@ export function InventarioFarmacia({ filas, proveedores, laboratorios, esGestor 
         {FILTROS.map(f => (
           <button
             key={f.id}
-            onClick={() => setFiltro(f.id)}
+            onClick={() => cambiarFiltro(f.id)}
             className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
               filtro === f.id
                 ? "bg-brand-600 text-white"
@@ -129,7 +155,7 @@ export function InventarioFarmacia({ filas, proveedores, laboratorios, esGestor 
         <div className="ml-auto flex flex-wrap gap-2">
           {sinFecha > 0 && filtro !== "sin_fecha" && (
             <button
-              onClick={() => setFiltro("sin_fecha")}
+              onClick={() => cambiarFiltro("sin_fecha")}
               className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-600"
               title="Lotes cargados sin fecha de vencimiento: se venden, pero conviene completarla"
             >
@@ -139,7 +165,7 @@ export function InventarioFarmacia({ filas, proveedores, laboratorios, esGestor 
           )}
           {alertas > 0 && filtro !== "por_vencer" && (
             <button
-              onClick={() => setFiltro("por_vencer")}
+              onClick={() => cambiarFiltro("por_vencer")}
               className="flex items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-700"
             >
               <AlertTriangle className="h-3 w-3" />
@@ -150,7 +176,7 @@ export function InventarioFarmacia({ filas, proveedores, laboratorios, esGestor 
       </div>
 
       {/* ── Tabla ─────────────────────────────────────────────────────────── */}
-      <div className="overflow-x-auto rounded-2xl border border-slate-100 bg-white shadow-sm">
+      <div className={`overflow-x-auto rounded-2xl border border-slate-100 bg-white shadow-sm transition-opacity ${busqueda !== qDiferida ? "opacity-70" : ""}`}>
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-slate-100 bg-slate-50/60">
@@ -182,12 +208,11 @@ export function InventarioFarmacia({ filas, proveedores, laboratorios, esGestor 
               </tr>
             )}
 
-            {visibles.map(f => {
+            {mostradas.map(f => {
               const sem = f.semaforo ? CADUCIDAD_META[f.semaforo] : null
               const sinStock = f.stock_venta + f.stock_bodega <= 0
               const principio = principioConConcentracion(f)
-              const costoIva  = f.costo != null ? costoConIva(f.costo, f.iva_pct) : null
-              const mg        = f.costo != null ? margen(f.precio_venta, f.costo, f.iva_pct) : null
+              const mg = f.margen
               return (
                 <tr key={f.id} className="group transition-colors hover:bg-brand-50/40">
                   <td className="px-4 py-3">
@@ -232,7 +257,7 @@ export function InventarioFarmacia({ filas, proveedores, laboratorios, esGestor 
                   <td className="px-4 py-3 text-right font-semibold tabular-nums text-slate-900">{fx.dinero(f.precio_venta)}</td>
                   {esGestor && (
                     <td className="px-4 py-3 text-right tabular-nums text-slate-500">
-                      {costoIva != null ? fx.dinero(costoIva) : "—"}
+                      {f.costo_iva != null ? fx.dinero(f.costo_iva) : "—"}
                       {f.iva_pct > 0 && <span className="ml-1 text-[10px] text-slate-400">IVA {f.iva_pct}%</span>}
                     </td>
                   )}
@@ -260,10 +285,23 @@ export function InventarioFarmacia({ filas, proveedores, laboratorios, esGestor 
             })}
           </tbody>
         </table>
+
+        {visibles.length > limite && (
+          <div className="border-t border-slate-100 px-4 py-3 text-center">
+            <button
+              onClick={() => setLimite(l => l + VENTANA)}
+              className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+            >
+              <ChevronDown className="h-3.5 w-3.5" />
+              Mostrar {Math.min(VENTANA, visibles.length - limite)} más
+            </button>
+          </div>
+        )}
       </div>
 
       <p className="text-xs text-slate-400">
-        {visibles.length} de {filas.length} productos · toca un producto para ver sus lotes, vencimientos, movimientos e historial de cambios
+        {visibles.length > limite ? `${mostradas.length} de ${visibles.length} resultados` : `${visibles.length} de ${filas.length} productos`}
+        {" "}· toca un producto para ver sus lotes, vencimientos, movimientos e historial de cambios
       </p>
 
       {esGestor && (
