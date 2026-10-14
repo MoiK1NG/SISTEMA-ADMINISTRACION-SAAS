@@ -1,6 +1,6 @@
-import { formato } from "@/lib/farmacia/formato"
+import { formato, costoConIva } from "@/lib/farmacia/formato"
 import Link from "next/link"
-import { Wallet, TrendingUp, Landmark, PackageOpen, Lock } from "lucide-react"
+import { Wallet, TrendingUp, Landmark, PackageOpen, Lock, Boxes } from "lucide-react"
 import { PortalNav } from "@/components/portal/portal-nav"
 import { BannerVerComo } from "@/components/portal/banner-ver-como"
 import { contextoFarmacia } from "@/lib/farmacia/contexto"
@@ -51,6 +51,8 @@ export default async function FinanzasFarmaciaPage() {
     { data: cxpAbiertas },
     { data: pedidosAbiertos },
     { data: cierres },
+    { data: stockRaw },
+    { data: productosRaw },
   ] = await Promise.all([
     supabase.from("ventas_farmacia")
       .select("id, total, created_at, items_venta_farmacia(cantidad, precio_unitario, costo_unitario)")
@@ -75,6 +77,13 @@ export default async function FinanzasFarmaciaPage() {
       .select("periodo_hasta, diferencia, num_ventas")
       .eq("negocio_id", negocio.id)
       .order("created_at", { ascending: false }).limit(5),
+    // Inventario valorizado: cuánto dinero hay en el estante y la bodega
+    supabase.from("stock_farmacia")
+      .select("producto_id, stock_venta, stock_bodega")
+      .eq("negocio_id", negocio.id),
+    supabase.from("productos_farmacia")
+      .select("id, nombre, categoria, costo, iva_pct, precio_venta")
+      .eq("negocio_id", negocio.id).eq("activo", true),
   ])
 
   // ── Cálculos ───────────────────────────────────────────────────────────────
@@ -109,6 +118,34 @@ export default async function FinanzasFarmaciaPage() {
 
   const dias = [...porDia.values()].sort((a, b) => a.fecha.localeCompare(b.fecha))
   const maxDia = Math.max(1, ...dias.map(d => d.ingreso))
+
+  // ── Inventario valorizado ──────────────────────────────────────────────────
+  interface ProductoValorizado { nombre: string; categoria: string; unidades: number; costoIva: number; precio: number; valorCosto: number; valorVenta: number }
+  const stockPorProducto = new Map<string, number>(
+    (stockRaw ?? []).map((s: any) => [s.producto_id, Number(s.stock_venta) + Number(s.stock_bodega)])
+  )
+  const valorizados: ProductoValorizado[] = []
+  for (const p of productosRaw ?? []) {
+    const unidades = stockPorProducto.get(p.id) ?? 0
+    if (unidades <= 0) continue
+    const cIva = costoConIva(Number(p.costo), Number(p.iva_pct ?? 0))
+    valorizados.push({
+      nombre: p.nombre, categoria: p.categoria || "otros", unidades,
+      costoIva: cIva, precio: Number(p.precio_venta),
+      valorCosto: unidades * cIva, valorVenta: unidades * Number(p.precio_venta),
+    })
+  }
+  const invCosto    = valorizados.reduce((s, p) => s + p.valorCosto, 0)
+  const invVenta    = valorizados.reduce((s, p) => s + p.valorVenta, 0)
+  const invUnidades = valorizados.reduce((s, p) => s + p.unidades, 0)
+  const sinCosto    = valorizados.filter(p => p.costoIva <= 0).length
+  const porCategoria = [...valorizados.reduce((m, p) => {
+    const c = m.get(p.categoria) ?? { categoria: p.categoria, productos: 0, unidades: 0, valorCosto: 0, valorVenta: 0 }
+    c.productos += 1; c.unidades += p.unidades; c.valorCosto += p.valorCosto; c.valorVenta += p.valorVenta
+    return m.set(p.categoria, c)
+  }, new Map<string, { categoria: string; productos: number; unidades: number; valorCosto: number; valorVenta: number }>()).values()]
+    .sort((a, b) => b.valorCosto - a.valorCosto)
+  const maxCategoria = Math.max(1, ...porCategoria.map(c => c.valorCosto))
 
   const kpis = [
     { label: "Vendido hoy",   valor: f.dinero(ingresoHoy),  sub: `${porDia.get(hoyStr)?.ventas ?? 0} ventas` },
@@ -207,6 +244,67 @@ export default async function FinanzasFarmaciaPage() {
               </div>
             )}
           </div>
+        </div>
+
+        {/* ── Inventario valorizado ──────────────────────────────────────────── */}
+        <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
+          <div className="flex items-center justify-between border-b border-slate-50 px-5 py-4">
+            <div>
+              <p className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                <Boxes className="h-4 w-4 text-brand-600" />Inventario valorizado
+              </p>
+              <p className="mt-0.5 text-xs text-slate-400">Lo que hay hoy en el estante y la bodega, a costo con IVA y a precio de venta</p>
+            </div>
+            <ExportarCsv
+              nombreArchivo={`inventario-valorizado-${negocio.nombre.toLowerCase().replace(/\s+/g, "-")}-${hoyStr}.csv`}
+              encabezados={["Producto", "Categoría", "Unidades", "Costo c/IVA", "Valor a costo", "Precio venta", "Valor a venta"]}
+              filas={valorizados
+                .sort((a, b) => b.valorCosto - a.valorCosto)
+                .map(p => [p.nombre, p.categoria, p.unidades, Math.round(p.costoIva), Math.round(p.valorCosto), Math.round(p.precio), Math.round(p.valorVenta)])}
+            />
+          </div>
+          {valorizados.length === 0 ? (
+            <p className="py-12 text-center text-sm text-slate-400">Sin unidades en inventario</p>
+          ) : (
+            <div className="space-y-4 p-5">
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">A costo</p>
+                  <p className="mt-1 text-xl font-black tabular-nums text-slate-900">{f.dinero(invCosto)}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">A precio de venta</p>
+                  <p className="mt-1 text-xl font-black tabular-nums text-slate-900">{f.dinero(invVenta)}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Unidades</p>
+                  <p className="mt-1 text-xl font-black tabular-nums text-slate-900">{invUnidades.toLocaleString(f.locale)}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Productos con stock</p>
+                  <p className="mt-1 text-xl font-black tabular-nums text-slate-900">{valorizados.length}</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                {porCategoria.map(c => (
+                  <div key={c.categoria} className="space-y-1">
+                    <div className="flex justify-between text-xs">
+                      <span className="font-medium capitalize text-slate-700">{c.categoria} <span className="text-slate-400">· {c.productos} productos · {c.unidades.toLocaleString(f.locale)} u.</span></span>
+                      <span className="font-bold tabular-nums text-slate-900">{f.dinero(c.valorCosto)}</span>
+                    </div>
+                    <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
+                      <div className="h-full rounded-full bg-brand-500" style={{ width: `${Math.round((c.valorCosto / maxCategoria) * 100)}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {sinCosto > 0 && (
+                <p className="text-[11px] text-amber-700">
+                  {sinCosto} producto{sinCosto === 1 ? "" : "s"} con stock no tiene{sinCosto === 1 ? "" : "n"} costo cargado: el valor a costo está subestimado.
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* ── Día a día del mes ──────────────────────────────────────────────── */}

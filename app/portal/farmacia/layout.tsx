@@ -4,8 +4,8 @@ import { MONEDA_POR_DEFECTO } from "@/lib/farmacia/formato"
 
 /**
  * Resuelve el negocio una vez (contextoFarmacia está memoizada por request,
- * así que las páginas no pagan una consulta extra) y expone su moneda e IVA a
- * todo el árbol cliente del portal.
+ * así que las páginas no pagan una consulta extra) y expone su moneda, IVA y
+ * datos a todo el árbol cliente del portal.
  */
 export default async function FarmaciaLayout({ children }: { children: React.ReactNode }) {
   const { negocio } = await contextoFarmacia()
@@ -13,6 +13,12 @@ export default async function FarmaciaLayout({ children }: { children: React.Rea
     <NegocioProvider
       moneda={negocio?.moneda ?? MONEDA_POR_DEFECTO}
       ivaDefault={negocio?.iva_pct_default ?? 0}
+      negocio={{
+        nombre:    negocio?.nombre ?? "",
+        nit:       negocio?.nit ?? null,
+        direccion: negocio?.direccion ?? null,
+        telefono:  negocio?.telefono ?? null,
+      }}
     >
       {children}
     </NegocioProvider>
