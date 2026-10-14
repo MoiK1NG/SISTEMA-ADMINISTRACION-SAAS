@@ -16,6 +16,12 @@ export const MONEDAS: Record<Moneda, { locale: string; nombre: string; pais: str
 
 export const MONEDA_POR_DEFECTO: Moneda = "COP"
 
+/** Identificador tributario del negocio según el país. */
+export const ID_FISCAL: Record<Moneda, string> = { COP: "NIT", CLP: "RUT" }
+
+/** Documento de identidad de una persona (clientes, pacientes). */
+export const DOC_PERSONA: Record<Moneda, string> = { COP: "CC", CLP: "RUT" }
+
 export interface Formato {
   moneda: Moneda
   locale: string

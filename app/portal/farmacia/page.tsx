@@ -75,8 +75,8 @@ export default async function FarmaciaPage() {
             <p className="text-base font-semibold text-slate-900">No perteneces a ninguna farmacia</p>
             <p className="mx-auto mt-2 max-w-sm text-sm text-slate-500">
               Si trabajas en una farmacia registrada, pide al dueño que te agregue al equipo
-              con el correo de tu cuenta. Si eres el dueño, contacta a la plataforma para
-              dar de alta tu negocio.
+              con el correo de esta cuenta (o que te cree una desde Equipo). Si eres el dueño,
+              contacta a la plataforma para dar de alta tu negocio.
             </p>
           </div>
         ) : (
