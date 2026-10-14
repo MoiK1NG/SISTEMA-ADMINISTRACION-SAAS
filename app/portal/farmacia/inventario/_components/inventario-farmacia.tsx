@@ -2,12 +2,13 @@
 
 import { useDeferredValue, useMemo, useState } from "react"
 import Link from "next/link"
-import { Search, Plus, ScanBarcode, AlertTriangle, CalendarOff, Pencil, ChevronDown } from "lucide-react"
+import { Search, Plus, ScanBarcode, AlertTriangle, CalendarOff, Pencil, ChevronDown, Ban, TrendingDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { CADUCIDAD_META, type EstadoCaducidad } from "@/lib/farmacia/caducidad"
 import { useFormato } from "@/components/farmacia/negocio-provider"
 import { buscar, indexar } from "@/lib/farmacia/busqueda"
+import type { FiltroInventario } from "@/lib/farmacia/filtros-inventario"
 import { ProductoFormDialog } from "./producto-form"
 
 export interface CatalogoItem { id: string; nombre: string }
@@ -37,16 +38,22 @@ export interface FilaProducto {
   /** Lotes con unidades que todavía no tienen fecha de vencimiento cargada */
   lotes_sin_fecha:  number
   semaforo:         EstadoCaducidad | null
+  /** 0 = sin alerta de reposición */
+  stock_minimo:     number
+  /** venta + bodega por debajo del mínimo (lo calcula la vista stock_farmacia) */
+  bajo_minimo:      boolean
 }
 
-type Filtro = "todos" | "por_vencer" | "sin_fecha" | "sin_stock" | "inactivos"
+type Filtro = FiltroInventario
 
 const FILTROS: { id: Filtro; label: string }[] = [
-  { id: "todos",      label: "Todos"        },
-  { id: "por_vencer", label: "🔴 Por vencer" },
-  { id: "sin_fecha",  label: "Sin fecha"    },
-  { id: "sin_stock",  label: "Sin stock"    },
-  { id: "inactivos",  label: "Inactivos"    },
+  { id: "todos",       label: "Todos"         },
+  { id: "vencidos",    label: "⚫ Vencidos"    },
+  { id: "por_vencer",  label: "🔴 Por vencer"  },
+  { id: "sin_fecha",   label: "Sin fecha"     },
+  { id: "bajo_minimo", label: "📉 Bajo mínimo" },
+  { id: "sin_stock",   label: "Sin stock"     },
+  { id: "inactivos",   label: "Inactivos"     },
 ]
 
 /** Filas que se renderizan de una vez; el resto con "Mostrar más". */
@@ -57,6 +64,8 @@ interface Props {
   proveedores:  CatalogoItem[]
   laboratorios: CatalogoItem[]
   esGestor:     boolean
+  /** Filtro con el que abre la tabla (viene de ?filtro= en la URL) */
+  filtroInicial?: Filtro
 }
 
 /** "Amlodipino + Valsartán 5/160 mg": el principio activo con su concentración al lado. */
@@ -65,20 +74,22 @@ export function principioConConcentracion(p: { principio_activo: string | null; 
 }
 
 function pasaFiltro(f: FilaProducto, filtro: Filtro): boolean {
-  if (filtro === "por_vencer" && !(f.semaforo === "rojo" || f.semaforo === "vencido")) return false
-  if (filtro === "sin_fecha"  && f.lotes_sin_fecha === 0) return false
+  if (filtro === "vencidos"    && f.semaforo !== "vencido") return false
+  if (filtro === "por_vencer"  && f.semaforo !== "rojo") return false
+  if (filtro === "bajo_minimo" && !f.bajo_minimo) return false
+  if (filtro === "sin_fecha"   && f.lotes_sin_fecha === 0) return false
   if (filtro === "sin_stock"  && f.stock_venta + f.stock_bodega > 0) return false
   if (filtro === "inactivos"  && f.activo) return false
   if (filtro !== "inactivos"  && !f.activo) return false
   return true
 }
 
-export function InventarioFarmacia({ filas, proveedores, laboratorios, esGestor }: Props) {
+export function InventarioFarmacia({ filas, proveedores, laboratorios, esGestor, filtroInicial }: Props) {
   const fx = useFormato()
   const [busqueda, setBusqueda] = useState("")
   // La tabla se filtra con el valor diferido: escribir nunca espera al filtrado
   const qDiferida = useDeferredValue(busqueda)
-  const [filtro, setFiltro]     = useState<Filtro>("todos")
+  const [filtro, setFiltro]     = useState<Filtro>(filtroInicial ?? "todos")
   const [limite, setLimite]     = useState(VENTANA)
   const [formAbierto, setFormAbierto] = useState(false)
   const [editando, setEditando] = useState<FilaProducto | null>(null)
@@ -96,14 +107,16 @@ export function InventarioFarmacia({ filas, proveedores, laboratorios, esGestor 
   }, [filas, indice, qDiferida, filtro])
 
   // Contadores de la barra, una sola pasada y solo cuando cambia el catálogo
-  const { alertas, sinFecha } = useMemo(() => {
-    let alertas = 0, sinFecha = 0
+  const { vencidos, porVencer, sinFecha, bajoMinimo } = useMemo(() => {
+    let vencidos = 0, porVencer = 0, sinFecha = 0, bajoMinimo = 0
     for (const f of filas) {
       if (!f.activo) continue
-      if (f.semaforo === "rojo" || f.semaforo === "vencido") alertas++
+      if (f.semaforo === "vencido") vencidos++
+      if (f.semaforo === "rojo") porVencer++
       if (f.lotes_sin_fecha > 0) sinFecha++
+      if (f.bajo_minimo) bajoMinimo++
     }
-    return { alertas, sinFecha }
+    return { vencidos, porVencer, sinFecha, bajoMinimo }
   }, [filas])
 
   function cambiarBusqueda(v: string) { setBusqueda(v); setLimite(VENTANA) }
@@ -163,13 +176,32 @@ export function InventarioFarmacia({ filas, proveedores, laboratorios, esGestor 
               {sinFecha} sin fecha
             </button>
           )}
-          {alertas > 0 && filtro !== "por_vencer" && (
+          {bajoMinimo > 0 && filtro !== "bajo_minimo" && (
+            <button
+              onClick={() => cambiarFiltro("bajo_minimo")}
+              className="flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700"
+              title="Productos por debajo de su stock mínimo"
+            >
+              <TrendingDown className="h-3 w-3" />
+              {bajoMinimo} bajo mínimo
+            </button>
+          )}
+          {porVencer > 0 && filtro !== "por_vencer" && (
             <button
               onClick={() => cambiarFiltro("por_vencer")}
               className="flex items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-700"
             >
               <AlertTriangle className="h-3 w-3" />
-              {alertas} por vencer
+              {porVencer} por vencer
+            </button>
+          )}
+          {vencidos > 0 && filtro !== "vencidos" && (
+            <button
+              onClick={() => cambiarFiltro("vencidos")}
+              className="flex items-center gap-1.5 rounded-full border border-slate-800 bg-slate-800 px-3 py-1.5 text-xs font-bold text-white"
+            >
+              <Ban className="h-3 w-3" />
+              {vencidos} {vencidos === 1 ? "vencido" : "vencidos"}
             </button>
           )}
         </div>
@@ -224,6 +256,9 @@ export function InventarioFarmacia({ filas, proveedores, laboratorios, esGestor 
                         )}
                         {f.requiere_receta && (
                           <span className="ml-2 rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-semibold text-violet-700" title="Requiere receta">Rx</span>
+                        )}
+                        {f.bajo_minimo && (
+                          <span className="ml-2 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700" title={`Mínimo: ${f.stock_minimo}`}>Bajo mínimo</span>
                         )}
                       </p>
                       <p className="mt-0.5 text-xs text-slate-400">

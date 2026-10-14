@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { requireNegocioAccion, type RolFarmacia } from "@/lib/farmacia/contexto"
-import { montoNoNegativo, montoValido, textoRequerido, unoDe } from "@/lib/portal-security"
+import { enteroNoNegativo, montoNoNegativo, montoValido, textoRequerido, unoDe } from "@/lib/portal-security"
 import { METODOS_PAGO_FARMACIA } from "@/lib/farmacia/pos-constants"
 import { borrarCuenta, crearCuentaConClave, validarClave, validarCorreo } from "@/lib/cuentas"
 
@@ -107,15 +107,22 @@ export async function actualizarNegocio(data: {
 }) {
   const { supabase, negocioId } = await requireNegocioAccion(["dueno"])
 
+  const corto = (v: string | undefined, max: number, label: string) => {
+    const t = v?.trim() || null
+    if (t && t.length > max) throw new Error(`El ${label} es demasiado largo`)
+    return t
+  }
+
   const { error } = await supabase.from("negocios").update({
     nombre:    textoRequerido(data.nombre, "nombre del negocio"),
-    nit:       data.nit?.trim() || null,
-    direccion: data.direccion?.trim() || null,
-    telefono:  data.telefono?.trim() || null,
+    nit:       corto(data.nit, 40, "identificador tributario"),
+    direccion: corto(data.direccion, 200, "dirección"),
+    telefono:  corto(data.telefono, 40, "teléfono"),
   }).eq("id", negocioId)
   if (error) throw error
 
-  revalidatePath("/portal/farmacia")
+  // "layout": el nombre del negocio está en la cabecera de todas las pantallas del portal
+  revalidatePath("/portal/farmacia", "layout")
   return { success: true }
 }
 
@@ -143,6 +150,8 @@ export interface ProductoFarmaciaInput {
   /** Costo NETO (sin IVA); el IVA va aparte en iva_pct */
   costo:             number
   iva_pct?:          number
+  /** 0 = sin alerta de reposición */
+  stock_minimo?:     number
   requiere_receta?:  boolean
   activo?:           boolean
 }
@@ -173,6 +182,7 @@ function limpiarProducto(data: ProductoFarmaciaInput) {
     precio_venta:     montoNoNegativo(data.precio_venta, "precio de venta"),
     costo:            montoNoNegativo(data.costo, "costo"),
     iva_pct:          porcentajeValido(data.iva_pct),
+    stock_minimo:     enteroNoNegativo(data.stock_minimo ?? 0, "cantidad mínima"),
     requiere_receta:  Boolean(data.requiere_receta),
   }
 }
