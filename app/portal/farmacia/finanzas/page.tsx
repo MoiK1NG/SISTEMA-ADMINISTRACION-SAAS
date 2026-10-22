@@ -1,10 +1,10 @@
 import { formato, costoConIva } from "@/lib/farmacia/formato"
 import Link from "next/link"
-import { Wallet, TrendingUp, Landmark, PackageOpen, Lock, Boxes } from "lucide-react"
+import { Wallet, TrendingUp, Landmark, PackageOpen, Lock, Boxes, Receipt } from "lucide-react"
 import { PortalNav } from "@/components/portal/portal-nav"
 import { BannerVerComo } from "@/components/portal/banner-ver-como"
 import { contextoFarmacia } from "@/lib/farmacia/contexto"
-import { METODO_PAGO_LABEL, type MetodoPagoFarmacia } from "@/lib/farmacia/pos-constants"
+import { CATEGORIA_GASTO_LABEL, METODO_PAGO_LABEL, type CategoriaGasto, type MetodoPagoFarmacia } from "@/lib/farmacia/pos-constants"
 import { ExportarCsv } from "@/components/farmacia/exportar-csv"
 
 export default async function FinanzasFarmaciaPage() {
@@ -53,6 +53,7 @@ export default async function FinanzasFarmaciaPage() {
     { data: cierres },
     { data: stockRaw },
     { data: productosRaw },
+    { data: salidasRaw },
   ] = await Promise.all([
     supabase.from("ventas_farmacia")
       .select("id, total, created_at, items_venta_farmacia(cantidad, precio_unitario, costo_unitario)")
@@ -84,6 +85,12 @@ export default async function FinanzasFarmaciaPage() {
     supabase.from("productos_farmacia")
       .select("id, nombre, categoria, costo, iva_pct, precio_venta")
       .eq("negocio_id", negocio.id).eq("activo", true),
+    // Retiros y gastos pagados con la caja en el mes (sin los anulados)
+    supabase.from("movimientos_caja_farmacia")
+      .select("tipo, monto, concepto, categoria, created_at")
+      .eq("negocio_id", negocio.id).eq("anulado", false)
+      .gte("created_at", inicioMes.toISOString())
+      .order("created_at", { ascending: false }),
   ])
 
   // ── Cálculos ───────────────────────────────────────────────────────────────
@@ -146,6 +153,18 @@ export default async function FinanzasFarmaciaPage() {
   }, new Map<string, { categoria: string; productos: number; unidades: number; valorCosto: number; valorVenta: number }>()).values()]
     .sort((a, b) => b.valorCosto - a.valorCosto)
   const maxCategoria = Math.max(1, ...porCategoria.map(c => c.valorCosto))
+
+  // ── Salidas de caja del mes ────────────────────────────────────────────────
+  // El gasto es del negocio; el retiro es plata que se lleva el dueño (no es gasto)
+  interface Salida { tipo: "retiro" | "gasto"; monto: number; concepto: string; categoria: CategoriaGasto | null; created_at: string }
+  const salidas: Salida[] = (salidasRaw ?? []).map((m: any) => ({ ...m, monto: Number(m.monto) }))
+  const gastosMes  = salidas.filter(m => m.tipo === "gasto").reduce((s, m) => s + m.monto, 0)
+  const retirosMes = salidas.filter(m => m.tipo === "retiro").reduce((s, m) => s + m.monto, 0)
+  const gastoPorCategoria = [...salidas.filter(m => m.tipo === "gasto").reduce((acc, m) => {
+    const c = m.categoria ?? "otros"
+    return acc.set(c, (acc.get(c) ?? 0) + m.monto)
+  }, new Map<CategoriaGasto, number>()).entries()].sort((a, b) => b[1] - a[1])
+  const maxGasto = Math.max(1, ...gastoPorCategoria.map(([, v]) => v))
 
   const kpis = [
     { label: "Vendido hoy",   valor: f.dinero(ingresoHoy),  sub: `${porDia.get(hoyStr)?.ventas ?? 0} ventas` },
@@ -244,6 +263,60 @@ export default async function FinanzasFarmaciaPage() {
               </div>
             )}
           </div>
+        </div>
+
+        {/* ── Salidas de caja: gastos y retiros del mes ──────────────────────── */}
+        <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <p className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                <Receipt className="h-4 w-4 text-brand-600" />Gastos y retiros de caja del mes
+              </p>
+              <p className="mt-0.5 text-xs text-slate-400">Efectivo que salió del cajón sin ser venta, registrado en Caja</p>
+            </div>
+            <ExportarCsv
+              nombreArchivo={`salidas-caja-${negocio.nombre.toLowerCase().replace(/\s+/g, "-")}-${hoyStr.slice(0, 7)}.csv`}
+              encabezados={["Fecha", "Tipo", "Categoría", "Concepto", "Monto"]}
+              filas={salidas.map(m => [
+                String(m.created_at).split("T")[0],
+                m.tipo === "retiro" ? "Retiro" : "Gasto",
+                m.categoria ? CATEGORIA_GASTO_LABEL[m.categoria] : "",
+                m.concepto, Math.round(m.monto),
+              ])}
+            />
+          </div>
+          {salidas.length === 0 ? (
+            <p className="py-6 text-center text-sm text-slate-400">Sin gastos ni retiros este mes</p>
+          ) : (
+            <div className="grid gap-6 sm:grid-cols-[12rem_1fr]">
+              <div className="space-y-3">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Gastos</p>
+                  <p className="mt-1 text-xl font-black tabular-nums text-slate-900">{f.dinero(gastosMes)}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Retiros</p>
+                  <p className="mt-1 text-xl font-black tabular-nums text-slate-900">{f.dinero(retirosMes)}</p>
+                  <p className="text-[11px] text-slate-400">Plata que se llevó el dueño; no es gasto</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                {gastoPorCategoria.length === 0 ? (
+                  <p className="text-xs text-slate-400">Este mes solo hubo retiros.</p>
+                ) : gastoPorCategoria.map(([cat, monto]) => (
+                  <div key={cat} className="space-y-1">
+                    <div className="flex justify-between text-xs">
+                      <span className="font-medium text-slate-700">{CATEGORIA_GASTO_LABEL[cat] ?? cat}</span>
+                      <span className="font-bold tabular-nums text-slate-900">{f.dinero(monto)}</span>
+                    </div>
+                    <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
+                      <div className="h-full rounded-full bg-amber-400" style={{ width: `${Math.round((monto / maxGasto) * 100)}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* ── Inventario valorizado ──────────────────────────────────────────── */}

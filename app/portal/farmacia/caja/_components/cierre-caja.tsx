@@ -1,15 +1,18 @@
 "use client"
 
 import { useFormato } from "@/components/farmacia/negocio-provider"
-import { useEffect, useState, useTransition } from "react"
+import { Fragment, useEffect, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { Loader2, Lock, CheckCircle2, AlertTriangle, ChevronDown, LogOut } from "lucide-react"
+import { Loader2, Lock, CheckCircle2, AlertTriangle, ChevronDown, LogOut, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { salirDeLaCuenta } from "@/components/boton-cerrar-sesion"
 import { cerrarCajaFarmacia } from "../../actions"
-import { METODOS_PAGO_FARMACIA, METODO_PAGO_LABEL, type MetodoPagoFarmacia } from "@/lib/farmacia/pos-constants"
+import {
+  CATEGORIA_GASTO_LABEL, METODOS_PAGO_FARMACIA, METODO_PAGO_LABEL, type MetodoPagoFarmacia,
+} from "@/lib/farmacia/pos-constants"
+import { AnularMovimientoDialog, BotonesSalidaCaja, type MovimientoCaja } from "./salidas-caja"
 
 export interface FilaCierre {
   id:         string
@@ -21,6 +24,8 @@ export interface FilaCierre {
   diferencia: Record<string, number>
   ventas:     number
   notas:      string | null
+  retiros:    number
+  gastos:     number
 }
 
 export interface VentaTurno {
@@ -35,11 +40,14 @@ export interface VentaTurno {
 
 type Resultado = Awaited<ReturnType<typeof cerrarCajaFarmacia>>
 
-export function CierreCaja({ cierres, ventasTurno, esGestor, soloLectura }: {
-  cierres:     FilaCierre[]
-  ventasTurno: VentaTurno[]
-  esGestor:    boolean
-  soloLectura: boolean
+type FilaTurno = { kind: "op"; hora: string; v: VentaTurno } | { kind: "mov"; hora: string; m: MovimientoCaja }
+
+export function CierreCaja({ cierres, ventasTurno, movimientosCaja, esGestor, soloLectura }: {
+  cierres:         FilaCierre[]
+  ventasTurno:     VentaTurno[]
+  movimientosCaja: MovimientoCaja[]
+  esGestor:        boolean
+  soloLectura:     boolean
 }) {
   const f = useFormato()
   const router = useRouter()
@@ -52,6 +60,22 @@ export function CierreCaja({ cierres, ventasTurno, esGestor, soloLectura }: {
   const [error, setError] = useState<string | null>(null)
   const [isPending, start] = useTransition()
   const [segundosSalida, setSegundosSalida] = useState<number | null>(null)
+  // Retiros y gastos registrados o anulados en esta pantalla, hasta que el
+  // servidor vuelva a mandar la lista (al cerrar la caja)
+  const [movsNuevos, setMovsNuevos] = useState<MovimientoCaja[]>([])
+  const [anuladosAca, setAnuladosAca] = useState<Map<string, string>>(new Map())
+  const [anulando, setAnulando] = useState<MovimientoCaja | null>(null)
+
+  const movimientos = [...movsNuevos, ...movimientosCaja.filter(m => !movsNuevos.some(n => n.id === m.id))]
+    .map(m => anuladosAca.has(m.id) ? { ...m, anulado: true, motivo: anuladosAca.get(m.id) ?? null } : m)
+  const vigentes = movimientos.filter(m => !m.anulado)
+  const totalRetiros = vigentes.filter(m => m.tipo === "retiro").reduce((s, m) => s + m.monto, 0)
+  const totalGastos  = vigentes.filter(m => m.tipo === "gasto").reduce((s, m) => s + m.monto, 0)
+
+  const filasTurno: FilaTurno[] = [
+    ...ventasTurno.map(v => ({ kind: "op" as const, hora: v.hora, v })),
+    ...movimientos.map(m => ({ kind: "mov" as const, hora: m.hora, m })),
+  ].sort((a, b) => b.hora.localeCompare(a.hora))
 
   // Cajero: al cerrar caja se cierra la sesión (pedido del cliente).
   // 30 segundos para leer el cuadre, o "Salir ahora".
@@ -79,6 +103,7 @@ export function CierreCaja({ cierres, ventasTurno, esGestor, soloLectura }: {
         setResultado(r)
         setMontos({ efectivo: "", tarjeta_debito: "", tarjeta_credito: "", transferencia: "" })
         setNotas("")
+        setMovsNuevos([]); setAnuladosAca(new Map())
         if (!esGestor) setSegundosSalida(30)
         router.refresh()
       } catch (e: any) { setError(e?.message ?? "No se pudo cerrar la caja") }
@@ -104,27 +129,65 @@ export function CierreCaja({ cierres, ventasTurno, esGestor, soloLectura }: {
           <p className="text-sm font-bold text-slate-900">Movimientos del turno</p>
           <p className="mt-0.5 text-xs text-slate-400">
             {ventasTurno.length} operaciones desde el último cierre
+            {movimientos.length > 0 && ` · ${movimientos.length} ${movimientos.length === 1 ? "retiro o gasto" : "retiros y gastos"}`}
             {!esGestor && " · los totales por método se revelan al cerrar"}
           </p>
         </div>
 
-        {esGestor && totalesTurno.size > 0 && (
+        {esGestor && (totalesTurno.size > 0 || totalRetiros + totalGastos > 0) && (
           <div className="flex flex-wrap gap-2 border-b border-slate-50 px-5 py-3">
             {METODOS_PAGO_FARMACIA.filter(m => totalesTurno.has(m)).map(m => (
               <span key={m} className="rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-bold text-brand-800">
                 {METODO_PAGO_LABEL[m]}: {f.dinero(totalesTurno.get(m) ?? 0)}
               </span>
             ))}
+            {totalRetiros > 0 && (
+              <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-800">
+                Retiros: −{f.dinero(totalRetiros)}
+              </span>
+            )}
+            {totalGastos > 0 && (
+              <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-800">
+                Gastos: −{f.dinero(totalGastos)}
+              </span>
+            )}
           </div>
         )}
 
-        {ventasTurno.length === 0 ? (
+        {filasTurno.length === 0 ? (
           <p className="py-8 text-center text-sm text-slate-400">Sin movimientos en este turno</p>
         ) : (
           <div className="max-h-72 overflow-y-auto">
             <table className="w-full text-sm">
               <tbody className="divide-y divide-slate-50">
-                {ventasTurno.map(v => (
+                {filasTurno.map(fila => fila.kind === "mov" ? (
+                  <tr key={`mov-${fila.m.id}`} className={`hover:bg-slate-50/50 ${fila.m.anulado ? "opacity-50" : ""}`}>
+                    <td className="whitespace-nowrap px-5 py-2.5 text-xs text-slate-400">{f.hora(fila.m.hora)}</td>
+                    <td className="px-3 py-2.5">
+                      <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700">
+                        {fila.m.tipo === "retiro" ? "Retiro" : "Gasto"}
+                      </span>
+                    </td>
+                    <td className="max-w-[16rem] px-3 py-2.5 text-xs text-slate-600">
+                      <p className={`truncate ${fila.m.anulado ? "line-through" : ""}`}>{fila.m.concepto}</p>
+                      <p className="truncate text-[10px] text-slate-400">
+                        {fila.m.categoria ? `${CATEGORIA_GASTO_LABEL[fila.m.categoria]} · ` : ""}{fila.m.autor}
+                        {fila.m.anulado && ` · anulado${fila.m.motivo ? `: ${fila.m.motivo}` : ""}`}
+                      </p>
+                    </td>
+                    <td className="px-3 py-2.5 text-right">
+                      {!soloLectura && !fila.m.anulado && (fila.m.propio || esGestor) && (
+                        <button onClick={() => setAnulando(fila.m)} title="Anular"
+                                className="rounded-md p-1 text-slate-300 hover:bg-rose-50 hover:text-rose-600">
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </td>
+                    <td className={`px-5 py-2.5 text-right text-xs font-bold tabular-nums ${fila.m.anulado ? "text-slate-400 line-through" : "text-amber-700"}`}>
+                      −{f.dinero(fila.m.monto)}
+                    </td>
+                  </tr>
+                ) : (() => { const v = fila.v; return (
                   <tr key={`${v.tipo}-${v.id}`} className="hover:bg-slate-50/50">
                     <td className="whitespace-nowrap px-5 py-2.5 text-xs text-slate-400">{f.hora(v.hora)}</td>
                     <td className="px-3 py-2.5">
@@ -146,12 +209,27 @@ export function CierreCaja({ cierres, ventasTurno, esGestor, soloLectura }: {
                     </td>
                     <td className="px-5 py-2.5 text-right text-xs font-bold tabular-nums text-slate-900">{f.dinero(v.total)}</td>
                   </tr>
-                ))}
+                ) })())}
               </tbody>
             </table>
           </div>
         )}
       </div>
+
+      {/* ── Retiros y gastos: efectivo que sale del cajón sin ser venta ────── */}
+      {!soloLectura && segundosSalida === null && (
+        <div className="space-y-2">
+          <BotonesSalidaCaja onRegistrado={m => setMovsNuevos(prev => [m, ...prev])} />
+          <p className="text-center text-[11px] text-slate-400">
+            Registra aquí la plata que sacas de la caja durante el turno: el cierre la descuenta del efectivo.
+          </p>
+        </div>
+      )}
+      <AnularMovimientoDialog
+        movimiento={anulando}
+        onCerrar={() => setAnulando(null)}
+        onAnulado={(id, motivo) => { setAnuladosAca(prev => new Map(prev).set(id, motivo)); setAnulando(null) }}
+      />
 
       {/* ── Formulario de cierre ciego ─────────────────────────────────────── */}
       {!soloLectura && segundosSalida === null && (
@@ -165,7 +243,8 @@ export function CierreCaja({ cierres, ventasTurno, esGestor, soloLectura }: {
               <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
                 Cuenta lo que hay físicamente y declara los totales de los comprobantes.
                 El sistema calcula lo esperado <strong>después</strong> de que declares —
-                no antes — y guarda la diferencia. Cubre todo lo vendido desde el cierre anterior.
+                no antes — y guarda la diferencia. Cubre todo lo vendido desde el cierre anterior
+                y descuenta los retiros y gastos registrados en el turno.
               </p>
             </div>
           </div>
@@ -242,6 +321,14 @@ export function CierreCaja({ cierres, ventasTurno, esGestor, soloLectura }: {
               </tbody>
             </table>
           </div>
+          {(Number(resultado.retiros) > 0 || Number(resultado.gastos) > 0) && (
+            <p className="mt-2 text-[11px] text-slate-500">
+              El efectivo esperado ya descuenta
+              {Number(resultado.retiros) > 0 && <> retiros por <strong>{f.dinero(Number(resultado.retiros))}</strong></>}
+              {Number(resultado.retiros) > 0 && Number(resultado.gastos) > 0 && " y"}
+              {Number(resultado.gastos) > 0 && <> gastos por <strong>{f.dinero(Number(resultado.gastos))}</strong></>}.
+            </p>
+          )}
 
           {segundosSalida !== null && (
             <div className="mt-4 flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3">
@@ -288,8 +375,8 @@ export function CierreCaja({ cierres, ventasTurno, esGestor, soloLectura }: {
                   const dif = difTotal(c)
                   const abierto = expandido === c.id
                   return (
-                    <>
-                      <tr key={c.id} onClick={() => setExpandido(abierto ? null : c.id)}
+                    <Fragment key={c.id}>
+                      <tr onClick={() => setExpandido(abierto ? null : c.id)}
                           className="cursor-pointer hover:bg-slate-50/50">
                         <td className="whitespace-nowrap px-4 py-3 text-xs text-slate-500">{f.fechaHora(c.hasta)}</td>
                         {esGestor && <td className="px-4 py-3 text-xs font-medium text-slate-700">{c.cajero}</td>}
@@ -306,7 +393,7 @@ export function CierreCaja({ cierres, ventasTurno, esGestor, soloLectura }: {
                         </td>
                       </tr>
                       {abierto && (
-                        <tr key={`${c.id}-det`} className="bg-slate-50/60">
+                        <tr className="bg-slate-50/60">
                           <td colSpan={esGestor ? 7 : 6} className="px-6 py-3">
                             <div className="grid gap-x-8 gap-y-1 sm:grid-cols-2">
                               {METODOS_PAGO_FARMACIA.map(m => {
@@ -324,13 +411,22 @@ export function CierreCaja({ cierres, ventasTurno, esGestor, soloLectura }: {
                                 )
                               })}
                             </div>
+                            {(c.retiros > 0 || c.gastos > 0) && (
+                              <p className="mt-2 text-xs text-slate-500">
+                                Salió del cajón durante el turno:
+                                {c.retiros > 0 && <> retiros <strong className="tabular-nums">{f.dinero(c.retiros)}</strong></>}
+                                {c.retiros > 0 && c.gastos > 0 && " ·"}
+                                {c.gastos > 0 && <> gastos <strong className="tabular-nums">{f.dinero(c.gastos)}</strong></>}
+                                {" "}(ya descontado del efectivo esperado)
+                              </p>
+                            )}
                             <p className="mt-2 text-[10px] uppercase tracking-wider text-slate-400">
                               declarado / esperado · diferencia{c.notas ? ` — nota: ${c.notas}` : ""}
                             </p>
                           </td>
                         </tr>
                       )}
-                    </>
+                    </Fragment>
                   )
                 })}
               </tbody>
