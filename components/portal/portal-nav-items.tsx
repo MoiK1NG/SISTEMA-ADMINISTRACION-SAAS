@@ -2,8 +2,9 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutGrid, Shield, ArrowLeftRight } from "lucide-react"
+import { LayoutGrid, Shield, ArrowLeftRight, GraduationCap } from "lucide-react"
 import { BotonCerrarSesion } from "@/components/boton-cerrar-sesion"
+import { abrirTutorial } from "@/lib/tutorial-evento"
 import { PORTALES } from "./portal-config"
 
 export interface OtroPortal {
@@ -18,11 +19,13 @@ interface Props {
   sticky:  boolean
   esAdmin: boolean
   otros:   OtroPortal[]
+  /** El portal tiene tutorial de primer ingreso (hoy, solo farmacia). */
+  tutorial?: boolean
 }
 
 const ACCION = "flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors"
 
-export function PortalNavItems({ portal, top, sticky, esAdmin, otros }: Props) {
+export function PortalNavItems({ portal, top, sticky, esAdmin, otros, tutorial = false }: Props) {
   const pathname = usePathname()
   const config = PORTALES[portal]
   if (!config) return null
@@ -94,6 +97,17 @@ export function PortalNavItems({ portal, top, sticky, esAdmin, otros }: Props) {
               <Shield className="h-3.5 w-3.5" />
               <span className="hidden lg:inline">Panel admin</span>
             </Link>
+          )}
+          {tutorial && (
+            <button
+              type="button"
+              onClick={abrirTutorial}
+              title="Ver el tutorial de nuevo"
+              className={`${ACCION} text-slate-600 hover:bg-slate-100 hover:text-slate-900`}
+            >
+              <GraduationCap className="h-3.5 w-3.5" />
+              <span className="hidden lg:inline">Ver tutorial</span>
+            </button>
           )}
           <Link
             href="/dashboard"
