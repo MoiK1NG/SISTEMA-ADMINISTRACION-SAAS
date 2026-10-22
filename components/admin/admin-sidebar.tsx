@@ -5,11 +5,12 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import {
   Users, LayoutDashboard, CreditCard, Grid3X3,
-  BarChart3, Bell, ClipboardList, Layers, TrendingUp,
+  BarChart3, Bell, ClipboardList, Layers, TrendingUp, Building2,
 } from "lucide-react"
 
 const NAV_MAIN = [
   { title: "Panel de Control", href: "/admin",             icon: LayoutDashboard },
+  { title: "Negocios",         href: "/admin/negocios",    icon: Building2       },
   { title: "Usuarios",         href: "/admin/users",       icon: Users           },
   { title: "Membresías",       href: "/admin/memberships", icon: CreditCard      },
   { title: "Planes",           href: "/admin/plans",       icon: Layers          },

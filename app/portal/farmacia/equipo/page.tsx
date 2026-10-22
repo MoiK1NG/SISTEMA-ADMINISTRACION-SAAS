@@ -14,13 +14,17 @@ export default async function EquipoPage() {
   const esGestor = rol === "dueno" || rol === "regente"
 
   // Equipo + auditoría de accesos (cuándo inició y cerró sesión cada miembro)
-  const [{ data: equipoRaw }, { data: accesos }] = await Promise.all([
+  const [{ data: equipoRaw }, { data: accesos }, { data: limites }] = await Promise.all([
     negocio
       ? supabase.rpc("equipo_negocio", { p_negocio: negocio.id })
       : Promise.resolve({ data: [] as any[] }),
     esGestor && negocio
       ? supabase.rpc("accesos_equipo", { p_negocio: negocio.id })
       : Promise.resolve({ data: [] as any[] }),
+    // Cupo de regentes y cajeros según el plan del dueño
+    negocio
+      ? supabase.rpc("limites_equipo", { p_negocio: negocio.id })
+      : Promise.resolve({ data: null }),
   ])
 
   const miembros: FilaMiembro[] = (equipoRaw ?? []).map((m: any) => ({
@@ -58,6 +62,7 @@ export default async function EquipoPage() {
               miembros={miembros}
               puedeGestionar={puedeGestionar}
               miUserId={agenteId}
+              limites={limites ?? undefined}
             />
 
             {esGestor && (

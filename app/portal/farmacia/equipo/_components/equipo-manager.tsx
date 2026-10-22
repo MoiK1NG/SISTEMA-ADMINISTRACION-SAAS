@@ -37,9 +37,11 @@ interface Props {
   miembros:  FilaMiembro[]
   puedeGestionar: boolean
   miUserId:  string
+  /** Máximo de regentes y cajeros del plan (null = sin límite) */
+  limites?:  { plan: string | null; regente: number | null; cajero: number | null }
 }
 
-export function EquipoManager({ miembros, puedeGestionar, miUserId }: Props) {
+export function EquipoManager({ miembros, puedeGestionar, miUserId, limites }: Props) {
   const f = useFormato()
   const router = useRouter()
   const [open, setOpen]       = useState(false)
@@ -63,9 +65,14 @@ export function EquipoManager({ miembros, puedeGestionar, miUserId }: Props) {
     })
   }
 
+  // Cupo del plan: el dueño no tiene límite; regente y cajero según el plan
+  const cuantos = (r: FilaMiembro["rol"]) => miembros.filter(m => m.rol === r).length
+  const tope = (r: FilaMiembro["rol"]) => (r === "dueno" ? null : limites?.[r] ?? null)
+  const lleno = (r: FilaMiembro["rol"]) => tope(r) !== null && cuantos(r) >= tope(r)!
+
   function abrirAlta() {
     setError(null); setAviso(null); setCreada(null)
-    setModo("nueva"); setNombre(""); setEmail(""); setRol("cajero"); setClave(generarClave())
+    setModo("nueva"); setNombre(""); setEmail(""); setRol(lleno("cajero") && !lleno("regente") ? "regente" : "cajero"); setClave(generarClave())
     setOpen(true)
   }
 
@@ -110,6 +117,12 @@ export function EquipoManager({ miembros, puedeGestionar, miUserId }: Props) {
       <div className="flex items-center justify-between">
         <p className="text-sm text-slate-500">
           {miembros.length} {miembros.length === 1 ? "persona" : "personas"} en el equipo
+          {limites?.plan && (limites.regente !== null || limites.cajero !== null) && (
+            <span className="text-slate-400">
+              {" "}· plan {limites.plan}: {cuantos("regente")} de {limites.regente ?? "∞"} regentes,{" "}
+              {cuantos("cajero")} de {limites.cajero ?? "∞"} cajeros
+            </span>
+          )}
         </p>
         {puedeGestionar && (
           <Button size="sm" onClick={abrirAlta} className="gap-1.5 bg-brand-600 hover:bg-brand-700">
@@ -158,9 +171,9 @@ export function EquipoManager({ miembros, puedeGestionar, miUserId }: Props) {
                     {(Object.keys(ROL_META) as FilaMiembro["rol"][])
                       .filter(r => r !== m.rol)
                       .map(r => (
-                        <DropdownMenuItem key={r} className="cursor-pointer text-sm"
+                        <DropdownMenuItem key={r} className="cursor-pointer text-sm" disabled={lleno(r)}
                           onClick={() => correr(() => cambiarRolMiembro(m.id, r))}>
-                          Hacer {ROL_META[r].label.toLowerCase()}
+                          Hacer {ROL_META[r].label.toLowerCase()}{lleno(r) && " (cupo lleno)"}
                         </DropdownMenuItem>
                       ))}
                     <DropdownMenuSeparator />
@@ -231,13 +244,16 @@ export function EquipoManager({ miembros, puedeGestionar, miUserId }: Props) {
               <div className="grid gap-2">
                 {(Object.keys(ROL_META) as FilaMiembro["rol"][]).map(r => (
                   <button
-                    key={r} type="button" onClick={() => setRol(r)}
-                    className={`rounded-xl border-2 px-3.5 py-2.5 text-left transition-colors ${
+                    key={r} type="button" onClick={() => setRol(r)} disabled={lleno(r)}
+                    className={`rounded-xl border-2 px-3.5 py-2.5 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                       rol === r ? "border-brand-600 bg-brand-50" : "border-slate-200 hover:border-slate-300"
                     }`}
                   >
-                    <p className="text-sm font-bold text-slate-900">{ROL_META[r].label}</p>
-                    <p className="text-xs text-slate-500">{ROL_META[r].desc}</p>
+                    <p className="text-sm font-bold text-slate-900">
+                      {ROL_META[r].label}
+                      {tope(r) !== null && <span className="ml-1.5 text-xs font-medium text-slate-400">{cuantos(r)} de {tope(r)}</span>}
+                    </p>
+                    <p className="text-xs text-slate-500">{lleno(r) ? "Tu plan no permite más personas con este rol" : ROL_META[r].desc}</p>
                   </button>
                 ))}
               </div>
@@ -250,7 +266,7 @@ export function EquipoManager({ miembros, puedeGestionar, miUserId }: Props) {
               <Button
                 className="flex-1 bg-brand-600 hover:bg-brand-700"
                 onClick={modo === "nueva" ? handleCrear : handleAgregar}
-                disabled={isPending || !email.trim() || (modo === "nueva" && (!nombre.trim() || clave.length < 8))}
+                disabled={isPending || lleno(rol) || !email.trim() || (modo === "nueva" && (!nombre.trim() || clave.length < 8))}
               >
                 {isPending
                   ? <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />{modo === "nueva" ? "Creando…" : "Agregando…"}</>
