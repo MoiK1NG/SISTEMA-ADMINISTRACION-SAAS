@@ -127,10 +127,10 @@ th.c,td.c{ text-align:center; width:19mm; }
 .ok{ display:inline-block; width:4.6mm; height:4.6mm; border-radius:50%; background:var(--blue); position:relative; vertical-align:middle; }
 .ok::after{ content:""; position:absolute; left:1.65mm; top:0.75mm; width:1.05mm; height:2.1mm; border:solid var(--white); border-width:0 0.5mm 0.5mm 0; transform:rotate(45deg); }
 .no{ color:var(--muted); font-weight:600; }
-table.matrix{ font-size:8.5pt; line-height:1.4; }
-table.matrix td{ padding:1.1mm 3mm; }
+table.matrix{ font-size:8.5pt; line-height:1.3; }
+table.matrix td{ padding:0.6mm 3mm; }
 table.matrix th.c, table.matrix td.c{ width:16mm; }
-table.matrix .grp td{ padding:0.9mm 3mm; }
+table.matrix .grp td{ padding:0.6mm 3mm; }
 .grp td{ background:var(--bg-soft) !important; color:var(--navy); font-weight:600; font-size:9pt; padding:1.6mm 3mm; }
 .sem{ display:inline-block; width:3.6mm; height:3.6mm; border-radius:50%; vertical-align:middle; margin-right:2mm; }
 
@@ -183,7 +183,7 @@ table.matrix .grp td{ padding:0.9mm 3mm; }
     <div class="eyebrow">Guía de uso</div>
     <h1>Portal de Farmacia<span>Cómo entrar, quién puede hacer qué y cómo usar cada módulo</span></h1>
     <p class="lead">Para el dueño, el regente y los cajeros de la farmacia, y para el equipo de LOMS 360 que acompaña su uso.</p>
-    <div class="meta">Versión 1.1 · Octubre de 2026</div>
+    <div class="meta">Versión 1.2 · Octubre de 2026</div>
   </div>
   <div class="foot">
     <div class="tag">La solución <em>360</em> para tu negocio</div>
@@ -221,6 +221,7 @@ table.matrix .grp td{ padding:0.9mm 3mm; }
         <li><span>4.2</span>Desde la farmacia: módulo Equipo</li>
         <li><span>4.3</span>Auditoría de accesos</li>
         <li><span>4.4</span>Buenas prácticas</li>
+        <li><span>4.5</span>Tu privacidad y el soporte</li>
       </ul></div></li>
     <li><div class="n">5</div><div><div class="tt">Los módulos del portal</div>
       <ul class="sub">
@@ -308,6 +309,7 @@ table.matrix .grp td{ padding:0.9mm 3mm; }
     <li>Entra a <span class="ph">〈dirección del portal〉</span> con tu correo y la contraseña inicial que te entregaron.</li>
     <li>Se abre la pantalla <strong>"Elige tu contraseña"</strong>. Escribe la contraseña inicial y, debajo, la nueva dos veces. Debe tener <strong>al menos 8 caracteres</strong>.</li>
     <li>Elige <strong>"Guardar contraseña"</strong> y luego <strong>"Continuar"</strong>. Desde ahora entras con la contraseña nueva; la inicial ya no sirve.</li>
+    <li>Al entrar a Farmacia se abre un <strong>tutorial corto</strong> con lo que puede hacer tu rol: el cajero ve vender, cobrar, encargos, retiros y gastos y el cierre; el regente suma inventario y compras; el dueño, además, el panel, el equipo, las finanzas y la privacidad de sus datos. Puedes saltarlo y verlo cuando quieras con <strong>"Ver tutorial"</strong> en la barra.</li>
   </ol>
   <div class="note">
     <div class="t">Ten en cuenta</div>
@@ -321,8 +323,9 @@ table.matrix .grp td{ padding:0.9mm 3mm; }
     <li>Se abre <strong>"Mis portales"</strong>, la lista de portales a los que tienes acceso.</li>
     <li>Entra a <strong>Farmacia</strong>.</li>
   </ol>
-  <p>La <strong>barra superior</strong> te acompaña en todas las pantallas: a la izquierda, las secciones del portal; a la derecha, tres botones fijos (en pantallas chicas se ven solo con su ícono):</p>
+  <p>La <strong>barra superior</strong> te acompaña en todas las pantallas: a la izquierda, el logo de tu farmacia (si el dueño lo subió) y las secciones del portal; a la derecha, botones fijos (en pantallas chicas se ven solo con su ícono):</p>
   <ul>
+    <li><strong>Ver tutorial</strong>: repite el recorrido del primer ingreso.</li>
     <li><strong>Mis portales</strong>: vuelve a la lista de portales.</li>
     <li><strong>Panel admin</strong>: solo lo ven los administradores de LOMS 360.</li>
     <li><strong>Cerrar sesión</strong>: sale del sistema.</li>
@@ -352,6 +355,7 @@ table.matrix .grp td{ padding:0.9mm 3mm; }
     <tbody>
       <tr><td><strong>Aprobación pendiente</strong></td><td>Tu cuenta existe, pero nadie la aprobó todavía. Pasa solo si te registraste por tu cuenta.</td><td>Pide al dueño que te sume desde Equipo con "Ya tiene cuenta". Si eres el dueño de una farmacia nueva, espera la aprobación de LOMS 360.</td></tr>
       <tr><td><strong>Cuenta suspendida</strong></td><td>Un administrador de LOMS 360 desactivó tu cuenta.</td><td>Contacta a LOMS 360 (sección 7).</td></tr>
+      <tr><td><strong>Acceso suspendido</strong></td><td>El dueño de la farmacia suspendió tu acceso. Sigues en el equipo, pero no puedes entrar.</td><td>Habla con el dueño para que te reactive desde Equipo.</td></tr>
       <tr><td><strong>Membresía expirada o inactiva</strong></td><td>La membresía del dueño venció o no está activa. El acceso del regente y de los cajeros depende de ella.</td><td>El dueño debe contactar a LOMS 360 para renovarla. Mientras tanto, nadie del equipo puede entrar.</td></tr>
       <tr><td><strong>Sin acceso a este portal</strong></td><td>Tu cuenta está aprobada, pero no tiene acceso al portal de farmacia.</td><td>Pide al dueño que revise tu rol en Equipo, o contacta a LOMS 360.</td></tr>
       <tr><td><strong>Portal no disponible</strong></td><td>El portal no está habilitado en este momento.</td><td>Contacta a LOMS 360.</td></tr>
@@ -430,7 +434,10 @@ table.matrix .grp td{ padding:0.9mm 3mm; }
       <tr class="grp"><td colspan="4">Negocio y equipo</td></tr>
       <tr><td>Gestionar equipo (agregar, cambiar rol, quitar)</td><td class="c"><span class="ok"></span></td><td class="c"><span class="no">—</span></td><td class="c"><span class="no">—</span></td></tr>
       <tr><td>Crear cuentas del equipo con contraseña inicial</td><td class="c"><span class="ok"></span></td><td class="c"><span class="no">—</span></td><td class="c"><span class="no">—</span></td></tr>
+      <tr><td>Suspender y reactivar a alguien del equipo</td><td class="c"><span class="ok"></span></td><td class="c"><span class="no">—</span></td><td class="c"><span class="no">—</span></td></tr>
       <tr><td>Editar datos del negocio</td><td class="c"><span class="ok"></span></td><td class="c"><span class="no">—</span></td><td class="c"><span class="no">—</span></td></tr>
+      <tr><td>Subir el logo y elegir el color de la farmacia</td><td class="c"><span class="ok"></span></td><td class="c"><span class="no">—</span></td><td class="c"><span class="no">—</span></td></tr>
+      <tr><td>Dar o quitar el permiso de soporte de LOMS 360</td><td class="c"><span class="ok"></span></td><td class="c"><span class="no">—</span></td><td class="c"><span class="no">—</span></td></tr>
       <tr><td>Ver auditoría de accesos del equipo</td><td class="c"><span class="ok"></span></td><td class="c"><span class="ok"></span></td><td class="c"><span class="no">—</span></td></tr>
       <tr class="grp"><td colspan="4">Inventario</td></tr>
       <tr><td>Crear y editar productos y lotes (cada cambio queda en el historial)</td><td class="c"><span class="ok"></span></td><td class="c"><span class="ok"></span></td><td class="c"><span class="no">—</span></td></tr>
@@ -446,6 +453,8 @@ table.matrix .grp td{ padding:0.9mm 3mm; }
       <tr><td>Cancelar un pedido</td><td class="c"><span class="ok"></span></td><td class="c"><span class="ok"></span></td><td class="c"><span class="no">—</span></td></tr>
       <tr class="grp"><td colspan="4">Caja y compras</td></tr>
       <tr><td>Cerrar caja (el cajero solo ve sus propios cierres)</td><td class="c"><span class="ok"></span></td><td class="c"><span class="ok"></span></td><td class="c"><span class="ok"></span></td></tr>
+      <tr><td>Registrar retiros y gastos de caja</td><td class="c"><span class="ok"></span></td><td class="c"><span class="ok"></span></td><td class="c"><span class="ok"></span></td></tr>
+      <tr><td>Anular un retiro o gasto del turno abierto (el cajero, solo los suyos)</td><td class="c"><span class="ok"></span></td><td class="c"><span class="ok"></span></td><td class="c"><span class="ok"></span></td></tr>
       <tr><td>Ver totales esperados y movimientos por método de pago del turno</td><td class="c"><span class="ok"></span></td><td class="c"><span class="ok"></span></td><td class="c"><span class="no">—</span></td></tr>
       <tr><td>Cuentas por pagar: crear y abonar</td><td class="c"><span class="ok"></span></td><td class="c"><span class="ok"></span></td><td class="c"><span class="no">—</span></td></tr>
       <tr><td>Cuentas por pagar: anular</td><td class="c"><span class="ok"></span></td><td class="c"><span class="no">—</span></td><td class="c"><span class="no">—</span></td></tr>
@@ -466,13 +475,15 @@ table.matrix .grp td{ padding:0.9mm 3mm; }
   <h2><span class="k">4.1</span>Desde el equipo de LOMS 360</h2>
   <p>Los administradores de LOMS 360 se encargan de lo que está por encima de la farmacia: la cuenta del dueño y su membresía. Desde el panel de administración pueden:</p>
   <ul>
+    <li><strong>Dar de alta una farmacia completa</strong> (Negocios › <strong>"Nuevo negocio"</strong>): el nombre, el país (que define la moneda y el IVA propuesto), la cuenta del dueño, el plan con su vigencia y, si se quiere, el equipo inicial. Si algo falla a mitad de camino, no queda nada creado a medias.</li>
+    <li><strong>Definir cuántos regentes y cajeros permite cada plan</strong> (Planes). El dueño no cuenta en el límite, y quien ya está en el equipo no se quita si el límite baja.</li>
     <li><strong>Crear una cuenta</strong> con contraseña inicial (Usuarios › <strong>"Crear usuario"</strong>). Queda aprobada y activa desde el primer momento; el acceso al portal y la membresía se asignan después. Solo el superadministrador puede crear administradores.</li>
     <li><strong>Aprobar una cuenta</strong> que alguien creó por su lado desde "Crear una cuenta", para que pueda entrar a la plataforma.</li>
     <li><strong>Asignar la membresía</strong>: el plan contratado y su vigencia.</li>
     <li><strong>Dar acceso al portal Farmacia</strong> a la cuenta del dueño.</li>
     <li><strong>Suspender o reactivar</strong> una cuenta.</li>
     <li><strong>Cambiar el rol de plataforma</strong> de una cuenta (usuario, administrador, superadministrador).</li>
-    <li><strong>"Ver como cliente"</strong> para dar soporte: ven el portal exactamente como lo ve el equipo de la farmacia.</li>
+    <li><strong>"Ver como cliente"</strong> para dar soporte: ven el portal como lo ve el equipo de la farmacia, pero sin tus datos sensibles salvo que tú lo autorices (sección 4.5).</li>
   </ul>
   <div class="note">
     <div class="t">Ten en cuenta</div>
@@ -480,7 +491,7 @@ table.matrix .grp td{ padding:0.9mm 3mm; }
   </div>
 
   <h2><span class="k">4.2</span>Desde la farmacia: módulo Equipo</h2>
-  <p>El dueño arma y mantiene su equipo desde el módulo <strong>Equipo</strong>. Regentes y cajeros no pagan una membresía aparte: dependen de la del dueño.</p>
+  <p>El dueño arma y mantiene su equipo desde el módulo <strong>Equipo</strong>. Regentes y cajeros no pagan una membresía aparte: dependen de la del dueño. Arriba de la lista verás cuántos lleva y cuántos permite tu plan (por ejemplo, <strong>"2 de 3 cajeros"</strong>); cuando se llena el cupo de un rol, no se pueden sumar más personas con ese rol.</p>
   <div class="keep">
   <h3>Agregar a una persona</h3>
   <p>Entra a <strong>Equipo</strong> y elige <strong>"Agregar persona"</strong>. Verás dos opciones:</p>
@@ -516,12 +527,13 @@ table.matrix .grp td{ padding:0.9mm 3mm; }
   <h3>Cambiar el rol o quitar a alguien</h3>
   <ul>
     <li><strong>Cambiar rol</strong>: en la lista del equipo, elige a la persona y asígnale el rol nuevo. El cambio aplica en su próximo ingreso.</li>
+    <li><strong>Suspender</strong>: la persona sigue en el equipo, pero no puede entrar ni ver datos hasta que la <strong>reactives</strong>. Si tenía la sesión abierta, el portal la saca en su siguiente clic. Sirve para vacaciones, licencias o mientras aclaras algo. Al dueño no se lo puede suspender.</li>
     <li><strong>Quitar del equipo</strong>: la persona deja de tener acceso al portal de tu farmacia. Su cuenta en LOMS 360 sigue existiendo, pero ya no entra a tus datos.</li>
   </ul>
   </div>
 
   <h2><span class="k">4.3</span>Auditoría de accesos</h2>
-  <p>En el mismo módulo Equipo, el dueño y el regente pueden ver <strong>cuándo inició y cerró sesión cada miembro</strong>. Es útil para confirmar quién estaba en el sistema en un turno determinado, por ejemplo al revisar una diferencia de caja.</p>
+  <p>En el mismo módulo Equipo, el dueño y el regente pueden ver <strong>cuándo inició y cerró sesión cada miembro</strong>. Es útil para confirmar quién estaba en el sistema en un turno determinado, por ejemplo al revisar una diferencia de caja. Además, cada tarjeta del equipo muestra el <strong>último acceso</strong> de la persona y, salvo el dueño, su <strong>último cierre de caja</strong>.</p>
 
   <h2><span class="k">4.4</span>Buenas prácticas</h2>
   <div class="cards four">
@@ -529,6 +541,20 @@ table.matrix .grp td{ padding:0.9mm 3mm; }
     <div class="card"><div class="dot"></div><h3 style="font-size:10.5pt">Sin compartir contraseñas</h3><ul><li>La inicial se entrega en persona y se cambia en el primer ingreso. Si alguien la olvida, la recupera desde "¿Olvidaste tu contraseña?".</li></ul></div>
     <div class="card"><div class="dot"></div><h3 style="font-size:10.5pt">Quitar a quien se va</h3><ul><li>Cuando alguien deja de trabajar en la farmacia, quítalo del equipo ese mismo día.</li></ul></div>
     <div class="card"><div class="dot"></div><h3 style="font-size:10.5pt">Cerrar caja al terminar</h3><ul><li>El cajero cierra su caja al final de cada turno. Su sesión se cierra con ella.</li></ul></div>
+  </div>
+
+  <div class="keep">
+  <h2><span class="k">4.5</span>Tu privacidad y el soporte</h2>
+  <p>El equipo de LOMS 360 <strong>no ve</strong> tus ventas, pagos, encargos, clientes, recetas, pacientes, cierres de caja, retiros y gastos, cuentas por pagar ni proveedores. Para darte soporte ve solo lo técnico: los datos del negocio, tu equipo, el catálogo, los lotes y el stock.</p>
+  <ol class="steps">
+    <li>Si necesitas ayuda con algo de esa información, en el <strong>Panel</strong> busca la tarjeta <strong>"Soporte de LOMS 360"</strong> y elige <strong>"Permitir por 24 h"</strong>.</li>
+    <li>Mientras dure el permiso, la tarjeta muestra hasta cuándo vale. El soporte puede <strong>ver</strong> esa información, pero no modificar nada.</li>
+    <li>Cuando terminen, elige <strong>"Quitar permiso"</strong>. Si no lo quitas, vence solo a las 24 horas.</li>
+  </ol>
+  <div class="note">
+    <div class="t">Ten en cuenta</div>
+    <p>Solo el dueño puede dar o quitar el permiso, y cada vez queda registrado con fecha y hora en la auditoría de LOMS 360.</p>
+  </div>
   </div>
 </section>
 
@@ -539,7 +565,7 @@ table.matrix .grp td{ padding:0.9mm 3mm; }
   <p>Cada módulo se explica con el mismo esquema: para qué sirve, quién lo usa y los pasos clave. Cuando hay algo que conviene saber antes de usarlo, lo encontrarás en una caja "Ten en cuenta".</p>
 
   <h2><span class="k">5.1</span>Panel</h2>
-  <p class="who">Lo usan: <b>dueño, regente y cajero</b> · Datos del negocio: <b>dueño</b></p>
+  <p class="who">Lo usan: <b>dueño, regente y cajero</b> · Datos del negocio, primeros pasos y soporte: <b>dueño</b></p>
   <p>Es la primera pantalla al entrar a Farmacia. Muestra el nombre y los datos de la farmacia, las <strong>alertas de hoy</strong>, el equipo y los accesos a cada módulo. La barra superior, con <strong>Mis portales</strong>, <strong>Panel admin</strong> y <strong>Cerrar sesión</strong> a la derecha (sección 2.3), te acompaña en todas las pantallas.</p>
   <h3>Alertas de hoy</h3>
   <p>Son tarjetas con un conteo y un enlace a la pantalla donde se resuelve cada cosa. Se calculan al abrir el panel, con los datos de ese instante. Aparecen solo las que tienen algo que mostrar; si no hay nada pendiente, verás <strong>"Todo en orden"</strong>:</p>
@@ -551,8 +577,13 @@ table.matrix .grp td{ padding:0.9mm 3mm; }
     <li><strong>Pacientes crónicos por quedarse sin medicamento</strong> (3 días o menos): avísales.</li>
     <li><strong>Cuentas por pagar vencidas</strong>: solo las ven el dueño y el regente.</li>
   </ul>
-  <h3>Datos del negocio</h3>
+  <h3>Primeros pasos</h3>
+  <p>Mientras falte algo para dejar la farmacia lista, el dueño ve una lista con su avance: completar los datos del negocio, subir el logo, crear al menos un cajero, cargar el inventario, completar las fechas de vencimiento y hacer el primer cierre de caja. Cada paso se marca solo al cumplirse y la lista desaparece cuando está todo.</p>
+  <h3>Datos del negocio, logo y color</h3>
   <p>Junto al nombre de la farmacia, el dueño tiene el botón <strong>"Datos del negocio"</strong>. Ahí edita el nombre, el <strong>RUT</strong> (NIT en Colombia), la dirección y el teléfono. Esos datos salen impresos en el comprobante de venta (sección 5.2), así que conviene completarlos antes de empezar a vender.</p>
+  <p>En la misma ventana puedes <strong>subir el logo</strong> (PNG, JPG o WebP de hasta 500 KB) y <strong>elegir el color</strong> de tu farmacia entre nueve opciones. Se guardan al instante: el logo aparece en la barra, en el panel y en el comprobante, y el color en la sección activa de la barra.</p>
+  <h3>Soporte de LOMS 360</h3>
+  <p>La tarjeta para dar o quitar el permiso de soporte está explicada en la <strong>sección 4.5</strong>.</p>
 
   <h2><span class="k">5.2</span>Vender (POS)</h2>
   <p class="who">Lo usan: <b>dueño, regente y cajero</b></p>
@@ -674,7 +705,7 @@ table.matrix .grp td{ padding:0.9mm 3mm; }
   <p class="who">Lo usan: <b>dueño, regente y cajero</b> · Totales esperados: <b>dueño y regente</b></p>
   <p>Al terminar un turno, el cajero cuenta lo que tiene y lo declara por método de pago <strong>sin ver cuánto debería haber</strong>. El sistema compara con lo que registró y guarda la diferencia. Así el cuadre refleja lo que realmente hay en la caja.</p>
   <ol class="steps">
-    <li>Entra a <strong>Cierre</strong>. El turno abarca desde el último cierre hasta ahora e incluye las ventas y los pagos de encargos de ese período.</li>
+    <li>Entra a <strong>Cierre</strong>. El turno abarca desde el último cierre hasta ahora e incluye las ventas, los pagos de encargos y los retiros y gastos de ese período.</li>
     <li>Cuenta el dinero y los comprobantes y <strong>declara el total por cada método</strong>: efectivo, débito, crédito, transferencia.</li>
     <li>Confirma el cierre. El sistema compara lo declarado con lo esperado y guarda la diferencia, positiva o negativa.</li>
     <li>Si eres cajero, verás el cuadre durante 30 segundos y luego tu sesión se cerrará; también puedes elegir "Salir ahora".</li>
@@ -685,6 +716,15 @@ table.matrix .grp td{ padding:0.9mm 3mm; }
       <li>El dueño y el regente sí ven los <strong>totales esperados</strong> y los movimientos del turno por método de pago, y pueden revisar los cierres de todo el equipo.</li>
       <li>El cajero ve únicamente sus propios cierres.</li>
     </ul>
+  </div>
+  <div class="keep">
+  <h3>Retiros y gastos de caja</h3>
+  <p>Cuando sale efectivo del cajón sin que sea una venta, regístralo en <strong>Cierre</strong> en el momento, para que el cuadre no muestre un faltante:</p>
+  <ul>
+    <li><strong>"Retiro de caja"</strong>: plata que se lleva el dueño o que se deposita. No es un gasto del negocio.</li>
+    <li><strong>"Gasto"</strong>: un gasto menor pagado con la caja (agua, aseo, un envío). Elige la categoría y guarda la boleta.</li>
+  </ul>
+  <p>Cualquier persona del equipo puede registrarlos. Aparecen en los movimientos del turno con signo menos y el cierre los <strong>descuenta del efectivo esperado</strong>, sin dejar de ser ciego. Si te equivocaste, anúlalo con la <strong>X</strong> de la fila e indica el motivo: lo puede hacer quien lo registró, el dueño o el regente, y solo antes del cierre.</p>
   </div>
 
   <h2><span class="k">5.7</span>Compras (cuentas por pagar)</h2>
@@ -716,7 +756,7 @@ table.matrix .grp td{ padding:0.9mm 3mm; }
 
   <h2><span class="k">5.10</span>Finanzas</h2>
   <p class="who">Lo usa: <b>dueño</b></p>
-  <p>Resume los números del negocio para tomar decisiones sin sacar cuentas a mano. Incluye las <strong>ventas del mes</strong>, las ventas <strong>por día</strong> y <strong>por método de pago</strong>, los <strong>cierres de caja con sus diferencias</strong>, las <strong>cuentas por pagar pendientes</strong>, los <strong>márgenes</strong> y el <strong>inventario valorizado</strong>.</p>
+  <p>Resume los números del negocio para tomar decisiones sin sacar cuentas a mano. Incluye las <strong>ventas del mes</strong>, las ventas <strong>por día</strong> y <strong>por método de pago</strong>, los <strong>cierres de caja con sus diferencias</strong>, las <strong>cuentas por pagar pendientes</strong>, los <strong>márgenes</strong>, los <strong>gastos y retiros de caja del mes</strong> (los gastos por categoría y los retiros aparte, porque no son gasto) y el <strong>inventario valorizado</strong>.</p>
   <h3>Inventario valorizado</h3>
   <p>Muestra cuánto dinero tienes hoy en el estante y la bodega: el valor <strong>a costo con IVA</strong> y <strong>a precio de venta</strong>, las unidades y la cantidad de productos con stock, con el desglose por categoría. Se puede <strong>exportar a CSV</strong> producto por producto. Si hay productos con stock sin costo cargado, el sistema lo avisa: el valor a costo queda subestimado hasta que los completes en Inventario.</p>
   <div class="note">
@@ -726,7 +766,7 @@ table.matrix .grp td{ padding:0.9mm 3mm; }
 
   <h2><span class="k">5.11</span>Equipo</h2>
   <p class="who">Lo usa: <b>dueño</b> · Auditoría de accesos: <b>dueño y regente</b></p>
-  <p>Aquí el dueño crea las cuentas de su equipo (o suma a quien ya tiene una), les asigna rol y las quita cuando dejan de trabajar en la farmacia. También muestra la auditoría de accesos. Está explicado en detalle en la <strong>sección 4</strong>.</p>
+  <p>Aquí el dueño crea las cuentas de su equipo (o suma a quien ya tiene una), les asigna rol, las suspende o las quita cuando dejan de trabajar en la farmacia. También muestra la auditoría de accesos. Está explicado en detalle en la <strong>sección 4</strong>.</p>
 </section>
 
 <!-- ================= 6. PREGUNTAS FRECUENTES ================= -->
@@ -747,6 +787,8 @@ table.matrix .grp td{ padding:0.9mm 3mm; }
     <div class="item"><p class="q">¿Qué pasa si vence la membresía?</p><p class="a">Nadie del equipo puede entrar al portal: el acceso del regente y de los cajeros depende de la membresía del dueño. El dueño debe contactar a LOMS 360 para renovarla.</p></div>
     <div class="item"><p class="q">¿El comprobante de venta sirve como boleta?</p><p class="a">No. Es un comprobante interno para el cliente, con los datos de la farmacia, los productos y los pagos. La boleta o factura sigue saliendo por el canal que use la farmacia.</p></div>
     <div class="item"><p class="q">Anulé una venta por error. ¿Cómo la recupero?</p><p class="a">No se recupera. La anulación devolvió el stock al lote y dejó la venta marcada con su motivo. Para corregir, vuelve a registrar la venta desde Vender.</p></div>
+    <div class="item"><p class="q">Saqué plata de la caja. ¿Cómo hago para que el cierre cuadre?</p><p class="a">Regístralo en Cierre con "Retiro de caja" (si es para el dueño o para depositar) o "Gasto" (si pagaste algo). El cierre lo descuenta del efectivo esperado. Hazlo en el momento, antes de cerrar.</p></div>
+    <div class="item"><p class="q">¿El equipo de LOMS 360 ve mis ventas?</p><p class="a">No, salvo que tú lo autorices. Sin tu permiso, el soporte ve solo el inventario, tu equipo y la configuración. Si necesitas ayuda con tus ventas o tu caja, da permiso por 24 horas desde el Panel (sección 4.5).</p></div>
     <div class="item"><p class="q">¿Quién cambia la moneda o el IVA del negocio?</p><p class="a">El equipo de LOMS 360. Esos datos se definen al habilitar el portal y no se modifican desde la farmacia. Si necesitas un cambio, escríbenos.</p></div>
   </div>
 
@@ -759,8 +801,8 @@ table.matrix .grp td{ padding:0.9mm 3mm; }
     <li>Qué estabas haciendo y qué esperabas que pasara.</li>
     <li>El mensaje exacto que viste en pantalla, si hubo alguno.</li>
   </ul>
-  <p>Si el problema es de acceso (aprobación, membresía o suspensión), lo resuelve un administrador de LOMS 360. Si es de uso del portal, podemos revisar tu caso con "ver como cliente", sin modificar nada de tu farmacia.</p>
-  <div class="version">Guía de uso · Portal de Farmacia · Versión 1.1 · Octubre de 2026 · LOMS 360</div>
+  <p>Si el problema es de acceso (aprobación, membresía o suspensión), lo resuelve un administrador de LOMS 360. Si es de uso del portal, podemos revisar tu caso con "ver como cliente", sin modificar nada de tu farmacia. Si el problema está en tus ventas, tu caja o tus finanzas, te pediremos que actives el permiso de soporte por 24 horas (sección 4.5).</p>
+  <div class="version">Guía de uso · Portal de Farmacia · Versión 1.2 · Octubre de 2026 · LOMS 360</div>
 </section>
 
 <!-- ================= CONTRAPORTADA ================= -->

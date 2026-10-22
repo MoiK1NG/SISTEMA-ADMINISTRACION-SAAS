@@ -31,6 +31,7 @@ TRANSVERSAL = [
  ("T11", "Contraseña inicial", "En esa pantalla, poner la inicial y elegir una nueva.", "Entra a Mis portales; en los siguientes ingresos ya no la pide."),
  ("T12", "Admin en 'ver como'", "Como superadmin (o QA Admin): Usuarios → ⋯ → 'Ver sus portales' del dueño de prueba → Farmacia → POS.", "Entra en solo lectura: la barra azul avisa; 'Cobrar' deshabilitado; crear producto no aparece. 'Volver a mi cuenta' sale del modo."),
  ("T13", "Cambio de cuenta", "Cerrar sesión estando en 'ver como' y entrar como QA Cajero en el mismo navegador. Hacer una venta.", "La venta se registra (no aparece 'modo lectura')."),
+ ("T14", "Tutorial", "Con cualquier cuenta del portal: 'Ver tutorial' en la barra. Recorrerlo con Siguiente/Anterior y probar 'Ir ahora' en un paso.", "Se abre desde el paso 1, muestra 'Paso N de M' y 'Ir ahora' lleva a la pantalla del paso."),
 ]
 
 ADMIN = [
@@ -43,6 +44,12 @@ ADMIN = [
  ("A07", "Usuarios · Cambiar rol", "Como QA Admin, buscar la opción de cambiar rol.", "No aparece (solo superadmin)."),
  ("A08", "Auditoría", "Después de A02–A06, abrir Admin → Auditoría.", "Aparecen las acciones con quién, cuándo y sobre quién."),
  ("A09", "Alertas", "Admin → Alertas con una membresía que venza en menos de 7 días.", "La membresía figura en la lista de próximas a vencer."),
+ ("A10", "Planes · Límites", "Admin → Planes: editar un plan y poner Máx. regentes 1 y Máx. cajeros 2. Dejar otro plan con los campos vacíos.", "La tarjeta del plan muestra '1 regente · 2 cajeros'; el vacío dice 'sin límite'."),
+ ("A11", "Negocios · Nuevo negocio", "Admin → Negocios → Nuevo negocio: 'Farmacia QA Alta', Chile, dueño nuevo (+qa-dueno2 del Gmail), plan con límites, 1 cajero (+qa-cajero3). Dar de alta.", "Muestra las dos contraseñas iniciales una sola vez. La lista suma el negocio con su plan, vencimiento y '1 de 2' cajeros."),
+ ("A12", "Negocios · Dueño del alta", "Entrar con el dueño recién creado.", "Pide elegir contraseña; el portal sale en CLP; al crear un producto propone IVA 19; Equipo muestra al cajero."),
+ ("A13", "Negocios · Todo o nada", "Repetir el alta usando como dueño 'Ya tiene cuenta' con el correo del dueño de la Farmacia de Prueba.", "Error 'Esa cuenta ya pertenece a otro negocio… Se deshizo lo que se había creado'. En Usuarios no quedó ninguna cuenta nueva."),
+ ("A14", "Ver como · Privacidad", "En 'ver como' del dueño de prueba (sin permiso de soporte): abrir Ventas, Finanzas, Recetas, Inventario y Equipo.", "Ventas, Finanzas y Recetas muestran 'sin permiso de soporte'. Inventario y Equipo se ven. El inicio avisa que pacientes y cuentas aparecen en cero."),
+ ("A15", "Ver como · Con permiso", "Después del D19 (el dueño da permiso), recargar Ventas en 'ver como'. Luego el dueño quita el permiso y recargar otra vez.", "Con permiso se ven las ventas (sin poder cobrar ni anular). Sin permiso vuelve el aviso. En Auditoría figuran 'autorizar_soporte' y 'revocar_soporte'."),
 ]
 
 DUENO = [
@@ -60,6 +67,14 @@ DUENO = [
  ("D12", "Compras", "Crear una cuenta por pagar, abonarla parcialmente, anularla.", "Estados pendiente → parcial → anulada. Solo el dueño ve 'Anular'."),
  ("D13", "Cierre", "Abrir Cierre como dueño.", "Ve los totales esperados por método y los movimientos del turno (el cajero no)."),
  ("D14", "Inventario · Mostrar más", "Con los 665 productos cargados, abrir Inventario y escribir rápido en el buscador.", "No se traba. Si hay más de 200 resultados aparece 'Mostrar 200 más'; los contadores de la barra no cambian."),
+ ("D15", "Cierre · Retiros y gastos", "Después del C14, abrir Cierre como dueño.", "Los totales del turno muestran 'Retiros: −$ 50.000' y 'Gastos: −$ 5.000'; los movimientos aparecen con signo menos y quién los hizo."),
+ ("D16", "Finanzas · Gastos del mes", "Abrir Finanzas y exportar el CSV de 'Gastos y retiros de caja del mes'.", "Gastos por categoría (Insumos $ 5.000) y retiros aparte, con la nota 'no es gasto'. El CSV trae fecha, tipo, categoría, concepto y monto."),
+ ("D17", "Datos del negocio · Logo y color", "Subir un logo PNG chico, elegir el color Verde. Después intentar subir un SVG y una imagen de más de 500 KB.", "El logo sale en la barra, el inicio y el comprobante; la pestaña activa queda verde. El SVG y la imagen grande se rechazan con mensaje."),
+ ("D18", "Equipo · Suspender", "Con QA Cajero con la sesión abierta en otro navegador: suspenderlo desde ⋯. Que QA Cajero haga clic en cualquier sección. Luego reactivarlo.", "La tarjeta queda 'Suspendido'. QA Cajero sale a Mis portales con 'Acceso suspendido'. Al reactivarlo, vuelve a entrar."),
+ ("D19", "Inicio · Soporte de LOMS 360", "En la tarjeta 'Soporte de LOMS 360': 'Permitir por 24 h'. Después 'Quitar permiso'.", "Muestra 'hasta [fecha y hora]' mientras está activo; al quitarlo vuelve a 'tus datos son privados'."),
+ ("D20", "Inicio · Primeros pasos", "En un negocio nuevo (el del A11), entrar como dueño y completar cada paso.", "La lista marca cada paso al cumplirse y desaparece cuando están todos."),
+ ("D21", "Equipo · Cupo del plan", "En el negocio del A11 (plan con 2 cajeros): agregar un segundo cajero, luego intentar un tercero y cambiar a alguien a cajero.", "Arriba dice '2 de 2 cajeros'; el rol Cajero queda deshabilitado con 'Tu plan no permite más personas con este rol' y en el menú dice '(cupo lleno)'."),
+ ("D22", "Equipo · Último acceso", "Mirar las tarjetas del equipo.", "Cada persona muestra 'Último acceso' y, salvo el dueño, 'último cierre' (o 'nunca' / 'ninguno')."),
 ]
 
 REGENTE = [
@@ -75,6 +90,8 @@ REGENTE = [
  ("R10", "Compras", "Crear y abonar una cuenta por pagar; buscar 'Anular'.", "Crear y abonar funcionan; 'Anular' no aparece."),
  ("R11", "Inventario · Costos", "Mirar la tabla y el detalle.", "Ve Costo c/IVA, Margen y el historial de cambios."),
  ("R12", "Lotes sin fecha en el POS", "Producto con un lote con fecha y otro sin fecha: venderlo.", "Se descuenta primero el lote con fecha (FEFO); el sin fecha va al final."),
+ ("R13", "Cierre · Anular un gasto", "Anular con motivo un gasto registrado por QA Cajero en el turno abierto (la X de la fila). Cerrar caja.", "El gasto queda tachado 'anulado: motivo' y el cierre no lo descuenta."),
+ ("R14", "Cierre · Turno cerrado", "Intentar anular un retiro de un turno que ya se cerró (por ejemplo, desde otra pestaña abierta antes del cierre).", "Se rechaza: 'ya entró en un cierre de caja'."),
 ]
 
 CAJERO = [
@@ -86,11 +103,15 @@ CAJERO = [
  ("C06", "POS · Después de vender", "Vender 2 unidades de un producto y mirar su stock en la lista. Tocar 'Imprimir' en el aviso verde.", "El stock baja al instante sin recarga. Se abre el comprobante; al imprimir (o 'Guardar como PDF') sale solo el ticket."),
  ("C07", "POS · Dos cajeros", "En dos navegadores, con QA Cajero y el dueño, agregar la última unidad del mismo producto y cobrar en ambos.", "El segundo recibe 'Stock insuficiente' o 'El stock cambió'; su ticket se corrige solo."),
  ("C08", "Ventas", "Abrir Ventas; usar 'Hoy', '7 días', un rango manual; exportar CSV; reimprimir una venta con la impresora.", "La lista y los KPIs cambian con el rango; el CSV abre en Excel; el comprobante se ve igual al del POS. No aparece el botón de anular."),
- ("C09", "Pedidos", "Crear un encargo con anticipo, avanzarlo de estado y entregarlo cobrando el saldo.", "El saldo se cobra al entregar y el pago aparece en Ventas → Encargos."),
+ ("C09", "Pedidos", "Crear un encargo de $ 10.000 con anticipo de $ 4.000 en efectivo, avanzarlo hasta 'recibido' y usar 'Entregar y cobrar' pagando los $ 6.000 con débito.", "La entrega pasa sin error. En Ventas → Encargos aparecen los dos pagos. En el cierre del turno, lo esperado suma $ 4.000 en efectivo y $ 6.000 en débito."),
  ("C10", "Pacientes", "Crear un tratamiento (30 días), renovarlo, desactivarlo.", "Aparece en la lista con 'Se le acaba'; renovar actualiza la fecha; desactivado queda 'Pausado'."),
  ("C11", "Cierre de caja", "Cerrar caja declarando lo contado por método.", "No se ve el total esperado antes de declarar. Después muestra la diferencia. A los 30 s cierra la sesión (o con 'Salir ahora')."),
  ("C12", "Permisos", "Recorrer Inventario, Finanzas, Compras y Equipo.", "Inventario sin Costo/Margen ni lápiz de editar; Finanzas y Compras bloqueadas; Equipo solo lectura."),
  ("C13", "POS en tablet", "Abrir el POS en una tablet o con el navegador a 800 px de ancho.", "Buscador, resultados y ticket usables sin scroll horizontal."),
+ ("C14", "Cierre · Retiro y gasto", "En un turno con una venta de $ 60.000 en efectivo: 'Retiro de caja' de $ 50.000 ('remesa para el dueño') y 'Gasto' de $ 5.000 ('bidón de agua', Insumos). Cerrar declarando $ 5.000 en efectivo.", "Los dos aparecen en Movimientos del turno con signo menos. El cierre da diferencia 0 y dice que ya descuenta los retiros y gastos."),
+ ("C15", "Cierre · Anular lo propio", "Registrar un gasto con un monto mal escrito y anularlo con la X, indicando el motivo.", "Queda tachado con 'anulado: motivo'. No aparece la X en movimientos de otras personas."),
+ ("C16", "Tutorial · Primer ingreso", "Entrar con una cuenta de cajero nueva (creada en D04), elegir contraseña.", "Se abre solo el tutorial de cajero: vender, cobrar, recetas, encargos, retiros y gastos, cierre. No menciona Finanzas ni Equipo."),
+ ("C17", "Tutorial · No se repite", "Tocar 'Saltar tutorial', recargar la página, cerrar sesión y volver a entrar.", "No vuelve a abrirse solo; se puede ver con 'Ver tutorial'."),
 ]
 
 NUEVO = [
@@ -115,7 +136,7 @@ borde = Border(left=fino, right=fino, top=fino, bottom=fino)
 
 instrucciones = [
  ("Plan de pruebas · Portal de farmacia LOMS 360", "titulo"),
- ("Versión 1.0 · octubre de 2026", "sub"),
+ ("Versión 1.1 · 21 de octubre de 2026", "sub"),
  ("", ""),
  ("Cuentas", "h"),
  ("Usa las cuentas del kit de QA (archivo accesos_qa.xlsx, no versionado): QA Superadmin, QA Admin, Dueño de Prueba (farmacia.prueba@ejemplo.com), QA Regente, QA Cajero y QA Nuevo. Todas trabajan sobre la 'Farmacia de Prueba'. Nunca probar en la Farmacia Luis Gabriel: es el negocio real.", ""),
@@ -124,7 +145,10 @@ instrucciones = [
  ("En la dirección del portal que te pase el equipo (producción o el preview del PR que se esté probando). Los datos de prueba (lotes, productos, tratamientos) se crean en la Farmacia de Prueba y se pueden borrar al terminar.", ""),
  ("", ""),
  ("Cómo marcar", "h"),
- ("Cada hoja es un rol. Por caso: hacé los pasos, compará con 'Resultado esperado' y marcá Pasó = Sí o No. Si es No, escribí qué pasó (mensaje exacto, pantalla, hora) y, si podés, una captura con el ID del caso en el nombre del archivo. Quién probó y Fecha ayudan a reproducir.", ""),
+ ("Cada hoja es un rol. Por caso: haz los pasos, compara con 'Resultado esperado' y marca Pasó = Sí o No. Si es No, escribe qué pasó (mensaje exacto, pantalla, hora) y, si puedes, agrega una captura con el ID del caso en el nombre del archivo. Quién probó y Fecha ayudan a reproducir.", ""),
+ ("", ""),
+ ("Novedades de la versión 1.1", "h"),
+ ("Lo de la reunión del 21 de octubre: retiros y gastos de caja (C14, C15, R13, R14, D15, D16), tutorial (T14, C16, C17), alta de negocios y límites por plan (A10–A13, D20, D21), logo, color y suspender (D17, D18, D22) y privacidad del soporte (A14, A15, D19). C09 ahora prueba el cobro de encargos con montos concretos. Estos casos requieren que estén desplegados los cambios correspondientes y corridos sus SQL.", ""),
  ("", ""),
  ("Orden sugerido", "h"),
  ("1) Transversal T01–T07 · 2) Admin · 3) Dueño (deja los datos de prueba del D01 creados) · 4) Regente · 5) Cajero · 6) Usuario nuevo · 7) Transversal T08–T13.", ""),
