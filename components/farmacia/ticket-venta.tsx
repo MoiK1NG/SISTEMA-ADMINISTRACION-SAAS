@@ -39,6 +39,10 @@ export function TicketVenta({ venta, open, onOpenChange }: {
   const cuerpo = (
     <div className="font-mono text-[12px] leading-snug text-slate-900">
       <div className="text-center">
+        {negocio.logo_url && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={negocio.logo_url} alt="" className="mx-auto mb-1 max-h-14 max-w-[60%] object-contain grayscale" />
+        )}
         <p className="text-sm font-bold uppercase">{negocio.nombre || "LOMS 360"}</p>
         {negocio.nit && <p>{ID_FISCAL[moneda]} {negocio.nit}</p>}
         {negocio.direccion && <p>{negocio.direccion}</p>}

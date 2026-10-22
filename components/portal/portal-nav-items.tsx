@@ -13,6 +13,13 @@ export interface OtroPortal {
   color: string
 }
 
+export interface MarcaNegocio {
+  nombre: string
+  logo:   string | null
+  /** null = color del portal */
+  color:  string | null
+}
+
 interface Props {
   portal:  string
   top:     14 | 16
@@ -21,17 +28,20 @@ interface Props {
   otros:   OtroPortal[]
   /** El portal tiene tutorial de primer ingreso (hoy, solo farmacia). */
   tutorial?: boolean
+  /** Logo y color del negocio del usuario (hoy, solo farmacia) */
+  marca?:   MarcaNegocio
 }
 
 const ACCION = "flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors"
 
-export function PortalNavItems({ portal, top, sticky, esAdmin, otros, tutorial = false }: Props) {
+export function PortalNavItems({ portal, top, sticky, esAdmin, otros, tutorial = false, marca }: Props) {
   const pathname = usePathname()
   const config = PORTALES[portal]
   if (!config) return null
 
   const { secciones } = config
   const raiz = secciones[0].href
+  const color = marca?.color ?? config.color
 
   return (
     <nav
@@ -42,6 +52,11 @@ export function PortalNavItems({ portal, top, sticky, esAdmin, otros, tutorial =
       <div className="mx-auto flex max-w-7xl items-center gap-2 px-4 sm:px-6 lg:px-8">
 
         {/* ── Secciones (con scroll si no entran) ─────────────────────────── */}
+        {marca?.logo && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={marca.logo} alt={marca.nombre} title={marca.nombre}
+               className="h-8 w-8 shrink-0 rounded-lg border border-slate-100 bg-white object-contain" />
+        )}
         <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {secciones.map(({ href, label, icon: Icon }) => {
             // La raíz solo con coincidencia exacta; el resto acepta rutas hijas.
@@ -55,7 +70,7 @@ export function PortalNavItems({ portal, top, sticky, esAdmin, otros, tutorial =
                 className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
                   activo ? "text-white" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                 }`}
-                style={activo ? { backgroundColor: config.color } : undefined}
+                style={activo ? { backgroundColor: color } : undefined}
               >
                 <Icon className="h-3.5 w-3.5" />
                 {label}

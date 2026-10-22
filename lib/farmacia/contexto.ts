@@ -21,6 +21,10 @@ export interface Negocio {
   moneda:    Moneda
   /** IVA propuesto al crear productos (Chile 19, Colombia 0). */
   iva_pct_default: number
+  /** URL pública del logo (bucket logos-negocios) */
+  logo_url:  string | null
+  /** Color de la paleta del negocio; null = azul LOMS 360 */
+  color:     string | null
 }
 
 export interface ContextoFarmacia {
@@ -45,7 +49,7 @@ export const contextoFarmacia = cache(async (): Promise<ContextoFarmacia> => {
 
   const { data: miembro } = await supabase
     .from("miembros_negocio")
-    .select("rol, negocios(id, nombre, nit, direccion, telefono, moneda, iva_pct_default)")
+    .select("rol, negocios(id, nombre, nit, direccion, telefono, moneda, iva_pct_default, logo_url, color)")
     .eq("user_id", agenteId)
     .limit(1)
     .maybeSingle()

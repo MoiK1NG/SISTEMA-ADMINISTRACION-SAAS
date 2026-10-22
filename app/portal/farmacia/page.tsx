@@ -47,6 +47,11 @@ export default async function FarmaciaPage() {
       ayuda: `${ID_FISCAL[negocio.moneda]}, dirección y teléfono: salen en el comprobante. Usa "Datos del negocio", arriba a la derecha.`,
     },
     {
+      label: "Sube el logo de tu farmacia",
+      hecho: Boolean(negocio.logo_url),
+      ayuda: "Sale en la barra y en el comprobante. También eliges el color, en \"Datos del negocio\".",
+    },
+    {
       label: "Crea la cuenta de al menos un cajero",
       hecho: (equipo ?? []).some((m: any) => m.rol === "cajero"),
       href:  "/portal/farmacia/equipo",
@@ -95,9 +100,16 @@ export default async function FarmaciaPage() {
       <header className="sticky top-0 z-30 border-b border-slate-100 bg-white/80 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-600 to-brand-900 shadow-sm shadow-brand-500/30">
-              <Pill className="h-4 w-4 text-white" />
-            </div>
+            {negocio?.logo_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={negocio.logo_url} alt={negocio.nombre}
+                   className="h-9 w-9 rounded-xl border border-slate-100 bg-white object-contain" />
+            ) : (
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-600 to-brand-900 shadow-sm shadow-brand-500/30"
+                   style={negocio?.color ? { backgroundImage: "none", backgroundColor: negocio.color } : undefined}>
+                <Pill className="h-4 w-4 text-white" />
+              </div>
+            )}
             <div className="hidden sm:block">
               <p className="text-sm font-semibold leading-none text-slate-900">
                 {negocio?.nombre ?? "Farmacia"}

@@ -26,6 +26,7 @@ const PORTAL_ROUTE_RE = /^\/portal\/([^/]+)/
 export type PortalErrorCode =
   | 'no_access'       // sin fila en user_portal_access
   | 'membership_expired'  // membresía expirada o inexistente
+  | 'team_suspended'  // el dueño del negocio lo suspendió
   | 'portal_inactive' // el portal está desactivado por el admin
   | 'unauthorized'    // sin sesión válida
 
@@ -204,7 +205,9 @@ export async function updateSession(request: NextRequest) {
         .rpc('tiene_membresia_vigente', { p_user: user.id })
 
       if (!vigente) {
-        return redirectWithError(request, '/dashboard', 'membership_expired')
+        // Si el dueño lo suspendió, decirlo (no es un problema de pago)
+        const { data: suspendido } = await supabase.rpc('estoy_suspendido')
+        return redirectWithError(request, '/dashboard', suspendido ? 'team_suspended' : 'membership_expired')
       }
 
       // ✅ Todo OK → continuar hacia la página del portal

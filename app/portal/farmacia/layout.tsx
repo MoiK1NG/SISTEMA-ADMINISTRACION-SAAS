@@ -25,6 +25,8 @@ export default async function FarmaciaLayout({ children }: { children: React.Rea
         nit:       negocio?.nit ?? null,
         direccion: negocio?.direccion ?? null,
         telefono:  negocio?.telefono ?? null,
+        logo_url:  negocio?.logo_url ?? null,
+        color:     negocio?.color ?? null,
       }}
     >
       {children}

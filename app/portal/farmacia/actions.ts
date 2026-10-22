@@ -5,6 +5,8 @@ import { requireNegocioAccion, type RolFarmacia } from "@/lib/farmacia/contexto"
 import { enteroNoNegativo, montoNoNegativo, montoValido, textoRequerido, unoDe } from "@/lib/portal-security"
 import { CATEGORIAS_GASTO, METODOS_PAGO_FARMACIA, TIPOS_MOVIMIENTO_CAJA } from "@/lib/farmacia/pos-constants"
 import { borrarCuenta, crearCuentaConClave, validarClave, validarCorreo } from "@/lib/cuentas"
+import { crearClienteAdmin } from "@/lib/supabase/admin"
+import { BUCKET_LOGOS, LOGO_MAX_BYTES, LOGO_TIPOS, PALETA_NEGOCIO } from "@/lib/farmacia/marca"
 
 const ROLES = ["dueno", "regente", "cajero"] as const
 
@@ -88,6 +90,19 @@ export async function cambiarRolMiembro(miembroId: string, rol: string) {
   return { success: true }
 }
 
+/** Suspender sin quitar: deja de entrar y de ver datos, pero sigue en el equipo. */
+export async function suspenderMiembro(miembroId: string, suspendido: boolean) {
+  const { supabase, user } = await requireNegocioAccion(["dueno"])
+
+  const { error } = await supabase.rpc("suspender_miembro", { p_miembro: miembroId, p_suspendido: suspendido })
+  if (error) throw new Error(error.message)
+
+  await logEquipo(supabase, user.id, suspendido ? "suspender_miembro" : "reactivar_miembro", { miembro_id: miembroId })
+
+  revalidatePath("/portal/farmacia/equipo")
+  return { success: true }
+}
+
 export async function quitarMiembro(miembroId: string) {
   const { supabase, user } = await requireNegocioAccion(["dueno"])
 
@@ -122,6 +137,82 @@ export async function actualizarNegocio(data: {
   if (error) throw error
 
   // "layout": el nombre del negocio está en la cabecera de todas las pantallas del portal
+  revalidatePath("/portal/farmacia", "layout")
+  return { success: true }
+}
+
+// ── Marca del negocio: logo y color (solo el dueño) ──────────────────────────
+
+/** Firma real del archivo: el tipo que declara el navegador no alcanza. */
+function tipoPorFirma(b: Uint8Array): (typeof LOGO_TIPOS)[number] | null {
+  if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) return "image/png"
+  if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return "image/jpeg"
+  const ascii = (i: number, n: number) => String.fromCharCode(...b.slice(i, i + n))
+  if (ascii(0, 4) === "RIFF" && ascii(8, 4) === "WEBP") return "image/webp"
+  return null
+}
+
+/**
+ * Sube el logo del negocio. Sin SVG (puede llevar scripts); PNG, JPG o WebP
+ * de hasta 500 KB, verificado por la firma del archivo. Lo sube el servidor
+ * con la service role, después de comprobar que quien llama es el dueño.
+ */
+export async function subirLogoNegocio(formData: FormData) {
+  const { supabase, negocioId } = await requireNegocioAccion(["dueno"])
+
+  const archivo = formData.get("logo")
+  if (!(archivo instanceof File) || archivo.size === 0) throw new Error("Elige una imagen")
+  if (archivo.size > LOGO_MAX_BYTES) throw new Error("El logo no puede pesar más de 500 KB")
+
+  const bytes = new Uint8Array(await archivo.arrayBuffer())
+  const tipo = tipoPorFirma(bytes)
+  if (!tipo) throw new Error("El logo tiene que ser PNG, JPG o WebP")
+
+  const ext = tipo === "image/png" ? "png" : tipo === "image/jpeg" ? "jpg" : "webp"
+  const ruta = `${negocioId}/logo-${Date.now()}.${ext}`
+  const storage = crearClienteAdmin().storage.from(BUCKET_LOGOS)
+
+  const { error: errSubida } = await storage.upload(ruta, bytes, { contentType: tipo, upsert: false })
+  if (errSubida) throw new Error(errSubida.message)
+  const { data: { publicUrl } } = storage.getPublicUrl(ruta)
+
+  const { error } = await supabase.from("negocios").update({ logo_url: publicUrl }).eq("id", negocioId)
+  if (error) {
+    await storage.remove([ruta])
+    throw new Error(error.message)
+  }
+
+  // Los logos anteriores del negocio ya no se usan
+  const { data: viejos } = await storage.list(negocioId)
+  const sobran = (viejos ?? []).map(o => `${negocioId}/${o.name}`).filter(r => r !== ruta)
+  if (sobran.length) await storage.remove(sobran)
+
+  revalidatePath("/portal/farmacia", "layout")
+  return { logo_url: publicUrl }
+}
+
+export async function quitarLogoNegocio() {
+  const { supabase, negocioId } = await requireNegocioAccion(["dueno"])
+
+  const { error } = await supabase.from("negocios").update({ logo_url: null }).eq("id", negocioId)
+  if (error) throw new Error(error.message)
+
+  const storage = crearClienteAdmin().storage.from(BUCKET_LOGOS)
+  const { data: archivos } = await storage.list(negocioId)
+  if (archivos?.length) await storage.remove(archivos.map(o => `${negocioId}/${o.name}`))
+
+  revalidatePath("/portal/farmacia", "layout")
+  return { success: true }
+}
+
+/** Color de la paleta, o null para volver al azul LOMS 360. */
+export async function cambiarColorNegocio(color: string | null) {
+  const { supabase, negocioId } = await requireNegocioAccion(["dueno"])
+  const valido = color === null ? null : unoDe(color, PALETA_NEGOCIO.map(p => p.color), "color")
+
+  const { error } = await supabase.from("negocios").update({ color: valido }).eq("id", negocioId)
+  if (error) throw new Error(error.message)
+
   revalidatePath("/portal/farmacia", "layout")
   return { success: true }
 }
