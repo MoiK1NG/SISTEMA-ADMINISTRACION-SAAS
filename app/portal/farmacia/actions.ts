@@ -141,6 +141,31 @@ export async function actualizarNegocio(data: {
   return { success: true }
 }
 
+// ── Permiso de soporte (solo el dueño) ───────────────────────────────────────
+// Sin permiso, un admin de LOMS 360 no ve ventas, clientes, recetas, caja ni
+// finanzas (RLS). Las funciones SQL registran cada cambio en audit_logs.
+export async function autorizarSoporte(horas = 24) {
+  const { supabase } = await requireNegocioAccion(["dueno"])
+  const h = Number(horas)
+  if (!Number.isInteger(h) || h < 1 || h > 72) throw new Error("El permiso puede durar entre 1 y 72 horas")
+
+  const { data, error } = await supabase.rpc("autorizar_soporte", { p_horas: h })
+  if (error) throw new Error(error.message)
+
+  revalidatePath("/portal/farmacia", "layout")
+  return { hasta: data as string }
+}
+
+export async function revocarSoporte() {
+  const { supabase } = await requireNegocioAccion(["dueno"])
+
+  const { error } = await supabase.rpc("revocar_soporte")
+  if (error) throw new Error(error.message)
+
+  revalidatePath("/portal/farmacia", "layout")
+  return { success: true }
+}
+
 // ── Marca del negocio: logo y color (solo el dueño) ──────────────────────────
 
 /** Firma real del archivo: el tipo que declara el navegador no alcanza. */

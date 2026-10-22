@@ -1,7 +1,7 @@
 import {
   Grid2x2, ScanBarcode, UserRound, CreditCard, FileText, Printer, ClipboardList,
   ArrowUpFromLine, Lock, Boxes, CalendarClock, Truck, Receipt, LayoutDashboard,
-  Building2, Users, Wallet, PartyPopper, HeartPulse,
+  Building2, Users, Wallet, PartyPopper, HeartPulse, Headset,
 } from "lucide-react"
 import type { RolFarmacia } from "./contexto"
 
@@ -111,6 +111,10 @@ const DUENO: PasoTutorial[] = [
   {
     icono: Wallet, titulo: "Finanzas (solo tú)", href: "/portal/farmacia/finanzas",
     texto: "Lo vendido, el margen, lo que debes y te deben, los gastos de caja y el valor de tu inventario. Nadie más del equipo ve esta sección.",
+  },
+  {
+    icono: Headset, titulo: "Tus datos son privados", href: "/portal/farmacia",
+    texto: "El equipo de LOMS 360 no ve tus ventas, clientes, recetas ni finanzas. Si necesitas ayuda con eso, en el panel das permiso por 24 horas y lo quitas cuando quieras.",
   },
 ]
 

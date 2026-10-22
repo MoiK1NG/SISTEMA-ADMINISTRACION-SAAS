@@ -1,11 +1,12 @@
 import { ClipboardList } from "lucide-react"
 import { PortalNav } from "@/components/portal/portal-nav"
 import { BannerVerComo } from "@/components/portal/banner-ver-como"
+import { PaginaSoporteBloqueado } from "@/components/farmacia/soporte-bloqueado"
 import { contextoFarmacia } from "@/lib/farmacia/contexto"
 import { PedidosFarmacia, type FilaPedido, type ClientePedido } from "./_components/pedidos-farmacia"
 
 export default async function PedidosFarmaciaPage() {
-  const { supabase, viendoA, negocio, rol } = await contextoFarmacia()
+  const { supabase, viendoA, negocio, rol, sinPermisoSoporte } = await contextoFarmacia()
 
   if (!negocio) {
     return (
@@ -15,6 +16,9 @@ export default async function PedidosFarmaciaPage() {
       </div>
     )
   }
+
+  // Datos sensibles: un admin los ve solo si el dueño autorizó el soporte
+  if (sinPermisoSoporte) return <PaginaSoporteBloqueado seccion="Pedidos" viendoA={viendoA} />
 
   const [{ data: pedidosRaw }, { data: clientes }] = await Promise.all([
     supabase.from("pedidos_farmacia")

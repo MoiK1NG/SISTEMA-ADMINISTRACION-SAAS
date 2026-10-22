@@ -1,11 +1,12 @@
 import { Truck } from "lucide-react"
 import { PortalNav } from "@/components/portal/portal-nav"
 import { BannerVerComo } from "@/components/portal/banner-ver-como"
+import { PaginaSoporteBloqueado } from "@/components/farmacia/soporte-bloqueado"
 import { contextoFarmacia } from "@/lib/farmacia/contexto"
 import { ComprasFarmacia, type FilaCuenta } from "./_components/compras-farmacia"
 
 export default async function ComprasFarmaciaPage() {
-  const { supabase, viendoA, negocio, rol } = await contextoFarmacia()
+  const { supabase, viendoA, negocio, rol, sinPermisoSoporte } = await contextoFarmacia()
 
   if (!negocio) {
     return (
@@ -15,6 +16,9 @@ export default async function ComprasFarmaciaPage() {
       </div>
     )
   }
+
+  // Datos sensibles: un admin los ve solo si el dueño autorizó el soporte
+  if (sinPermisoSoporte) return <PaginaSoporteBloqueado seccion="Compras" viendoA={viendoA} />
 
   // Cuentas por pagar = compras: territorio de dueño y regente (el cajero no)
   const esGestor = rol === "dueno" || rol === "regente"

@@ -1,12 +1,13 @@
 import { Calculator } from "lucide-react"
 import { PortalNav } from "@/components/portal/portal-nav"
 import { BannerVerComo } from "@/components/portal/banner-ver-como"
+import { PaginaSoporteBloqueado } from "@/components/farmacia/soporte-bloqueado"
 import { contextoFarmacia } from "@/lib/farmacia/contexto"
 import { CierreCaja, type FilaCierre, type VentaTurno } from "./_components/cierre-caja"
 import type { MovimientoCaja } from "./_components/salidas-caja"
 
 export default async function CajaFarmaciaPage() {
-  const { supabase, agenteId, viendoA, negocio, rol } = await contextoFarmacia()
+  const { supabase, agenteId, viendoA, negocio, rol, sinPermisoSoporte } = await contextoFarmacia()
 
   if (!negocio) {
     return (
@@ -16,6 +17,9 @@ export default async function CajaFarmaciaPage() {
       </div>
     )
   }
+
+  // Datos sensibles: un admin los ve solo si el dueño autorizó el soporte
+  if (sinPermisoSoporte) return <PaginaSoporteBloqueado seccion="Cierre de caja" viendoA={viendoA} />
 
   const esGestor = rol === "dueno" || rol === "regente"
 

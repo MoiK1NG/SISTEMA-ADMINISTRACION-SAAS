@@ -2,11 +2,12 @@ import { formato } from "@/lib/farmacia/formato"
 import { FileText, ShieldCheck } from "lucide-react"
 import { PortalNav } from "@/components/portal/portal-nav"
 import { BannerVerComo } from "@/components/portal/banner-ver-como"
+import { PaginaSoporteBloqueado } from "@/components/farmacia/soporte-bloqueado"
 import { contextoFarmacia } from "@/lib/farmacia/contexto"
 import { ExportarCsv } from "@/components/farmacia/exportar-csv"
 
 export default async function RecetasFarmaciaPage() {
-  const { supabase, viendoA, negocio } = await contextoFarmacia()
+  const { supabase, viendoA, negocio, sinPermisoSoporte } = await contextoFarmacia()
   const f = formato(negocio?.moneda)
 
   if (!negocio) {
@@ -17,6 +18,9 @@ export default async function RecetasFarmaciaPage() {
       </div>
     )
   }
+
+  // Datos sensibles: un admin los ve solo si el dueño autorizó el soporte
+  if (sinPermisoSoporte) return <PaginaSoporteBloqueado seccion="Recetas" viendoA={viendoA} />
 
   // Últimos 90 días — el CSV exporta lo visible
   const hace90 = new Date(); hace90.setDate(hace90.getDate() - 90)

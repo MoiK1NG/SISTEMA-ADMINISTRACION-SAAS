@@ -3,12 +3,13 @@ import Link from "next/link"
 import { Wallet, TrendingUp, Landmark, PackageOpen, Lock, Boxes, Receipt } from "lucide-react"
 import { PortalNav } from "@/components/portal/portal-nav"
 import { BannerVerComo } from "@/components/portal/banner-ver-como"
+import { PaginaSoporteBloqueado } from "@/components/farmacia/soporte-bloqueado"
 import { contextoFarmacia } from "@/lib/farmacia/contexto"
 import { CATEGORIA_GASTO_LABEL, METODO_PAGO_LABEL, type CategoriaGasto, type MetodoPagoFarmacia } from "@/lib/farmacia/pos-constants"
 import { ExportarCsv } from "@/components/farmacia/exportar-csv"
 
 export default async function FinanzasFarmaciaPage() {
-  const { supabase, viendoA, negocio, rol } = await contextoFarmacia()
+  const { supabase, viendoA, negocio, rol, sinPermisoSoporte } = await contextoFarmacia()
   const f = formato(negocio?.moneda)
 
   if (!negocio) {
@@ -19,6 +20,9 @@ export default async function FinanzasFarmaciaPage() {
       </div>
     )
   }
+
+  // Datos sensibles: un admin los ve solo si el dueño autorizó el soporte
+  if (sinPermisoSoporte) return <PaginaSoporteBloqueado seccion="Finanzas" viendoA={viendoA} />
 
   // Contabilidad general: SOLO el dueño (requisito explícito del cliente:
   // el regente no ve finanzas, el cajero menos)
