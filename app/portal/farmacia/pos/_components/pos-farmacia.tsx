@@ -1,8 +1,6 @@
 "use client"
 
-import { useFormato } from "@/components/farmacia/negocio-provider"
-import { useMemo, useRef, useState, useTransition } from "react"
-import { useRouter } from "next/navigation"
+import { useDeferredValue, useEffect, useMemo, useRef, useState, useTransition } from "react"
 import {
   Search, ScanBarcode, Plus, Minus, Trash2, ShoppingCart, CheckCircle2,
   Loader2, UserRound, Repeat2, X,
@@ -11,8 +9,14 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { registrarVentaFarmacia, crearClienteFarmacia, type RecetaVenta } from "../../actions"
+import {
+  registrarVentaFarmacia, crearClienteFarmacia, estadoProductosPos, buscarClientesFarmacia,
+  type RecetaVenta, type EstadoProductoPos,
+} from "../../actions"
 import { METODOS_PAGO_FARMACIA, METODO_PAGO_LABEL, type MetodoPagoFarmacia } from "@/lib/farmacia/pos-constants"
+import { useFormato, useNegocioUI } from "@/components/farmacia/negocio-provider"
+import { DOC_PERSONA } from "@/lib/farmacia/formato"
+import { buscar, indexar, type Indexado } from "@/lib/farmacia/busqueda"
 
 export interface ProductoPos {
   id:               string
@@ -28,78 +32,150 @@ export interface ProductoPos {
 
 export interface ClientePos { id: string; nombre: string; cedula: string | null; telefono: string | null }
 
-interface ItemCarrito { producto: ProductoPos; cantidad: number }
+/** El carrito guarda solo id y cantidad: precio y stock se leen del catálogo vigente. */
+interface ItemCarrito { productoId: string; cantidad: number }
 
 interface Props {
   productos:   ProductoPos[]
-  clientes:    ClientePos[]
   soloLectura: boolean
 }
 
-export function PosFarmacia({ productos, clientes, soloLectura }: Props) {
+// ── Índice del catálogo: se arma una vez por carga (y tras cada venta) ────────
+interface IndicePos {
+  lista:        Indexado<ProductoPos>[]
+  porId:        Map<string, ProductoPos>
+  porCodigo:    Map<string, ProductoPos>
+  porPrincipio: Map<string, ProductoPos[]>
+}
+
+function crearIndice(productos: ProductoPos[]): IndicePos {
+  const porId = new Map<string, ProductoPos>()
+  const porCodigo = new Map<string, ProductoPos>()
+  const porPrincipio = new Map<string, ProductoPos[]>()
+  for (const p of productos) {
+    porId.set(p.id, p)
+    if (p.codigo_barras) porCodigo.set(p.codigo_barras, p)
+    if (p.principio_activo) {
+      const lista = porPrincipio.get(p.principio_activo)
+      if (lista) lista.push(p); else porPrincipio.set(p.principio_activo, [p])
+    }
+  }
+  return {
+    lista: indexar(productos, p => `${p.nombre} ${p.principio_activo ?? ""} ${p.codigo_barras ?? ""}`),
+    porId, porCodigo, porPrincipio,
+  }
+}
+
+/** Código de barras exacto primero; si no, texto por nombre o principio activo. */
+function buscarProductos(indice: IndicePos, consulta: string, limite: number): ProductoPos[] {
+  const exacto = indice.porCodigo.get(consulta.trim())
+  if (exacto) return [exacto]
+  return buscar(indice.lista, consulta, limite)
+}
+
+export function PosFarmacia({ productos, soloLectura }: Props) {
   const f = useFormato()
-  const router = useRouter()
   const inputRef = useRef<HTMLInputElement>(null)
   const [busqueda, setBusqueda] = useState("")
+  // La lista de resultados se calcula sobre el valor diferido: el input nunca
+  // espera al filtrado. El Enter del lector usa `busqueda` (inmediato), nunca esto.
+  const qDiferida = useDeferredValue(busqueda)
   const [carrito, setCarrito]   = useState<ItemCarrito[]>([])
   const [cliente, setCliente]   = useState<ClientePos | null>(null)
 
   const [cobroAbierto, setCobroAbierto] = useState(false)
   const [exito, setExito] = useState<{ numero: number; total: number; vuelto: number } | null>(null)
 
-  // ── Búsqueda: código de barras exacto o texto ─────────────────────────────
-  const resultados = useMemo(() => {
-    const q = busqueda.trim().toLowerCase()
-    if (!q) return []
-    return productos.filter(p =>
-      p.nombre.toLowerCase().includes(q) ||
-      (p.principio_activo ?? "").toLowerCase().includes(q) ||
-      (p.codigo_barras ?? "") === q
-    ).slice(0, 12)
-  }, [productos, busqueda])
+  // Catálogo local: arranca con la prop y se corrige tras cada venta con lo que
+  // devuelve el servidor, sin volver a pedir la página. Si el server component
+  // vuelve a renderizar (otra navegación), se resincroniza con la prop nueva.
+  const [catalogo, setCatalogo] = useState(productos)
+  const [propAnterior, setPropAnterior] = useState(productos)
+  if (propAnterior !== productos) {
+    setPropAnterior(productos)
+    setCatalogo(productos)
+  }
+
+  const indice = useMemo(() => crearIndice(catalogo), [catalogo])
+  const resultados = useMemo(() => buscarProductos(indice, qDiferida, 12), [indice, qDiferida])
+
+  // Líneas del ticket con el producto vigente (si se desactivó, desaparece)
+  const lineas = carrito.flatMap(i => {
+    const producto = indice.porId.get(i.productoId)
+    return producto ? [{ producto, cantidad: i.cantidad }] : []
+  })
+  const total = lineas.reduce((s, l) => s + l.producto.precio * l.cantidad, 0)
+
+  /** Aplica stock/precio/activo que informa el servidor y recorta el ticket si hace falta. */
+  function aplicarEstado(estados: EstadoProductoPos[]) {
+    if (estados.length === 0) return
+    const porId = new Map(estados.map(e => [e.id, e]))
+    setCatalogo(prev => prev.flatMap(p => {
+      const e = porId.get(p.id)
+      if (!e) return [p]
+      if (!e.activo) return []
+      return [{ ...p, stock: e.stock, precio: e.precio }]
+    }))
+    setCarrito(prev => prev.flatMap(i => {
+      const e = porId.get(i.productoId)
+      if (!e) return [i]
+      if (!e.activo) return []
+      const cantidad = Math.min(i.cantidad, e.stock)
+      return cantidad > 0 ? [{ ...i, cantidad }] : []
+    }))
+  }
 
   function agregar(p: ProductoPos) {
     if (p.stock <= 0) return
     setCarrito(prev => {
-      const existe = prev.find(i => i.producto.id === p.id)
+      const existe = prev.find(i => i.productoId === p.id)
       if (existe) {
         if (existe.cantidad >= p.stock) return prev   // no vender más de lo que hay
-        return prev.map(i => i.producto.id === p.id ? { ...i, cantidad: i.cantidad + 1 } : i)
+        return prev.map(i => i.productoId === p.id ? { ...i, cantidad: i.cantidad + 1 } : i)
       }
-      return [...prev, { producto: p, cantidad: 1 }]
+      return [...prev, { productoId: p.id, cantidad: 1 }]
     })
     setBusqueda("")
     inputRef.current?.focus()
   }
 
-  // Lector de barras: dispara Enter → si hay coincidencia exacta, agrega directo
+  // Lector de barras: dispara Enter → coincidencia exacta por código, directo al
+  // ticket. Usa el valor inmediato y el mapa, no la lista diferida.
   function onEnterBusqueda() {
     const q = busqueda.trim()
     if (!q) return
-    const porCodigo = productos.find(p => p.codigo_barras === q)
+    const porCodigo = indice.porCodigo.get(q)
     if (porCodigo) { agregar(porCodigo); return }
-    if (resultados.length === 1) agregar(resultados[0])
+    const candidatos = buscarProductos(indice, q, 2)
+    if (candidatos.length === 1) agregar(candidatos[0])
   }
 
   function cambiarCantidad(id: string, delta: number) {
+    const stock = indice.porId.get(id)?.stock ?? 0
     setCarrito(prev => prev
-      .map(i => {
-        if (i.producto.id !== id) return i
-        const nueva = Math.min(i.cantidad + delta, i.producto.stock)
-        return { ...i, cantidad: nueva }
-      })
+      .map(i => i.productoId === id ? { ...i, cantidad: Math.min(i.cantidad + delta, stock) } : i)
       .filter(i => i.cantidad > 0))
   }
 
-  const total = carrito.reduce((s, i) => s + i.producto.precio * i.cantidad, 0)
-
-  function ventaCompletada(r: { numero: number; total: number; vuelto: number }) {
-    setExito(r)
+  function ventaCompletada(r: { numero: number; total: number; vuelto: number; productos: EstadoProductoPos[] }) {
+    setExito({ numero: r.numero, total: r.total, vuelto: r.vuelto })
     setCobroAbierto(false)
     setCarrito([])
     setCliente(null)
-    router.refresh()
+    aplicarEstado(r.productos)
     setTimeout(() => setExito(null), 3500)
+  }
+
+  // Si la venta falla ("El stock cambió", "no cubre el total"), se trae el
+  // estado real de lo que hay en el ticket y se corrige en el lugar.
+  const [, startRefresco] = useTransition()
+  function ventaFallida() {
+    const ids = carrito.map(i => i.productoId)
+    if (ids.length === 0) return
+    startRefresco(async () => {
+      try { aplicarEstado(await estadoProductosPos(ids)) }
+      catch { /* sin red: el próximo intento vuelve a validar en el servidor */ }
+    })
   }
 
   return (
@@ -121,7 +197,7 @@ export function PosFarmacia({ productos, clientes, soloLectura }: Props) {
           <ScanBarcode className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-300" />
         </div>
 
-        <div className="flex-1 overflow-y-auto rounded-2xl border border-slate-100 bg-white p-3 shadow-sm">
+        <div className={`flex-1 overflow-y-auto rounded-2xl border border-slate-100 bg-white p-3 shadow-sm transition-opacity ${busqueda !== qDiferida ? "opacity-70" : ""}`}>
           {busqueda.trim() === "" ? (
             <div className="flex h-full min-h-[280px] flex-col items-center justify-center text-center">
               <ScanBarcode className="h-10 w-10 text-slate-200" />
@@ -131,17 +207,16 @@ export function PosFarmacia({ productos, clientes, soloLectura }: Props) {
           ) : resultados.length === 0 ? (
             <div className="flex h-full min-h-[280px] flex-col items-center justify-center text-center">
               <p className="text-3xl">🔍</p>
-              <p className="mt-2 text-sm font-medium text-slate-600">Sin resultados para “{busqueda}”</p>
+              <p className="mt-2 text-sm font-medium text-slate-600">Sin resultados para “{qDiferida}”</p>
             </div>
           ) : (
             <div className="space-y-1.5">
               {resultados.map(p => {
                 const sinStock = p.stock <= 0
                 const equivalentes = sinStock && p.principio_activo
-                  ? productos.filter(e =>
-                      e.id !== p.id && e.stock > 0 &&
-                      e.principio_activo === p.principio_activo
-                    ).slice(0, 3)
+                  ? (indice.porPrincipio.get(p.principio_activo) ?? [])
+                      .filter(e => e.id !== p.id && e.stock > 0)
+                      .slice(0, 3)
                   : []
                 return (
                   <div key={p.id}>
@@ -203,7 +278,7 @@ export function PosFarmacia({ productos, clientes, soloLectura }: Props) {
             </div>
             <p className="text-sm font-bold text-slate-900">Ticket</p>
           </div>
-          {carrito.length > 0 && (
+          {lineas.length > 0 && (
             <button onClick={() => setCarrito([])} className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-rose-500 hover:bg-rose-50">
               <Trash2 className="h-3 w-3" />Limpiar
             </button>
@@ -212,34 +287,34 @@ export function PosFarmacia({ productos, clientes, soloLectura }: Props) {
 
         {/* Cliente */}
         <div className="border-b border-slate-50 px-4 py-2.5">
-          <SelectorCliente clientes={clientes} value={cliente} onChange={setCliente} disabled={soloLectura} />
+          <SelectorCliente value={cliente} onChange={setCliente} disabled={soloLectura} />
         </div>
 
         {/* Items */}
         <div className="min-h-[160px] flex-1 space-y-1.5 overflow-y-auto px-3 py-2">
-          {carrito.length === 0 ? (
+          {lineas.length === 0 ? (
             <p className="py-10 text-center text-xs text-slate-300">Toca un producto para agregarlo</p>
-          ) : carrito.map(i => (
-            <div key={i.producto.id} className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2">
+          ) : lineas.map(({ producto, cantidad }) => (
+            <div key={producto.id} className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2">
               <div className="min-w-0 flex-1">
                 <p className="truncate text-xs font-semibold text-slate-800">
-                  {i.producto.nombre}{i.producto.concentracion ? ` · ${i.producto.concentracion}` : ""}
+                  {producto.nombre}{producto.concentracion ? ` · ${producto.concentracion}` : ""}
                 </p>
-                <p className="text-[10px] text-slate-400">{f.dinero(i.producto.precio)} c/u</p>
+                <p className="text-[10px] text-slate-400">{f.dinero(producto.precio)} c/u</p>
               </div>
               <div className="flex shrink-0 items-center gap-1">
-                <button onClick={() => cambiarCantidad(i.producto.id, -1)}
+                <button onClick={() => cambiarCantidad(producto.id, -1)}
                         className="flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 hover:text-rose-500">
                   <Minus className="h-3 w-3" />
                 </button>
-                <span className="w-6 text-center text-sm font-bold tabular-nums">{i.cantidad}</span>
-                <button onClick={() => cambiarCantidad(i.producto.id, 1)}
-                        disabled={i.cantidad >= i.producto.stock}
+                <span className="w-6 text-center text-sm font-bold tabular-nums">{cantidad}</span>
+                <button onClick={() => cambiarCantidad(producto.id, 1)}
+                        disabled={cantidad >= producto.stock}
                         className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-600 text-white hover:bg-brand-700 disabled:opacity-30">
                   <Plus className="h-3 w-3" />
                 </button>
               </div>
-              <p className="w-16 shrink-0 text-right text-xs font-bold tabular-nums">{f.dinero(i.producto.precio * i.cantidad)}</p>
+              <p className="w-16 shrink-0 text-right text-xs font-bold tabular-nums">{f.dinero(producto.precio * cantidad)}</p>
             </div>
           ))}
         </div>
@@ -252,7 +327,7 @@ export function PosFarmacia({ productos, clientes, soloLectura }: Props) {
           </div>
           <Button
             className="h-12 w-full rounded-xl bg-brand-600 text-base font-bold hover:bg-brand-700"
-            disabled={carrito.length === 0 || soloLectura}
+            disabled={lineas.length === 0 || soloLectura}
             onClick={() => setCobroAbierto(true)}
           >
             💳 Cobrar {total > 0 ? f.dinero(total) : ""}
@@ -267,11 +342,12 @@ export function PosFarmacia({ productos, clientes, soloLectura }: Props) {
       <ModalCobroMixto
         open={cobroAbierto}
         total={total}
-        items={carrito.map(i => ({ producto_id: i.producto.id, cantidad: i.cantidad }))}
-        productosRx={carrito.filter(i => i.producto.requiere_receta).map(i => i.producto.nombre)}
+        items={lineas.map(l => ({ producto_id: l.producto.id, cantidad: l.cantidad }))}
+        productosRx={lineas.filter(l => l.producto.requiere_receta).map(l => l.producto.nombre)}
         clienteId={cliente?.id ?? null}
         onClose={() => setCobroAbierto(false)}
         onCompletada={ventaCompletada}
+        onFallo={ventaFallida}
       />
 
       {/* Toast de éxito */}
@@ -288,25 +364,35 @@ export function PosFarmacia({ productos, clientes, soloLectura }: Props) {
   )
 }
 
-/* ── Selector de cliente con alta rápida ─────────────────────────────────── */
-function SelectorCliente({ clientes, value, onChange, disabled }: {
-  clientes: ClientePos[]
+/* ── Selector de cliente: busca en el servidor al escribir, con alta rápida ── */
+function SelectorCliente({ value, onChange, disabled }: {
   value:    ClientePos | null
   onChange: (c: ClientePos | null) => void
   disabled: boolean
 }) {
-  const router = useRouter()
+  const { moneda } = useNegocioUI()
+  const doc = DOC_PERSONA[moneda]
   const [abierto, setAbierto] = useState(false)
   const [q, setQ] = useState("")
+  const qDiferida = useDeferredValue(q)
+  const [resultados, setResultados] = useState<ClientePos[]>([])
+  const [buscando, setBuscando] = useState(false)
   const [nuevo, setNuevo] = useState<{ nombre: string; cedula: string; telefono: string } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isPending, start] = useTransition()
+  // Las respuestas pueden llegar desordenadas: solo vale la de la última consulta
+  const secuencia = useRef(0)
 
-  const filtrados = q.trim()
-    ? clientes.filter(c =>
-        c.nombre.toLowerCase().includes(q.toLowerCase()) || (c.cedula ?? "").includes(q.trim())
-      ).slice(0, 6)
-    : clientes.slice(0, 6)
+  useEffect(() => {
+    const texto = qDiferida.trim()
+    if (!abierto || texto.length < 2) { setResultados([]); setBuscando(false); return }
+    const mia = ++secuencia.current
+    setBuscando(true)
+    buscarClientesFarmacia(texto)
+      .then(r => { if (secuencia.current === mia) setResultados(r) })
+      .catch(() => { if (secuencia.current === mia) setResultados([]) })
+      .finally(() => { if (secuencia.current === mia) setBuscando(false) })
+  }, [qDiferida, abierto])
 
   function crear() {
     if (!nuevo) return
@@ -315,7 +401,6 @@ function SelectorCliente({ clientes, value, onChange, disabled }: {
         const c = await crearClienteFarmacia(nuevo)
         onChange(c as ClientePos)
         setAbierto(false); setNuevo(null); setQ("")
-        router.refresh()
       } catch (e: any) { setError(e?.message ?? "No se pudo crear") }
     })
   }
@@ -326,7 +411,7 @@ function SelectorCliente({ clientes, value, onChange, disabled }: {
         <div className="flex min-w-0 items-center gap-2">
           <UserRound className="h-3.5 w-3.5 shrink-0 text-brand-600" />
           <p className="truncate text-xs font-semibold text-slate-800">{value.nombre}</p>
-          {value.cedula && <span className="shrink-0 text-[10px] text-slate-400">CC {value.cedula}</span>}
+          {value.cedula && <span className="shrink-0 text-[10px] text-slate-400">{doc} {value.cedula}</span>}
         </div>
         <button onClick={() => onChange(null)} className="shrink-0 text-slate-300 hover:text-slate-500">
           <X className="h-3.5 w-3.5" />
@@ -346,7 +431,7 @@ function SelectorCliente({ clientes, value, onChange, disabled }: {
         Cliente (opcional) — toca para buscar o crear
       </button>
 
-      <Dialog open={abierto} onOpenChange={setAbierto}>
+      <Dialog open={abierto} onOpenChange={v => { setAbierto(v); if (!v) { setQ(""); setNuevo(null); setError(null) } }}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader><DialogTitle>{nuevo ? "Nuevo cliente" : "Cliente"}</DialogTitle></DialogHeader>
           <div className="mt-2 space-y-3">
@@ -354,19 +439,24 @@ function SelectorCliente({ clientes, value, onChange, disabled }: {
 
             {nuevo === null ? (
               <>
-                <Input autoFocus placeholder="Buscar por nombre o cédula…" value={q} onChange={e => setQ(e.target.value)} />
+                <Input autoFocus placeholder={`Buscar por nombre o ${doc}…`} value={q} onChange={e => setQ(e.target.value)} />
                 <div className="max-h-52 space-y-1 overflow-y-auto">
-                  {filtrados.map(c => (
+                  {q.trim().length < 2 ? (
+                    <p className="py-4 text-center text-xs text-slate-400">Escribe al menos 2 letras o el {doc}</p>
+                  ) : buscando && resultados.length === 0 ? (
+                    <p className="flex items-center justify-center gap-2 py-4 text-xs text-slate-400">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />Buscando…
+                    </p>
+                  ) : resultados.length === 0 ? (
+                    <p className="py-4 text-center text-xs text-slate-400">Sin resultados</p>
+                  ) : resultados.map(c => (
                     <button key={c.id}
                             onClick={() => { onChange(c); setAbierto(false); setQ("") }}
                             className="flex w-full items-center justify-between rounded-lg border border-slate-100 px-3 py-2 text-left text-sm hover:bg-brand-50">
                       <span className="font-medium text-slate-800">{c.nombre}</span>
-                      <span className="text-xs text-slate-400">{c.cedula ? `CC ${c.cedula}` : ""}</span>
+                      <span className="text-xs text-slate-400">{c.cedula ? `${doc} ${c.cedula}` : ""}</span>
                     </button>
                   ))}
-                  {filtrados.length === 0 && (
-                    <p className="py-4 text-center text-xs text-slate-400">Sin resultados</p>
-                  )}
                 </div>
                 <Button variant="outline" className="w-full gap-1.5"
                         onClick={() => setNuevo({ nombre: q.trim(), cedula: "", telefono: "" })}>
@@ -381,7 +471,7 @@ function SelectorCliente({ clientes, value, onChange, disabled }: {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <Label>Cédula</Label>
+                    <Label>{doc}</Label>
                     <Input value={nuevo.cedula} onChange={e => setNuevo(n => n && ({ ...n, cedula: e.target.value }))} />
                   </div>
                   <div className="space-y-1.5">
@@ -410,14 +500,16 @@ const RECETA_VACIA = {
   paciente_nombre: "", paciente_documento: "", medico_nombre: "", medico_registro: "", numero_receta: "",
 }
 
-function ModalCobroMixto({ open, total, items, productosRx, clienteId, onClose, onCompletada }: {
+function ModalCobroMixto({ open, total, items, productosRx, clienteId, onClose, onCompletada, onFallo }: {
   open:      boolean
   total:     number
   items:     { producto_id: string; cantidad: number }[]
   productosRx: string[]
   clienteId: string | null
   onClose:   () => void
-  onCompletada: (r: { numero: number; total: number; vuelto: number }) => void
+  onCompletada: (r: { numero: number; total: number; vuelto: number; productos: EstadoProductoPos[] }) => void
+  /** La venta fue rechazada por el servidor: el POS refresca stock y precios del ticket. */
+  onFallo:   () => void
 }) {
   const f = useFormato()
   const [montos, setMontos] = useState<Record<MetodoPagoFarmacia, string>>({
@@ -468,7 +560,10 @@ function ModalCobroMixto({ open, total, items, productosRx, clienteId, onClose, 
         setMontos({ efectivo: "", tarjeta_debito: "", tarjeta_credito: "", transferencia: "" })
         setReceta(RECETA_VACIA)
         onCompletada(r)
-      } catch (e: any) { setError(e?.message ?? "No se pudo registrar la venta") }
+      } catch (e: any) {
+        setError(e?.message ?? "No se pudo registrar la venta")
+        onFallo()
+      }
     })
   }
 

@@ -2,7 +2,7 @@ import { Grid2x2 } from "lucide-react"
 import { PortalNav } from "@/components/portal/portal-nav"
 import { BannerVerComo } from "@/components/portal/banner-ver-como"
 import { contextoFarmacia } from "@/lib/farmacia/contexto"
-import { PosFarmacia, type ProductoPos, type ClientePos } from "./_components/pos-farmacia"
+import { PosFarmacia, type ProductoPos } from "./_components/pos-farmacia"
 
 export default async function PosFarmaciaPage() {
   const { supabase, viendoA, negocio } = await contextoFarmacia()
@@ -16,7 +16,8 @@ export default async function PosFarmaciaPage() {
     )
   }
 
-  const [{ data: productosRaw }, { data: stockRaw }, { data: clientesRaw }] = await Promise.all([
+  // Los clientes no viajan con la página: el POS los busca al escribir
+  const [{ data: productosRaw }, { data: stockRaw }] = await Promise.all([
     supabase.from("productos_farmacia")
       .select("id, codigo_barras, nombre, principio_activo, concentracion, presentacion, precio_venta, requiere_receta")
       .eq("negocio_id", negocio.id).eq("activo", true)
@@ -24,10 +25,6 @@ export default async function PosFarmaciaPage() {
     supabase.from("stock_farmacia")
       .select("producto_id, stock_venta")
       .eq("negocio_id", negocio.id),
-    supabase.from("clientes_farmacia")
-      .select("id, nombre, cedula, telefono")
-      .eq("negocio_id", negocio.id)
-      .order("nombre"),
   ])
 
   const stockPorId = new Map((stockRaw ?? []).map((s: any) => [s.producto_id, Number(s.stock_venta)]))
@@ -63,7 +60,6 @@ export default async function PosFarmaciaPage() {
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
         <PosFarmacia
           productos={productos}
-          clientes={(clientesRaw ?? []) as ClientePos[]}
           soloLectura={Boolean(viendoA)}
         />
       </main>

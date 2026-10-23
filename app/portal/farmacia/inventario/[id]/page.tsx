@@ -111,6 +111,14 @@ export default async function ProductoFarmaciaPage({
   const stockVenta  = lotes.reduce((s, l) => s + l.cantidad_venta, 0)
   const stockBodega = lotes.reduce((s, l) => s + l.cantidad_bodega, 0)
 
+  // Principio activo con su concentración al lado (pedido del equipo)
+  const principio = [producto.principio_activo, producto.concentracion].filter(Boolean).join(" ") || null
+  const precio    = Number(producto.precio_venta)
+  const costoNeto = Number(producto.costo)
+  const ivaPct    = Number(producto.iva_pct ?? 0)
+  const costoIva  = costoConIva(costoNeto, ivaPct)
+  const mg        = margen(precio, costoNeto, ivaPct)
+
   const productoForm: FilaProducto = {
     id:               producto.id,
     codigo_barras:    producto.codigo_barras,
@@ -123,6 +131,8 @@ export default async function ProductoFarmaciaPage({
     precio_venta:     Number(producto.precio_venta),
     costo:            Number(producto.costo),
     iva_pct:          Number(producto.iva_pct ?? 0),
+    costo_iva:        costoIva,
+    margen:           mg,
     requiere_receta:  producto.requiere_receta,
     activo:           producto.activo,
     laboratorio_id:   producto.laboratorio_id,
@@ -145,14 +155,6 @@ export default async function ProductoFarmaciaPage({
       stock: Number(st?.stock_venta ?? 0) + Number(st?.stock_bodega ?? 0),
     }
   })
-
-  // Principio activo con su concentración al lado (pedido del equipo)
-  const principio = [producto.principio_activo, producto.concentracion].filter(Boolean).join(" ") || null
-  const precio    = Number(producto.precio_venta)
-  const costoNeto = Number(producto.costo)
-  const ivaPct    = Number(producto.iva_pct ?? 0)
-  const costoIva  = costoConIva(costoNeto, ivaPct)
-  const mg        = margen(precio, costoNeto, ivaPct)
 
   const datos: [string, string | null][] = [
     ["Código de barras",     producto.codigo_barras],

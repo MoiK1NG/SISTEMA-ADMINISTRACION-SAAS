@@ -3,6 +3,7 @@ import { PortalNav } from "@/components/portal/portal-nav"
 import { BannerVerComo } from "@/components/portal/banner-ver-como"
 import { contextoFarmacia } from "@/lib/farmacia/contexto"
 import { estadoCaducidad } from "@/lib/farmacia/caducidad"
+import { costoConIva, margen } from "@/lib/farmacia/formato"
 import { InventarioFarmacia, type FilaProducto, type CatalogoItem } from "./_components/inventario-farmacia"
 
 export default async function InventarioFarmaciaPage() {
@@ -59,6 +60,9 @@ export default async function InventarioFarmaciaPage() {
       // El costo y el margen son información del dueño/regente, no del cajero
       costo:            esGestor ? Number(p.costo) : null,
       iva_pct:          Number(p.iva_pct ?? 0),
+      // Calculados acá una vez por request, no por fila y por render en el cliente
+      costo_iva:        esGestor ? costoConIva(Number(p.costo), Number(p.iva_pct ?? 0)) : null,
+      margen:           esGestor ? margen(Number(p.precio_venta), Number(p.costo), Number(p.iva_pct ?? 0)) : null,
       requiere_receta:  p.requiere_receta,
       activo:           p.activo,
       laboratorio_id:   p.laboratorio_id,

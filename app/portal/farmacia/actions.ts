@@ -363,13 +363,77 @@ export interface RecetaVenta {
   notas?:             string
 }
 
+/** Lo que el POS necesita saber de un producto después de una venta. */
+export interface EstadoProductoPos {
+  id:     string
+  stock:  number
+  precio: number
+  activo: boolean
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/** Stock en venta, precio y estado de hasta 200 productos del negocio. */
+async function leerEstadoProductos(supabase: any, negocioId: string, ids: string[]): Promise<EstadoProductoPos[]> {
+  const unicos = [...new Set(ids)].filter(id => typeof id === "string" && UUID_RE.test(id)).slice(0, 200)
+  if (unicos.length === 0) return []
+
+  const [{ data: prods }, { data: stock }] = await Promise.all([
+    supabase.from("productos_farmacia")
+      .select("id, precio_venta, activo")
+      .eq("negocio_id", negocioId).in("id", unicos),
+    supabase.from("stock_farmacia")
+      .select("producto_id, stock_venta")
+      .eq("negocio_id", negocioId).in("producto_id", unicos),
+  ])
+  const stockPorId = new Map<string, number>((stock ?? []).map((s: any) => [s.producto_id, Number(s.stock_venta)]))
+  return (prods ?? []).map((p: any) => ({
+    id:     p.id,
+    precio: Number(p.precio_venta),
+    activo: Boolean(p.activo),
+    stock:  stockPorId.get(p.id) ?? 0,
+  }))
+}
+
+/**
+ * El POS lo pide cuando una venta falla ("El stock cambió", "no cubre el
+ * total"): corrige stock y precio de lo que hay en el ticket sin recargar.
+ */
+export async function estadoProductosPos(ids: string[]) {
+  const { supabase, negocioId } = await requireNegocioAccion(["dueno", "regente", "cajero"])
+  if (!Array.isArray(ids)) throw new Error("Lista de productos inválida")
+  return leerEstadoProductos(supabase, negocioId, ids)
+}
+
+export interface ClienteBuscado { id: string; nombre: string; cedula: string | null; telefono: string | null }
+
+/** Búsqueda de clientes para el POS (ya no se mandan todos al cargar). */
+export async function buscarClientesFarmacia(q: string): Promise<ClienteBuscado[]> {
+  const { supabase, negocioId } = await requireNegocioAccion(["dueno", "regente", "cajero"])
+
+  // Solo letras, números, espacios y guion: coma, punto y paréntesis romperían
+  // el filtro `or` de PostgREST
+  const texto = (typeof q === "string" ? q : "").replace(/[^\p{L}\p{N}\s-]/gu, "").trim().slice(0, 60)
+  if (texto.length < 2) return []
+
+  const { data, error } = await supabase
+    .from("clientes_farmacia")
+    .select("id, nombre, cedula, telefono")
+    .eq("negocio_id", negocioId)
+    .or(`nombre.ilike.%${texto}%,cedula.ilike.%${texto}%`)
+    .order("nombre")
+    .limit(20)
+  if (error) throw new Error(error.message)
+  return (data ?? []) as ClienteBuscado[]
+}
+
 export async function registrarVentaFarmacia(input: {
   items:   { producto_id: string; cantidad: number }[]
   pagos:   { metodo: string; monto: number }[]
   cliente_id?: string | null
   receta?: RecetaVenta | null
 }) {
-  const { supabase } = await requireNegocioAccion(["dueno", "regente", "cajero"])
+  const { supabase, negocioId } = await requireNegocioAccion(["dueno", "regente", "cajero"])
 
   if (!input.items?.length) throw new Error("La venta debe tener al menos un producto")
   if (!input.pagos?.length) throw new Error("Falta el pago")
@@ -401,11 +465,15 @@ export async function registrarVentaFarmacia(input: {
   })
   if (error) throw new Error(error.message)
 
-  revalidatePath("/portal/farmacia/pos")
-  revalidatePath("/portal/farmacia/ventas")
-  revalidatePath("/portal/farmacia/inventario")
-  revalidatePath("/portal/farmacia/recetas")
-  return data as { venta_id: string; numero: number; total: number; vuelto: number }
+  // Sin revalidatePath a propósito: las páginas del portal son dinámicas
+  // (leen cookies) y se consultan de nuevo en cada navegación. Revalidar acá
+  // hacía que la respuesta de esta acción trajera la página entera (catálogo
+  // incluido) y el POS además pedía otra copia con router.refresh(). En su
+  // lugar devolvemos el estado actual de lo vendido para corregir el POS en
+  // el mismo lugar, con ~1 KB.
+  const venta = data as { venta_id: string; numero: number; total: number; vuelto: number }
+  const productos = await leerEstadoProductos(supabase, negocioId, items.map(i => i.producto_id))
+  return { ...venta, productos }
 }
 
 export async function anularVentaFarmacia(ventaId: string, motivo: string) {
@@ -438,11 +506,12 @@ export async function crearClienteFarmacia(data: { nombre: string; cedula?: stri
     })
     .select("id, nombre, cedula, telefono").single()
   if (error) {
-    if (error.code === "23505") throw new Error("Ya existe un cliente con esa cédula")
+    if (error.code === "23505") throw new Error("Ya existe un cliente con ese documento")
     throw new Error(error.message)
   }
 
-  revalidatePath("/portal/farmacia/pos")
+  // Sin revalidatePath: el POS ya no recibe la lista de clientes (busca en el
+  // servidor al escribir), así que no hay nada que refrescar.
   return cliente
 }
 
