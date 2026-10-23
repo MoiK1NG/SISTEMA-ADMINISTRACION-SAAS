@@ -18,12 +18,18 @@ interface Plan {
   price: number
   duration_days: number
   is_active: boolean
+  /** Máximo de regentes y cajeros por negocio; null = sin límite */
+  max_regentes: number | null
+  max_cajeros: number | null
   activeCount: number
 }
 
 const EMPTY: Omit<Plan, "id" | "activeCount"> = {
-  name: "", description: "", price: 0, duration_days: 30, is_active: true
+  name: "", description: "", price: 0, duration_days: 30, is_active: true, max_regentes: 2, max_cajeros: 3,
 }
+
+/** Campo vacío = sin límite */
+const aLimite = (v: string) => (v.trim() === "" ? null : Number(v))
 
 export function PlansManager({ plans }: { plans: Plan[] }) {
   const router = useRouter()
@@ -34,7 +40,14 @@ export function PlansManager({ plans }: { plans: Plan[] }) {
   const [error, setError] = useState<string | null>(null)
 
   function openCreate() { setEditing(null); setForm(EMPTY); setError(null); setOpen(true) }
-  function openEdit(p: Plan) { setEditing(p); setForm({ name: p.name, description: p.description || "", price: p.price, duration_days: p.duration_days, is_active: p.is_active }); setError(null); setOpen(true) }
+  function openEdit(p: Plan) {
+    setEditing(p)
+    setForm({
+      name: p.name, description: p.description || "", price: p.price, duration_days: p.duration_days,
+      is_active: p.is_active, max_regentes: p.max_regentes, max_cajeros: p.max_cajeros,
+    })
+    setError(null); setOpen(true)
+  }
 
   function handleSave() {
     setError(null)
@@ -85,6 +98,11 @@ export function PlansManager({ plans }: { plans: Plan[] }) {
                   {p.is_active ? "Activo" : "Inactivo"}
                 </Badge>
               </div>
+
+              <p className="text-xs text-muted-foreground">
+                Equipo por negocio: {p.max_regentes ?? "sin límite de"} regente{p.max_regentes === 1 ? "" : "s"} ·{" "}
+                {p.max_cajeros ?? "sin límite de"} cajero{p.max_cajeros === 1 ? "" : "s"}
+              </p>
 
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div className="rounded-lg bg-muted/50 p-2">
@@ -152,6 +170,21 @@ export function PlansManager({ plans }: { plans: Plan[] }) {
                 <Input type="number" min="1" value={form.duration_days} onChange={e => setForm(f => ({ ...f, duration_days: Number(e.target.value) }))} />
               </div>
             </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Máx. regentes</Label>
+                <Input type="number" min="0" placeholder="Sin límite" value={form.max_regentes ?? ""}
+                       onChange={e => setForm(f => ({ ...f, max_regentes: aLimite(e.target.value) }))} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Máx. cajeros</Label>
+                <Input type="number" min="0" placeholder="Sin límite" value={form.max_cajeros ?? ""}
+                       onChange={e => setForm(f => ({ ...f, max_cajeros: aLimite(e.target.value) }))} />
+              </div>
+            </div>
+            <p className="-mt-2 text-xs text-muted-foreground">
+              Por negocio, sin contar al dueño. Vacío = sin límite. Quien ya está en un equipo no se quita al bajar el límite.
+            </p>
             <label className="flex items-center gap-2 text-sm cursor-pointer">
               <input type="checkbox" checked={form.is_active} onChange={e => setForm(f => ({ ...f, is_active: e.target.checked }))} className="rounded" />
               Plan activo (visible para asignar)

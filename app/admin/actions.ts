@@ -97,7 +97,7 @@ async function verifySuperAdmin() {
 
 interface AuditEntry {
   action:       string
-  entity_type:  "user" | "membership" | "portal" | "plan"
+  entity_type:  "user" | "membership" | "portal" | "plan" | "negocio"
   entity_id?:   string | null
   entity_name?: string | null
   details?:     Record<string, unknown>
@@ -243,13 +243,12 @@ export async function deleteUser(userId: string) {
 // ACCIONES DE MEMBRESÍAS
 // ==========================================
 
-export async function assignMembership(
-  userId: string,
-  planId: string,
-  startDate: string
-) {
-  const { supabase, user } = await verifyAdmin()
-
+/**
+ * Crea la membresía (y vence las activas anteriores del usuario). Sin
+ * export: la usan assignMembership y el alta de negocios, que ya verificaron
+ * que quien llama es admin.
+ */
+async function crearMembresia(supabase: any, adminId: string, userId: string, planId: string, startDate: string) {
   // Obtener detalles del plan
   const { data: plan, error: planError } = await supabase
     .from("membership_plans")
@@ -284,11 +283,21 @@ export async function assignMembership(
   if (error) throw error
 
   const nombre = await nombreUsuario(supabase, userId)
-  await logAudit(supabase, user.id, {
+  await logAudit(supabase, adminId, {
     action: "assign_membership", entity_type: "membership", entity_id: nueva?.id,
     entity_name: nombre ? `${nombre} → ${plan.name}` : plan.name,
     details: { user_id: userId, plan_id: planId, start_date: startDate, end_date: endDate },
   })
+  return { id: nueva.id as string, endDate }
+}
+
+export async function assignMembership(
+  userId: string,
+  planId: string,
+  startDate: string
+) {
+  const { supabase, user } = await verifyAdmin()
+  await crearMembresia(supabase, user.id, userId, planId, startDate)
 
   revalidatePath("/admin/users")
   revalidatePath("/admin/memberships")
@@ -616,14 +625,25 @@ export async function removePortalAccess(userId: string, portalId: string) {
 // ACCIONES DE PLANES DE MEMBRESÍA
 // ==========================================
 
+/** Límite de usuarios por rol: entero >= 0, o null = sin límite. */
+function limiteValido(n: unknown, label: string): number | null {
+  if (n === null || n === undefined || n === "") return null
+  const v = Number(n)
+  if (!Number.isInteger(v) || v < 0 || v > 999) throw new Error(`El máximo de ${label} no es válido`)
+  return v
+}
+
 export async function createMembershipPlan(data: {
   name: string
   description: string | null
   duration_days: number
   price: number
   is_active: boolean
+  max_regentes: number | null
+  max_cajeros: number | null
 }) {
   const { supabase, user } = await verifyAdmin()
+  data = { ...data, max_regentes: limiteValido(data.max_regentes, "regentes"), max_cajeros: limiteValido(data.max_cajeros, "cajeros") }
 
   const { data: plan, error } = await supabase
     .from("membership_plans").insert(data).select("id").single()
@@ -647,9 +667,12 @@ export async function updateMembershipPlan(
     duration_days: number
     price: number
     is_active: boolean
+    max_regentes: number | null
+    max_cajeros: number | null
   }
 ) {
   const { supabase, user } = await verifyAdmin()
+  data = { ...data, max_regentes: limiteValido(data.max_regentes, "regentes"), max_cajeros: limiteValido(data.max_cajeros, "cajeros") }
 
   const { error } = await supabase
     .from("membership_plans")
@@ -660,7 +683,10 @@ export async function updateMembershipPlan(
 
   await logAudit(supabase, user.id, {
     action: "update_plan", entity_type: "plan", entity_id: planId,
-    entity_name: data.name, details: { price: data.price, duration_days: data.duration_days, is_active: data.is_active },
+    entity_name: data.name, details: {
+      price: data.price, duration_days: data.duration_days, is_active: data.is_active,
+      max_regentes: data.max_regentes, max_cajeros: data.max_cajeros,
+    },
   })
 
   revalidatePath("/admin/memberships")
@@ -700,4 +726,124 @@ export async function deleteMembershipPlan(planId: string) {
 
   revalidatePath("/admin/memberships")
   return { success: true }
+}
+
+// ==========================================
+// ALTA DE NEGOCIOS (farmacia)
+// ==========================================
+
+interface PersonaAlta { nombre: string; email: string; clave: string }
+
+export interface AltaNegocioInput {
+  nombre: string
+  moneda: "COP" | "CLP"
+  iva:    number
+  dueno:  ({ modo: "nueva" } & PersonaAlta) | { modo: "existente"; email: string }
+  planId: string
+  inicio: string
+  equipo: (PersonaAlta & { rol: "regente" | "cajero" })[]
+}
+
+/**
+ * Da de alta un negocio completo desde el panel: la cuenta del dueño (nueva
+ * con contraseña inicial, o una existente), el negocio con su moneda e IVA,
+ * el equipo inicial y la membresía del dueño, que heredan todos.
+ *
+ * Todo o nada: si un paso falla se deshace lo ya creado, en orden inverso.
+ * La membresía va al final porque es lo único que no se puede deshacer
+ * del todo (vence las membresías activas anteriores de una cuenta existente).
+ */
+export async function altaNegocioFarmacia(input: AltaNegocioInput) {
+  const { supabase, user } = await verifyAdmin()
+
+  // ── Validación completa antes de crear nada ────────────────────────────────
+  const nombre = (input.nombre ?? "").trim()
+  if (nombre.length < 2) throw new Error("Indica el nombre del negocio")
+  if (input.moneda !== "COP" && input.moneda !== "CLP") throw new Error("Moneda inválida")
+  const iva = Number(input.iva)
+  if (!Number.isFinite(iva) || iva < 0 || iva > 100) throw new Error("IVA inválido")
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(input.inicio ?? "")) throw new Error("Fecha de inicio inválida")
+
+  const { data: plan } = await supabase
+    .from("membership_plans").select("id, name, is_active, max_regentes, max_cajeros")
+    .eq("id", input.planId).maybeSingle()
+  if (!plan) throw new Error("Elige un plan")
+
+  const correoDueno = validarCorreo(input.dueno.email)
+  const dueno = input.dueno.modo === "nueva"
+    ? { modo: "nueva" as const, nombre: (input.dueno.nombre ?? "").trim(), email: correoDueno, clave: validarClave(input.dueno.clave) }
+    : { modo: "existente" as const, email: correoDueno }
+  if (dueno.modo === "nueva" && !dueno.nombre) throw new Error("Indica el nombre del dueño")
+
+  const equipo = (input.equipo ?? []).map(p => {
+    const n = (p.nombre ?? "").trim()
+    if (!n) throw new Error("Falta el nombre de alguien del equipo")
+    if (p.rol !== "regente" && p.rol !== "cajero") throw new Error("Rol inválido en el equipo")
+    return { nombre: n, email: validarCorreo(p.email), clave: validarClave(p.clave), rol: p.rol }
+  })
+  const correos = [correoDueno, ...equipo.map(p => p.email)]
+  if (new Set(correos).size !== correos.length) throw new Error("Hay correos repetidos entre el dueño y el equipo")
+
+  for (const rol of ["regente", "cajero"] as const) {
+    const max = rol === "regente" ? plan.max_regentes : plan.max_cajeros
+    const n = equipo.filter(p => p.rol === rol).length
+    if (max !== null && max !== undefined && n > max) {
+      throw new Error(`El plan ${plan.name} permite hasta ${max} ${rol === "regente" ? "regentes" : "cajeros"}`)
+    }
+  }
+
+  let duenoId: string
+  if (dueno.modo === "existente") {
+    const { data: perfil } = await supabase
+      // ilike para no depender de mayúsculas; _ y % del correo, escapados
+      .from("profiles").select("id").ilike("email", dueno.email.replace(/[\\%_]/g, "\\$&")).maybeSingle()
+    if (!perfil) throw new Error("No hay ninguna cuenta con el correo del dueño")
+    duenoId = perfil.id
+  }
+
+  // ── Creación, con pila para deshacer ───────────────────────────────────────
+  const deshacer: (() => Promise<unknown>)[] = []
+  try {
+    if (dueno.modo === "nueva") {
+      duenoId = await crearCuentaConClave({ email: dueno.email, nombre: dueno.nombre, clave: dueno.clave })
+      const id = duenoId
+      deshacer.push(() => borrarCuenta(id))
+    }
+
+    const { data: negocioId, error: errAlta } = await supabase.rpc("alta_negocio_farmacia", {
+      p_dueno: duenoId!, p_nombre: nombre, p_moneda: input.moneda, p_iva: iva,
+    })
+    if (errAlta) throw new Error(errAlta.message)
+    deshacer.push(async () => { await supabase.from("negocios").delete().eq("id", negocioId) })
+
+    for (const p of equipo) {
+      const id = await crearCuentaConClave({ email: p.email, nombre: p.nombre, clave: p.clave })
+      deshacer.push(() => borrarCuenta(id))
+      const { error } = await supabase.rpc("agregar_miembro_negocio", {
+        p_negocio: negocioId, p_email: p.email, p_rol: p.rol,
+      })
+      if (error) throw new Error(`${p.nombre}: ${error.message}`)
+    }
+
+    const membresia = await crearMembresia(supabase, user.id, duenoId!, plan.id, input.inicio)
+
+    await logAudit(supabase, user.id, {
+      action: "alta_negocio", entity_type: "negocio", entity_id: negocioId as string, entity_name: nombre,
+      details: {
+        moneda: input.moneda, iva, plan: plan.name, vence: membresia.endDate,
+        dueno: dueno.email, dueno_nuevo: dueno.modo === "nueva",
+        equipo: equipo.map(p => ({ email: p.email, rol: p.rol })),
+      },
+    })
+
+    revalidatePath("/admin/negocios")
+    revalidatePath("/admin/users")
+    revalidatePath("/admin")
+    return { negocioId: negocioId as string, nombre, vence: membresia.endDate }
+  } catch (e: any) {
+    for (const paso of deshacer.reverse()) {
+      await paso().catch(err => console.error("[altaNegocioFarmacia] no se pudo deshacer un paso", err))
+    }
+    throw new Error(`${e?.message ?? "Error desconocido"}. Se deshizo lo que se había creado.`)
+  }
 }
