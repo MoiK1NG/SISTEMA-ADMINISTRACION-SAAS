@@ -23,6 +23,13 @@ const ERROR_CONFIG: Record<
       'Tu membresía no está vigente. Renueva tu plan para recuperar el acceso a los portales.',
     variant: 'destructive',
   },
+  team_suspended: {
+    icon: PowerOff,
+    title: 'Acceso suspendido',
+    description:
+      'El dueño del negocio suspendió tu acceso. Habla con él para que te reactive.',
+    variant: 'destructive',
+  },
   portal_inactive: {
     icon: PowerOff,
     title: 'Portal no disponible',
@@ -41,6 +48,7 @@ const ERROR_CONFIG: Record<
 const VALID_CODES = new Set<PortalErrorCode>([
   'no_access',
   'membership_expired',
+  'team_suspended',
   'portal_inactive',
   'unauthorized',
 ])

@@ -102,11 +102,11 @@ const DUENO: PasoTutorial[] = [
   },
   {
     icono: Building2, titulo: "Datos del negocio",
-    texto: "Desde el panel completas el nombre, el RUT o NIT, la dirección y el teléfono. Salen en el comprobante de venta.",
+    texto: "Desde el panel completas el nombre, el RUT o NIT, la dirección y el teléfono, y eliges el logo y el color de tu farmacia. Salen en la barra y en el comprobante de venta.",
   },
   {
     icono: Users, titulo: "Tu equipo", href: "/portal/farmacia/equipo",
-    texto: "En Equipo creas las cuentas de tus cajeros y regentes con una contraseña inicial que les entregas en persona. Al primer ingreso, cada uno elige la suya.",
+    texto: "En Equipo creas las cuentas de tus cajeros y regentes con una contraseña inicial que les entregas en persona; al primer ingreso, cada uno elige la suya. Ves cuándo entró cada uno y puedes suspender a alguien sin quitarlo.",
   },
   {
     icono: Wallet, titulo: "Finanzas (solo tú)", href: "/portal/farmacia/finanzas",

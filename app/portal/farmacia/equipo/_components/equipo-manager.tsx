@@ -3,7 +3,7 @@
 import { useFormato } from "@/components/farmacia/negocio-provider"
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { UserPlus, MoreHorizontal, Trash2, ShieldCheck, Loader2 } from "lucide-react"
+import { UserPlus, MoreHorizontal, Trash2, ShieldCheck, Loader2, PauseCircle, PlayCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -14,7 +14,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { agregarMiembro, crearMiembroConCuenta, cambiarRolMiembro, quitarMiembro } from "../../actions"
+import { agregarMiembro, crearMiembroConCuenta, cambiarRolMiembro, quitarMiembro, suspenderMiembro } from "../../actions"
 import { CampoClaveInicial, CredencialesCreadas, generarClave } from "@/components/credenciales-iniciales"
 
 export interface FilaMiembro {
@@ -25,6 +25,9 @@ export interface FilaMiembro {
   email:    string
   aprobado: boolean
   desde:    string
+  suspendido:    boolean
+  ultimoAcceso:  string | null
+  ultimoCierre:  string | null
 }
 
 const ROL_META: Record<FilaMiembro["rol"], { label: string; desc: string; clases: string }> = {
@@ -135,20 +138,25 @@ export function EquipoManager({ miembros, puedeGestionar, miUserId, limites }: P
         {miembros.map(m => {
           const meta = ROL_META[m.rol]
           return (
-            <div key={m.id} className="flex items-start gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+            <div key={m.id} className={`flex items-start gap-3 rounded-2xl border bg-white p-4 shadow-sm ${m.suspendido ? "border-amber-200 bg-amber-50/30" : "border-slate-100"}`}>
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-600/10 text-sm font-bold text-brand-700">
                 {(m.nombre || m.email)[0].toUpperCase()}
               </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-slate-900">
                   {m.nombre}
-                  {m.user_id === miUserId && <span className="ml-1.5 text-xs font-normal text-slate-400">(vos)</span>}
+                  {m.user_id === miUserId && <span className="ml-1.5 text-xs font-normal text-slate-400">(tú)</span>}
                 </p>
                 <p className="truncate text-xs text-slate-400">{m.email}</p>
                 <div className="mt-2 flex flex-wrap items-center gap-1.5">
                   <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold ${meta.clases}`}>
                     <ShieldCheck className="h-2.5 w-2.5" />{meta.label}
                   </span>
+                  {m.suspendido && (
+                    <span className="rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">
+                      Suspendido
+                    </span>
+                  )}
                   {!m.aprobado && (
                     <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
                       Cuenta sin aprobar
@@ -157,6 +165,10 @@ export function EquipoManager({ miembros, puedeGestionar, miUserId, limites }: P
                   <span className="text-[10px] text-slate-300">desde {f.fecha(m.desde)}</span>
                 </div>
                 <p className="mt-1.5 text-[11px] text-slate-400">{meta.desc}</p>
+                <p className="mt-1 text-[11px] text-slate-500">
+                  Último acceso: {m.ultimoAcceso ? f.fechaHoraAnio(m.ultimoAcceso) : "nunca"}
+                  {m.rol !== "dueno" && <> · último cierre: {m.ultimoCierre ? f.fechaHoraAnio(m.ultimoCierre) : "ninguno"}</>}
+                </p>
               </div>
 
               {puedeGestionar && m.user_id !== miUserId && (
@@ -177,6 +189,19 @@ export function EquipoManager({ miembros, puedeGestionar, miUserId, limites }: P
                         </DropdownMenuItem>
                       ))}
                     <DropdownMenuSeparator />
+                    {m.rol !== "dueno" && (
+                      <DropdownMenuItem
+                        className="cursor-pointer gap-2 text-sm"
+                        onClick={() => {
+                          if (m.suspendido || confirm(`¿Suspender a ${m.nombre}? No podrá entrar al portal hasta que lo reactives. Sigue en el equipo.`)) {
+                            correr(() => suspenderMiembro(m.id, !m.suspendido))
+                          }
+                        }}>
+                        {m.suspendido
+                          ? <><PlayCircle className="h-4 w-4" />Reactivar</>
+                          : <><PauseCircle className="h-4 w-4" />Suspender</>}
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem
                       className="cursor-pointer gap-2 text-sm text-rose-600 focus:text-rose-700"
                       onClick={() => {

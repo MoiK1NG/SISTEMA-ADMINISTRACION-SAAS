@@ -1,6 +1,7 @@
 import { sesionActual } from "@/lib/admin-context"
+import { contextoFarmacia } from "@/lib/farmacia/contexto"
 import { PORTALES } from "./portal-config"
-import { PortalNavItems, type OtroPortal } from "./portal-nav-items"
+import { PortalNavItems, type MarcaNegocio, type OtroPortal } from "./portal-nav-items"
 
 interface Props {
   portal: string
@@ -50,6 +51,14 @@ export async function PortalNav({ portal, top = 16, sticky = true }: Props) {
     .map(s => ({ slug: s, nombre: PORTALES[s].nombre, color: PORTALES[s].color }))
     .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"))
 
+  // Farmacia: logo y color del negocio (contextoFarmacia ya está memoizada
+  // por request, la página la resolvió antes)
+  let marca: MarcaNegocio | undefined
+  if (portal === "farmacia") {
+    const { negocio } = await contextoFarmacia()
+    if (negocio) marca = { nombre: negocio.nombre, logo: negocio.logo_url, color: negocio.color }
+  }
+
   return (
     <PortalNavItems
       portal={portal}
@@ -58,6 +67,7 @@ export async function PortalNav({ portal, top = 16, sticky = true }: Props) {
       esAdmin={esAdmin}
       otros={otros}
       tutorial={portal === "farmacia"}
+      marca={marca}
     />
   )
 }

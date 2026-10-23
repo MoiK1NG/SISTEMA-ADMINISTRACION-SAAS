@@ -35,6 +35,9 @@ export default async function EquipoPage() {
     email:    m.email,
     aprobado: m.aprobado,
     desde:    m.desde,
+    suspendido:   Boolean(m.suspendido),
+    ultimoAcceso: m.ultimo_acceso ?? null,
+    ultimoCierre: m.ultimo_cierre ?? null,
   }))
 
   return (

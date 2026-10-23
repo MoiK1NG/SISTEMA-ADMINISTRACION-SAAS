@@ -8,6 +8,8 @@ export interface NegocioResumen {
   nit:       string | null
   direccion: string | null
   telefono:  string | null
+  logo_url:  string | null
+  color:     string | null
 }
 
 interface NegocioUI {
@@ -18,7 +20,7 @@ interface NegocioUI {
   negocio:    NegocioResumen
 }
 
-const SIN_NEGOCIO: NegocioResumen = { nombre: "", nit: null, direccion: null, telefono: null }
+const SIN_NEGOCIO: NegocioResumen = { nombre: "", nit: null, direccion: null, telefono: null, logo_url: null, color: null }
 
 const Ctx = createContext<NegocioUI>({ moneda: MONEDA_POR_DEFECTO, ivaDefault: 0, negocio: SIN_NEGOCIO })
 
