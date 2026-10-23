@@ -57,6 +57,7 @@ export async function PortalNav({ portal, top = 16, sticky = true }: Props) {
       sticky={sticky}
       esAdmin={esAdmin}
       otros={otros}
+      tutorial={portal === "farmacia"}
     />
   )
 }

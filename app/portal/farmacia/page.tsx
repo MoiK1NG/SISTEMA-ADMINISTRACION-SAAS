@@ -9,6 +9,7 @@ import { alertasDeHoy } from "@/lib/farmacia/alertas"
 import { ID_FISCAL } from "@/lib/farmacia/formato"
 import { AlertasHoy } from "./_components/alertas-hoy"
 import { DatosNegocioDialog } from "./_components/datos-negocio-dialog"
+import { PrimerosPasos, type PasoInicial } from "./_components/primeros-pasos"
 
 function getInitials(name: string) {
   return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
@@ -18,7 +19,12 @@ export default async function FarmaciaPage() {
   const { supabase, agenteId, viendoA, negocio, rol } = await contextoFarmacia()
   const esGestor = rol === "dueno" || rol === "regente"
 
-  const [{ data: profile }, { data: equipo }, alertas] = await Promise.all([
+  const esDueno = rol === "dueno"
+  const contar = (tabla: string) => negocio && esDueno
+    ? supabase.from(tabla).select("id", { count: "exact", head: true }).eq("negocio_id", negocio.id)
+    : Promise.resolve({ count: null })
+
+  const [{ data: profile }, { data: equipo }, alertas, { count: numProductos }, { count: numCierres }] = await Promise.all([
     supabase.from("profiles").select("full_name, email").eq("id", agenteId).single(),
     // Equipo (via función: la RLS de profiles no deja ver perfiles ajenos)
     negocio
@@ -28,7 +34,45 @@ export default async function FarmaciaPage() {
     negocio
       ? alertasDeHoy(supabase, negocio.id, negocio.moneda, esGestor)
       : Promise.resolve(null),
+    // Para "Primeros pasos" del dueño
+    contar("productos_farmacia"),
+    contar("cierres_caja_farmacia"),
   ])
+
+  // Primeros pasos del dueño: se calculan en vivo y desaparecen al completarse
+  const primerosPasos: PasoInicial[] | null = negocio && esDueno ? [
+    {
+      label: "Completa los datos del negocio",
+      hecho: Boolean(negocio.nit && negocio.direccion && negocio.telefono),
+      ayuda: `${ID_FISCAL[negocio.moneda]}, dirección y teléfono: salen en el comprobante. Usa "Datos del negocio", arriba a la derecha.`,
+    },
+    {
+      label: "Crea la cuenta de al menos un cajero",
+      hecho: (equipo ?? []).some((m: any) => m.rol === "cajero"),
+      href:  "/portal/farmacia/equipo",
+      ayuda: "En Equipo, con una contraseña inicial que le entregas en persona.",
+    },
+    {
+      label: "Carga tu inventario",
+      hecho: (numProductos ?? 0) > 0,
+      href:  "/portal/farmacia/inventario",
+      ayuda: "Productos con su precio y sus lotes. Si tienes un Excel, pásalo a soporte y lo cargamos.",
+    },
+    {
+      label: "Completa las fechas de vencimiento",
+      hecho: (numProductos ?? 0) > 0 && alertas?.sin_fecha === 0,
+      href:  "/portal/farmacia/inventario",
+      ayuda: alertas?.sin_fecha
+        ? `Quedan ${alertas.sin_fecha} productos con lotes sin fecha.`
+        : "Cada lote necesita su fecha para el semáforo de vencimientos.",
+    },
+    {
+      label: "Haz tu primer cierre de caja",
+      hecho: (numCierres ?? 0) > 0,
+      href:  "/portal/farmacia/caja",
+      ayuda: "Al terminar el primer turno con ventas.",
+    },
+  ] : null
 
   const datosNegocio = negocio
     ? [negocio.nit && `${ID_FISCAL[negocio.moneda]} ${negocio.nit}`, negocio.direccion, negocio.telefono].filter(Boolean).join(" · ")
@@ -102,6 +146,8 @@ export default async function FarmaciaPage() {
               </div>
               {rol === "dueno" && !viendoA && <DatosNegocioDialog negocio={negocio} />}
             </div>
+
+            {primerosPasos && <PrimerosPasos pasos={primerosPasos} />}
 
             {/* ── Alertas de hoy ─────────────────────────────────────────────── */}
             {alertas && (
