@@ -3,6 +3,7 @@ import { PortalNav } from "@/components/portal/portal-nav"
 import { BannerVerComo } from "@/components/portal/banner-ver-como"
 import { contextoFarmacia } from "@/lib/farmacia/contexto"
 import { CierreCaja, type FilaCierre, type VentaTurno } from "./_components/cierre-caja"
+import type { MovimientoCaja } from "./_components/salidas-caja"
 
 export default async function CajaFarmaciaPage() {
   const { supabase, agenteId, viendoA, negocio, rol } = await contextoFarmacia()
@@ -21,7 +22,7 @@ export default async function CajaFarmaciaPage() {
   // El cajero solo ve sus cierres (la RLS lo garantiza; acá igual filtramos)
   let query = supabase
     .from("cierres_caja_farmacia")
-    .select("id, user_id, periodo_desde, periodo_hasta, declarado, esperado, diferencia, num_ventas, notas, created_at")
+    .select("id, user_id, periodo_desde, periodo_hasta, declarado, esperado, diferencia, num_ventas, notas, retiros, gastos, created_at")
     .eq("negocio_id", negocio.id)
     .order("created_at", { ascending: false })
     .limit(30)
@@ -42,7 +43,7 @@ export default async function CajaFarmaciaPage() {
     .limit(1).maybeSingle()
   const desde = ultimoCierre?.periodo_hasta ?? "1970-01-01T00:00:00Z"
 
-  const [[{ data: cierresRaw }, { data: equipo }], { data: ventasRaw }, { data: pagosPedidoRaw }] = await Promise.all([
+  const [[{ data: cierresRaw }, { data: equipo }], { data: ventasRaw }, { data: pagosPedidoRaw }, { data: movsRaw }] = await Promise.all([
     historial,
     supabase.from("ventas_farmacia")
       .select("id, numero, total, created_at, items_venta_farmacia(nombre, cantidad), pagos_venta_farmacia(metodo, monto)")
@@ -53,6 +54,13 @@ export default async function CajaFarmaciaPage() {
     supabase.from("pagos_pedido_farmacia")
       .select("id, metodo, monto, created_at, pedidos_farmacia!inner(negocio_id, descripcion)")
       .eq("pedidos_farmacia.negocio_id", negocio.id)
+      .gt("created_at", desde)
+      .order("created_at", { ascending: false })
+      .limit(100),
+    // Retiros y gastos del turno: el cajero ve los suyos, los gestores todos (RLS)
+    supabase.from("movimientos_caja_farmacia")
+      .select("id, tipo, monto, concepto, categoria, user_id, created_at, anulado, anulado_motivo")
+      .eq("negocio_id", negocio.id)
       .gt("created_at", desde)
       .order("created_at", { ascending: false })
       .limit(100),
@@ -70,6 +78,21 @@ export default async function CajaFarmaciaPage() {
     diferencia: c.diferencia,
     ventas:     c.num_ventas,
     notas:      c.notas,
+    retiros:    Number(c.retiros ?? 0),
+    gastos:     Number(c.gastos ?? 0),
+  }))
+
+  const movimientosCaja: MovimientoCaja[] = (movsRaw ?? []).map((m: any) => ({
+    id:        m.id,
+    tipo:      m.tipo,
+    monto:     Number(m.monto),
+    concepto:  m.concepto,
+    categoria: m.categoria,
+    hora:      m.created_at,
+    autor:     m.user_id === agenteId ? "Tú" : nombrePorUsuario.get(m.user_id) ?? "—",
+    propio:    m.user_id === agenteId,
+    anulado:   m.anulado,
+    motivo:    m.anulado_motivo,
   }))
 
   const ventasTurno: VentaTurno[] = [
@@ -116,6 +139,7 @@ export default async function CajaFarmaciaPage() {
         <CierreCaja
           cierres={cierres}
           ventasTurno={ventasTurno}
+          movimientosCaja={movimientosCaja}
           esGestor={esGestor}
           soloLectura={Boolean(viendoA)}
         />

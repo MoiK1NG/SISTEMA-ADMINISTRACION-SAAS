@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { requireNegocioAccion, type RolFarmacia } from "@/lib/farmacia/contexto"
 import { enteroNoNegativo, montoNoNegativo, montoValido, textoRequerido, unoDe } from "@/lib/portal-security"
-import { METODOS_PAGO_FARMACIA } from "@/lib/farmacia/pos-constants"
+import { CATEGORIAS_GASTO, METODOS_PAGO_FARMACIA, TIPOS_MOVIMIENTO_CAJA } from "@/lib/farmacia/pos-constants"
 import { borrarCuenta, crearCuentaConClave, validarClave, validarCorreo } from "@/lib/cuentas"
 
 const ROLES = ["dueno", "regente", "cajero"] as const
@@ -642,7 +642,48 @@ export async function cerrarCajaFarmacia(declarado: {
     declarado: Record<string, number>
     diferencia: Record<string, number>
     num_ventas: number
+    retiros: number
+    gastos: number
   }
+}
+
+// ── Retiros y gastos de caja ─────────────────────────────────────────────────
+// Efectivo que sale del cajón sin ser una venta: el dueño retira plata o se
+// paga un gasto menor. Cualquier miembro lo registra; el cierre lo descuenta
+// del efectivo esperado.
+export async function registrarMovimientoCaja(input: {
+  tipo: string; monto: number; concepto: string; categoria?: string | null
+}) {
+  const { supabase, user, negocioId } = await requireNegocioAccion(["dueno", "regente", "cajero"])
+
+  const tipo = unoDe(input.tipo, TIPOS_MOVIMIENTO_CAJA, "tipo de movimiento")
+  const { data, error } = await supabase
+    .from("movimientos_caja_farmacia")
+    .insert({
+      negocio_id: negocioId,
+      tipo,
+      monto:      montoValido(input.monto, tipo === "retiro" ? "monto del retiro" : "monto del gasto"),
+      concepto:   textoRequerido(input.concepto, "concepto"),
+      categoria:  tipo === "gasto" ? unoDe(input.categoria ?? "", CATEGORIAS_GASTO, "categoría") : null,
+      user_id:    user.id,
+    })
+    .select("id, tipo, monto, concepto, categoria, created_at")
+    .single()
+  if (error) throw new Error(error.message)
+
+  return { ...data, monto: Number(data.monto) }
+}
+
+/** Anula un retiro o gasto del turno abierto (quien lo hizo, dueño o regente). */
+export async function anularMovimientoCaja(id: string, motivo: string) {
+  const { supabase, user } = await requireNegocioAccion(["dueno", "regente", "cajero"])
+  const nota = textoRequerido(motivo, "motivo")
+
+  const { error } = await supabase.rpc("anular_movimiento_caja", { p_id: id, p_motivo: nota })
+  if (error) throw new Error(error.message)
+
+  await logEquipo(supabase, user.id, "anular_movimiento_caja", { movimiento_id: id, motivo: nota })
+  return { success: true }
 }
 
 // ── Cuentas por pagar (dueño y regente) ──────────────────────────────────────
