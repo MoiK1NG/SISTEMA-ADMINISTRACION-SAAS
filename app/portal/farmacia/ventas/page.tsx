@@ -2,9 +2,30 @@ import { Receipt } from "lucide-react"
 import { PortalNav } from "@/components/portal/portal-nav"
 import { BannerVerComo } from "@/components/portal/banner-ver-como"
 import { contextoFarmacia } from "@/lib/farmacia/contexto"
+import { fechaHoy, sumarDias, diferenciaDias, inicioDiaISO, finDiaISO } from "@/lib/farmacia/formato"
 import { VentasFarmacia, type FilaVenta, type FilaEncargo } from "./_components/ventas-farmacia"
 
-export default async function VentasFarmaciaPage() {
+/** Más filas que esto por rango no se muestran: se avisa y se pide acotar las fechas. */
+const LIMITE = 500
+const DIAS_POR_DEFECTO = 7
+const MAX_DIAS = 366
+
+const FECHA_RE = /^\d{4}-\d{2}-\d{2}$/
+
+/** Rango pedido en la URL, saneado: por defecto los últimos 7 días; nunca más de un año. */
+function rangoValido(desde: string | undefined, hasta: string | undefined, hoy: string) {
+  let d = desde && FECHA_RE.test(desde) ? desde : sumarDias(hoy, -(DIAS_POR_DEFECTO - 1))
+  let h = hasta && FECHA_RE.test(hasta) ? hasta : hoy
+  if (d > h) [d, h] = [h, d]
+  if (diferenciaDias(h, d) > MAX_DIAS) d = sumarDias(h, -MAX_DIAS)
+  return { desde: d, hasta: h }
+}
+
+export default async function VentasFarmaciaPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ desde?: string; hasta?: string }>
+}) {
   const { supabase, viendoA, negocio, rol } = await contextoFarmacia()
 
   if (!negocio) {
@@ -16,28 +37,35 @@ export default async function VentasFarmaciaPage() {
     )
   }
 
-  const hace7 = new Date(); hace7.setDate(hace7.getDate() - 7); hace7.setHours(0, 0, 0, 0)
+  const sp    = await searchParams
+  const hoy   = fechaHoy(negocio.moneda)
+  const rango = rangoValido(sp.desde, sp.hasta, hoy)
+  // Los límites del día se calculan en la zona horaria del negocio, no en UTC
+  const desdeISO = inicioDiaISO(rango.desde, negocio.moneda)
+  const hastaISO = finDiaISO(rango.hasta, negocio.moneda)
 
   const [{ data: ventasRaw }, { data: encargosRaw }] = await Promise.all([
     supabase
       .from("ventas_farmacia")
       .select(`id, numero, total, estado, created_at, anulada_motivo,
         clientes_farmacia(nombre),
-        items_venta_farmacia(nombre, cantidad),
+        items_venta_farmacia(nombre, cantidad, precio_unitario),
         pagos_venta_farmacia(metodo, monto)`)
       .eq("negocio_id", negocio.id)
-      .gte("created_at", hace7.toISOString())
+      .gte("created_at", desdeISO)
+      .lte("created_at", hastaISO)
       .order("created_at", { ascending: false })
-      .limit(100),
+      .limit(LIMITE),
     supabase
       .from("pedidos_farmacia")
       .select(`id, descripcion, cantidad, total, monto_pagado, estado, created_at,
         clientes_farmacia(nombre),
         pagos_pedido_farmacia(metodo, monto, created_at)`)
       .eq("negocio_id", negocio.id)
-      .gte("created_at", hace7.toISOString())
+      .gte("created_at", desdeISO)
+      .lte("created_at", hastaISO)
       .order("created_at", { ascending: false })
-      .limit(100),
+      .limit(LIMITE),
   ])
 
   const encargos: FilaEncargo[] = (encargosRaw ?? []).map((p: any) => {
@@ -59,6 +87,9 @@ export default async function VentasFarmaciaPage() {
 
   const ventas: FilaVenta[] = (ventasRaw ?? []).map((v: any) => {
     const cli = Array.isArray(v.clientes_farmacia) ? v.clientes_farmacia[0] : v.clientes_farmacia
+    const lineas = (v.items_venta_farmacia ?? []).map((i: any) => ({
+      nombre: i.nombre as string, cantidad: Number(i.cantidad), precio: Number(i.precio_unitario),
+    }))
     return {
       id:      v.id,
       numero:  v.numero,
@@ -67,8 +98,9 @@ export default async function VentasFarmaciaPage() {
       creada:  v.created_at,
       cliente: cli?.nombre ?? null,
       motivo_anulacion: v.anulada_motivo,
-      items:  (v.items_venta_farmacia ?? []).map((i: any) => `${Number(i.cantidad)}× ${i.nombre}`),
-      pagos:  (v.pagos_venta_farmacia ?? []).map((p: any) => ({ metodo: p.metodo, monto: Number(p.monto) })),
+      items:   lineas.map((l: { nombre: string; cantidad: number }) => `${l.cantidad}× ${l.nombre}`),
+      lineas,
+      pagos:   (v.pagos_venta_farmacia ?? []).map((p: any) => ({ metodo: p.metodo, monto: Number(p.monto) })),
     }
   })
 
@@ -83,7 +115,7 @@ export default async function VentasFarmaciaPage() {
           </div>
           <div>
             <p className="text-sm font-semibold leading-none text-slate-900">Ventas</p>
-            <p className="mt-0.5 text-xs text-slate-500">{negocio.nombre} · últimos 7 días</p>
+            <p className="mt-0.5 text-xs text-slate-500">{negocio.nombre}</p>
           </div>
         </div>
       </header>
@@ -91,7 +123,15 @@ export default async function VentasFarmaciaPage() {
       {viendoA && <BannerVerComo nombre={viendoA.full_name || viendoA.email} email={viendoA.email} />}
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <VentasFarmacia ventas={ventas} encargos={encargos} esGestor={esGestor} />
+        <VentasFarmacia
+          ventas={ventas}
+          encargos={encargos}
+          esGestor={esGestor}
+          rango={rango}
+          hoy={hoy}
+          truncado={(ventasRaw?.length ?? 0) >= LIMITE || (encargosRaw?.length ?? 0) >= LIMITE}
+          limite={LIMITE}
+        />
       </main>
     </div>
   )

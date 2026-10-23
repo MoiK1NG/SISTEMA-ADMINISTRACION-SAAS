@@ -46,6 +46,31 @@ export function diferenciaDias(a: string, b: string): number {
   return Math.round((Date.parse(a + "T00:00:00Z") - Date.parse(b + "T00:00:00Z")) / 86_400_000)
 }
 
+/** Un instante (ISO con hora) → "YYYY-MM-DD" en la zona horaria del negocio. */
+export function fechaEnZona(iso: string | Date, moneda: Moneda = MONEDA_POR_DEFECTO): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: ZONA_HORARIA[moneda], year: "numeric", month: "2-digit", day: "2-digit",
+  }).format(typeof iso === "string" ? new Date(iso) : iso)
+}
+
+/** Desfase (ms) de la zona horaria del negocio respecto de UTC en un instante dado. */
+function desfaseZona(instanteUTC: number, moneda: Moneda): number {
+  const enZona = new Date(new Date(instanteUTC).toLocaleString("en-US", { timeZone: ZONA_HORARIA[moneda] }))
+  return enZona.getTime() - instanteUTC
+}
+
+/** Instante ISO del inicio (00:00:00) de un día "YYYY-MM-DD" en la zona del negocio. */
+export function inicioDiaISO(fecha: string, moneda: Moneda = MONEDA_POR_DEFECTO): string {
+  const utc = Date.parse(fecha + "T00:00:00Z")
+  return new Date(utc - desfaseZona(utc, moneda)).toISOString()
+}
+
+/** Instante ISO del final (23:59:59.999) de un día "YYYY-MM-DD" en la zona del negocio. */
+export function finDiaISO(fecha: string, moneda: Moneda = MONEDA_POR_DEFECTO): string {
+  const utc = Date.parse(fecha + "T23:59:59.999Z")
+  return new Date(utc - desfaseZona(utc, moneda)).toISOString()
+}
+
 export interface Formato {
   moneda: Moneda
   locale: string

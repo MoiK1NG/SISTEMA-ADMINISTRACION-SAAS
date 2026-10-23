@@ -149,3 +149,10 @@
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
 }
+/* Comprobante de venta: al imprimir solo sale el bloque #ticket-impresion
+   (components/farmacia/ticket-venta.tsx). */
+@media print {
+  body * { visibility: hidden; }
+  #ticket-impresion, #ticket-impresion * { visibility: visible; }
+  @page { margin: 4mm; }
+}

@@ -3,7 +3,7 @@
 import { useDeferredValue, useEffect, useMemo, useRef, useState, useTransition } from "react"
 import {
   Search, ScanBarcode, Plus, Minus, Trash2, ShoppingCart, CheckCircle2,
-  Loader2, UserRound, Repeat2, X,
+  Loader2, UserRound, Repeat2, X, Printer,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -17,6 +17,7 @@ import { METODOS_PAGO_FARMACIA, METODO_PAGO_LABEL, type MetodoPagoFarmacia } fro
 import { useFormato, useNegocioUI } from "@/components/farmacia/negocio-provider"
 import { DOC_PERSONA } from "@/lib/farmacia/formato"
 import { buscar, indexar, type Indexado } from "@/lib/farmacia/busqueda"
+import { TicketVenta, type TicketData } from "@/components/farmacia/ticket-venta"
 
 export interface ProductoPos {
   id:               string
@@ -85,6 +86,9 @@ export function PosFarmacia({ productos, soloLectura }: Props) {
 
   const [cobroAbierto, setCobroAbierto] = useState(false)
   const [exito, setExito] = useState<{ numero: number; total: number; vuelto: number } | null>(null)
+  // Última venta, para imprimir el comprobante (queda disponible hasta la siguiente)
+  const [ultimaVenta, setUltimaVenta] = useState<TicketData | null>(null)
+  const [ticketAbierto, setTicketAbierto] = useState(false)
 
   // Catálogo local: arranca con la prop y se corrige tras cada venta con lo que
   // devuelve el servidor, sin volver a pedir la página. Si el server component
@@ -157,13 +161,25 @@ export function PosFarmacia({ productos, soloLectura }: Props) {
       .filter(i => i.cantidad > 0))
   }
 
-  function ventaCompletada(r: { numero: number; total: number; vuelto: number; productos: EstadoProductoPos[] }) {
+  function ventaCompletada(
+    r: { numero: number; total: number; vuelto: number; productos: EstadoProductoPos[] },
+    pagos: { metodo: string; monto: number }[],
+  ) {
     setExito({ numero: r.numero, total: r.total, vuelto: r.vuelto })
+    setUltimaVenta({
+      numero:  r.numero,
+      fecha:   new Date().toISOString(),
+      total:   r.total,
+      vuelto:  r.vuelto,
+      cliente: cliente?.nombre ?? null,
+      lineas:  lineas.map(l => ({ nombre: l.producto.nombre, cantidad: l.cantidad, precio: l.producto.precio })),
+      pagos,
+    })
     setCobroAbierto(false)
     setCarrito([])
     setCliente(null)
     aplicarEstado(r.productos)
-    setTimeout(() => setExito(null), 3500)
+    setTimeout(() => setExito(null), 6000)
   }
 
   // Si la venta falla ("El stock cambió", "no cubre el total"), se trae el
@@ -278,9 +294,14 @@ export function PosFarmacia({ productos, soloLectura }: Props) {
             </div>
             <p className="text-sm font-bold text-slate-900">Ticket</p>
           </div>
-          {lineas.length > 0 && (
+          {lineas.length > 0 ? (
             <button onClick={() => setCarrito([])} className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-rose-500 hover:bg-rose-50">
               <Trash2 className="h-3 w-3" />Limpiar
+            </button>
+          ) : ultimaVenta && (
+            <button onClick={() => setTicketAbierto(true)} className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-slate-500 hover:bg-slate-100"
+                    title={`Comprobante de la venta #${ultimaVenta.numero}`}>
+              <Printer className="h-3 w-3" />Último comprobante
             </button>
           )}
         </div>
@@ -350,7 +371,7 @@ export function PosFarmacia({ productos, soloLectura }: Props) {
         onFallo={ventaFallida}
       />
 
-      {/* Toast de éxito */}
+      {/* Toast de éxito, con acceso directo al comprobante */}
       {exito && (
         <div className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-2xl border border-emerald-200 bg-white px-5 py-3.5 shadow-xl">
           <CheckCircle2 className="h-6 w-6 text-emerald-500" />
@@ -358,8 +379,14 @@ export function PosFarmacia({ productos, soloLectura }: Props) {
             <p className="text-sm font-bold text-slate-900">Venta #{exito.numero} registrada · {f.dinero(exito.total)}</p>
             {exito.vuelto > 0 && <p className="text-xs font-semibold text-emerald-600">Vuelto: {f.dinero(exito.vuelto)}</p>}
           </div>
+          <button onClick={() => setTicketAbierto(true)}
+                  className="ml-2 flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+            <Printer className="h-3.5 w-3.5" />Imprimir
+          </button>
         </div>
       )}
+
+      <TicketVenta venta={ultimaVenta} open={ticketAbierto} onOpenChange={setTicketAbierto} />
     </div>
   )
 }
@@ -507,7 +534,10 @@ function ModalCobroMixto({ open, total, items, productosRx, clienteId, onClose, 
   productosRx: string[]
   clienteId: string | null
   onClose:   () => void
-  onCompletada: (r: { numero: number; total: number; vuelto: number; productos: EstadoProductoPos[] }) => void
+  onCompletada: (
+    r: { numero: number; total: number; vuelto: number; productos: EstadoProductoPos[] },
+    pagos: { metodo: string; monto: number }[],
+  ) => void
   /** La venta fue rechazada por el servidor: el POS refresca stock y precios del ticket. */
   onFallo:   () => void
 }) {
@@ -559,7 +589,7 @@ function ModalCobroMixto({ open, total, items, productosRx, clienteId, onClose, 
         const r = await registrarVentaFarmacia({ items, pagos, cliente_id: clienteId, receta: datosReceta })
         setMontos({ efectivo: "", tarjeta_debito: "", tarjeta_credito: "", transferencia: "" })
         setReceta(RECETA_VACIA)
-        onCompletada(r)
+        onCompletada(r, pagos)
       } catch (e: any) {
         setError(e?.message ?? "No se pudo registrar la venta")
         onFallo()
