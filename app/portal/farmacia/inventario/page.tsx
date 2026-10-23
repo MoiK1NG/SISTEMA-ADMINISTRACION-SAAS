@@ -5,8 +5,15 @@ import { contextoFarmacia } from "@/lib/farmacia/contexto"
 import { estadoCaducidad } from "@/lib/farmacia/caducidad"
 import { costoConIva, margen } from "@/lib/farmacia/formato"
 import { InventarioFarmacia, type FilaProducto, type CatalogoItem } from "./_components/inventario-farmacia"
+import { filtroInventarioValido } from "@/lib/farmacia/filtros-inventario"
 
-export default async function InventarioFarmaciaPage() {
+export default async function InventarioFarmaciaPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ filtro?: string }>
+}) {
+  // Las alertas del inicio enlazan con ?filtro=…; lo que no se reconoce cae en "todos"
+  const filtroInicial = filtroInventarioValido((await searchParams).filtro)
   const { supabase, viendoA, negocio, rol } = await contextoFarmacia()
 
   if (!negocio) {
@@ -25,11 +32,11 @@ export default async function InventarioFarmaciaPage() {
     { data: laboratorios },
   ] = await Promise.all([
     supabase.from("productos_farmacia")
-      .select("id, codigo_barras, nombre, principio_activo, concentracion, presentacion, categoria, registro_invima, precio_venta, costo, iva_pct, requiere_receta, activo, laboratorio_id, proveedor_id")
+      .select("id, codigo_barras, nombre, principio_activo, concentracion, presentacion, categoria, registro_invima, precio_venta, costo, iva_pct, stock_minimo, requiere_receta, activo, laboratorio_id, proveedor_id")
       .eq("negocio_id", negocio.id)
       .order("nombre"),
     supabase.from("stock_farmacia")
-      .select("producto_id, stock_venta, stock_bodega, proximo_vencimiento, lotes_sin_fecha")
+      .select("producto_id, stock_venta, stock_bodega, proximo_vencimiento, lotes_sin_fecha, bajo_minimo")
       .eq("negocio_id", negocio.id),
     supabase.from("proveedores_farmacia")
       .select("id, nombre").eq("negocio_id", negocio.id).eq("activo", true).order("nombre"),
@@ -71,6 +78,8 @@ export default async function InventarioFarmaciaPage() {
       stock_bodega:     Number(s?.stock_bodega ?? 0),
       vence,
       lotes_sin_fecha:  sinFecha,
+      stock_minimo:     Number(p.stock_minimo ?? 0),
+      bajo_minimo:      Boolean(s?.bajo_minimo),
       semaforo:         estadoCaducidad(vence, sinFecha > 0),
     }
   })
@@ -93,6 +102,8 @@ export default async function InventarioFarmaciaPage() {
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <InventarioFarmacia
+          key={filtroInicial}
+          filtroInicial={filtroInicial}
           filas={filas}
           proveedores={(proveedores ?? []) as CatalogoItem[]}
           laboratorios={(laboratorios ?? []) as CatalogoItem[]}

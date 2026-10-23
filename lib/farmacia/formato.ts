@@ -22,6 +22,30 @@ export const ID_FISCAL: Record<Moneda, string> = { COP: "NIT", CLP: "RUT" }
 /** Documento de identidad de una persona (clientes, pacientes). */
 export const DOC_PERSONA: Record<Moneda, string> = { COP: "CC", CLP: "RUT" }
 
+export const ZONA_HORARIA: Record<Moneda, string> = { COP: "America/Bogota", CLP: "America/Santiago" }
+
+/**
+ * Hoy como "YYYY-MM-DD" en la zona horaria del negocio. El servidor corre en
+ * UTC: a las 22:00 de Chile ya sería "mañana" si se usara toISOString().
+ */
+export function fechaHoy(moneda: Moneda = MONEDA_POR_DEFECTO): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: ZONA_HORARIA[moneda], year: "numeric", month: "2-digit", day: "2-digit",
+  }).format(new Date())
+}
+
+/** "YYYY-MM-DD" + n días, sin depender de la zona horaria del servidor. */
+export function sumarDias(fechaISO: string, dias: number): string {
+  const d = new Date(fechaISO + "T00:00:00Z")
+  d.setUTCDate(d.getUTCDate() + dias)
+  return d.toISOString().slice(0, 10)
+}
+
+/** Días de `a` a `b` (ambas "YYYY-MM-DD"); negativo si `a` es anterior. */
+export function diferenciaDias(a: string, b: string): number {
+  return Math.round((Date.parse(a + "T00:00:00Z") - Date.parse(b + "T00:00:00Z")) / 86_400_000)
+}
+
 export interface Formato {
   moneda: Moneda
   locale: string

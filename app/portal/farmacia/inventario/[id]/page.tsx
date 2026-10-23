@@ -20,6 +20,7 @@ const CAMPO_LABEL: Record<string, string> = {
   precio_venta: "Precio de venta", costo: "Costo neto", iva_pct: "IVA %",
   requiere_receta: "Requiere receta", activo: "Activo", laboratorio_id: "Laboratorio", proveedor_id: "Proveedor",
   lote_numero: "Número de lote", lote_vencimiento: "Vencimiento de lote", lote_estanteria: "Estantería de lote",
+  stock_minimo: "Stock mínimo",
 }
 
 const TIPO_MOV_LABEL: Record<string, string> = {
@@ -45,7 +46,7 @@ export default async function ProductoFarmaciaPage({
   const { data: producto } = await supabase
     .from("productos_farmacia")
     .select(`id, codigo_barras, nombre, principio_activo, concentracion, presentacion,
-      categoria, registro_invima, precio_venta, costo, iva_pct, requiere_receta, activo,
+      categoria, registro_invima, precio_venta, costo, iva_pct, stock_minimo, requiere_receta, activo,
       laboratorio_id, proveedor_id, laboratorios_farmacia(nombre), proveedores_farmacia(nombre)`)
     .eq("id", id).eq("negocio_id", negocio.id)
     .maybeSingle()
@@ -110,6 +111,8 @@ export default async function ProductoFarmaciaPage({
 
   const stockVenta  = lotes.reduce((s, l) => s + l.cantidad_venta, 0)
   const stockBodega = lotes.reduce((s, l) => s + l.cantidad_bodega, 0)
+  const stockMinimo = Number(producto.stock_minimo ?? 0)
+  const bajoMinimo  = producto.activo && stockMinimo > 0 && stockVenta + stockBodega < stockMinimo
 
   // Principio activo con su concentración al lado (pedido del equipo)
   const principio = [producto.principio_activo, producto.concentracion].filter(Boolean).join(" ") || null
@@ -142,6 +145,8 @@ export default async function ProductoFarmaciaPage({
     vence:            null,
     lotes_sin_fecha:  lotes.filter(l => !l.fecha_vencimiento).length,
     semaforo:         null,
+    stock_minimo:     stockMinimo,
+    bajo_minimo:      bajoMinimo,
   }
 
   const lab  = Array.isArray(producto.laboratorios_farmacia) ? producto.laboratorios_farmacia[0] : producto.laboratorios_farmacia
@@ -164,6 +169,7 @@ export default async function ProductoFarmaciaPage({
     ["Proveedor",        prov?.nombre ?? null],
     ["Categoría",        producto.categoria],
     ["Registro sanitario",  producto.registro_invima],
+    ["Stock mínimo",        stockMinimo > 0 ? String(stockMinimo) : null],
   ]
 
   return (
@@ -250,6 +256,11 @@ export default async function ProductoFarmaciaPage({
                 <p className="mt-1 text-2xl font-black tabular-nums text-slate-900">{stockBodega}</p>
               </div>
             </div>
+            {bajoMinimo && (
+              <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-xs font-medium text-amber-800">
+                Bajo el mínimo: hay {stockVenta + stockBodega} y el mínimo es {stockMinimo}. Conviene reponer.
+              </p>
+            )}
           </div>
         </div>
 
