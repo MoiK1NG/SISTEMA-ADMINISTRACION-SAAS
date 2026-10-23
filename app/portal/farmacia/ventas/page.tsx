@@ -1,6 +1,7 @@
 import { Receipt } from "lucide-react"
 import { PortalNav } from "@/components/portal/portal-nav"
 import { BannerVerComo } from "@/components/portal/banner-ver-como"
+import { PaginaSoporteBloqueado } from "@/components/farmacia/soporte-bloqueado"
 import { contextoFarmacia } from "@/lib/farmacia/contexto"
 import { fechaHoy, sumarDias, diferenciaDias, inicioDiaISO, finDiaISO } from "@/lib/farmacia/formato"
 import { VentasFarmacia, type FilaVenta, type FilaEncargo } from "./_components/ventas-farmacia"
@@ -26,7 +27,7 @@ export default async function VentasFarmaciaPage({
 }: {
   searchParams: Promise<{ desde?: string; hasta?: string }>
 }) {
-  const { supabase, viendoA, negocio, rol } = await contextoFarmacia()
+  const { supabase, viendoA, negocio, rol, sinPermisoSoporte } = await contextoFarmacia()
 
   if (!negocio) {
     return (
@@ -36,6 +37,9 @@ export default async function VentasFarmaciaPage({
       </div>
     )
   }
+
+  // Datos sensibles: un admin los ve solo si el dueño autorizó el soporte
+  if (sinPermisoSoporte) return <PaginaSoporteBloqueado seccion="Ventas" viendoA={viendoA} />
 
   const sp    = await searchParams
   const hoy   = fechaHoy(negocio.moneda)

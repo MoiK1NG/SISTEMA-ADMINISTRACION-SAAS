@@ -10,13 +10,14 @@ import { ID_FISCAL } from "@/lib/farmacia/formato"
 import { AlertasHoy } from "./_components/alertas-hoy"
 import { DatosNegocioDialog } from "./_components/datos-negocio-dialog"
 import { PrimerosPasos, type PasoInicial } from "./_components/primeros-pasos"
+import { SoporteCard } from "./_components/soporte-card"
 
 function getInitials(name: string) {
   return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
 }
 
 export default async function FarmaciaPage() {
-  const { supabase, agenteId, viendoA, negocio, rol } = await contextoFarmacia()
+  const { supabase, agenteId, viendoA, negocio, rol, sinPermisoSoporte } = await contextoFarmacia()
   const esGestor = rol === "dueno" || rol === "regente"
 
   const esDueno = rol === "dueno"
@@ -40,7 +41,8 @@ export default async function FarmaciaPage() {
   ])
 
   // Primeros pasos del dueño: se calculan en vivo y desaparecen al completarse
-  const primerosPasos: PasoInicial[] | null = negocio && esDueno ? [
+  // Un admin sin permiso de soporte no ve los cierres: la lista saldría mal
+  const primerosPasos: PasoInicial[] | null = negocio && esDueno && !sinPermisoSoporte ? [
     {
       label: "Completa los datos del negocio",
       hecho: Boolean(negocio.nit && negocio.direccion && negocio.telefono),
@@ -160,6 +162,15 @@ export default async function FarmaciaPage() {
             </div>
 
             {primerosPasos && <PrimerosPasos pasos={primerosPasos} />}
+
+            {sinPermisoSoporte && (
+              <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
+                <strong>Sin permiso de soporte.</strong> El dueño no autorizó el acceso: ventas, clientes, recetas, caja y
+                finanzas están ocultos, y las alertas de pacientes y cuentas por pagar aparecen en cero.
+              </p>
+            )}
+
+            {rol === "dueno" && !viendoA && <SoporteCard hasta={negocio.soporte_hasta} />}
 
             {/* ── Alertas de hoy ─────────────────────────────────────────────── */}
             {alertas && (

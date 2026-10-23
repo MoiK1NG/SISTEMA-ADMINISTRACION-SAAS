@@ -25,6 +25,8 @@ export interface Negocio {
   logo_url:  string | null
   /** Color de la paleta del negocio; null = azul LOMS 360 */
   color:     string | null
+  /** Hasta cuándo el dueño autorizó al soporte de LOMS 360 a ver datos sensibles */
+  soporte_hasta: string | null
 }
 
 export interface ContextoFarmacia {
@@ -35,6 +37,11 @@ export interface ContextoFarmacia {
   negocio:  Negocio | null
   /** Rol del agente dentro del negocio; null si no pertenece a ninguno. */
   rol:      RolFarmacia | null
+  /**
+   * Admin en "ver como" sin permiso de soporte vigente: las secciones con
+   * datos sensibles muestran un aviso (la RLS ya no le devuelve filas).
+   */
+  sinPermisoSoporte: boolean
 }
 
 /**
@@ -49,7 +56,7 @@ export const contextoFarmacia = cache(async (): Promise<ContextoFarmacia> => {
 
   const { data: miembro } = await supabase
     .from("miembros_negocio")
-    .select("rol, negocios(id, nombre, nit, direccion, telefono, moneda, iva_pct_default, logo_url, color)")
+    .select("rol, negocios(id, nombre, nit, direccion, telefono, moneda, iva_pct_default, logo_url, color, soporte_hasta)")
     .eq("user_id", agenteId)
     .limit(1)
     .maybeSingle()
@@ -68,8 +75,13 @@ export const contextoFarmacia = cache(async (): Promise<ContextoFarmacia> => {
     viendoA,
     negocio,
     rol: (miembro?.rol as RolFarmacia) ?? null,
+    sinPermisoSoporte: Boolean(viendoA) && !soporteVigente(negocio?.soporte_hasta ?? null),
   }
 })
+
+export function soporteVigente(hasta: string | null): boolean {
+  return Boolean(hasta) && new Date(hasta!).getTime() > Date.now()
+}
 
 /**
  * Puerta de ESCRITURA para las server actions de farmacia.

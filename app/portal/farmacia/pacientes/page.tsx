@@ -1,12 +1,13 @@
 import { HeartPulse } from "lucide-react"
 import { PortalNav } from "@/components/portal/portal-nav"
 import { BannerVerComo } from "@/components/portal/banner-ver-como"
+import { PaginaSoporteBloqueado } from "@/components/farmacia/soporte-bloqueado"
 import { contextoFarmacia } from "@/lib/farmacia/contexto"
 import { diasParaVencer } from "@/lib/farmacia/caducidad"
 import { PacientesFarmacia, type FilaTratamiento, type ClienteCrm, type ProductoCrm } from "./_components/pacientes-farmacia"
 
 export default async function PacientesFarmaciaPage() {
-  const { supabase, viendoA, negocio } = await contextoFarmacia()
+  const { supabase, viendoA, negocio, sinPermisoSoporte } = await contextoFarmacia()
 
   if (!negocio) {
     return (
@@ -16,6 +17,9 @@ export default async function PacientesFarmaciaPage() {
       </div>
     )
   }
+
+  // Datos sensibles: un admin los ve solo si el dueño autorizó el soporte
+  if (sinPermisoSoporte) return <PaginaSoporteBloqueado seccion="Pacientes" viendoA={viendoA} />
 
   const [{ data: tratamientosRaw }, { data: clientes }, { data: productos }] = await Promise.all([
     supabase.from("tratamientos_farmacia")
